@@ -37,7 +37,7 @@ function FigureQuadratic(α::Number,β::Number, x₀::Vector, xSol::Vector,ε::N
     
     # Plots
     ymax = 1.25
-    plt = plot(x -> α*x^2 + β,-0.5,sqrt((ymax - β)/α),lw=1,c=:blue,fill = (ymax, 0.5, :dodgerblue),palette=:gnuplot2)
+    plt = plot(x -> α*x^2 + β,-0.5,sqrt((ymax - β)/α),lw=1,c=:blue,fill = (ymax, 0.5, :dodgerblue))
     scatter!([x₀[1]],[x₀[2]],label=false)
     MAPscatter = [xMAPDir[:,1],xMAPDir[:,2]]
     scatter!(MAPscatter[1][2:end],MAPscatter[2][2:end], label="MAP ($(MAPResult.iter_total) it.)")
