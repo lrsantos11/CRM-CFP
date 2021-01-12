@@ -15,7 +15,8 @@ function CRMiteration(xCRM::Vector, ReflectA, ReflectB)
     return xCRM  
 end 
 
-function CRM(x₀::Vector,ReflectA::Function, ReflectB::Function; EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "")
+
+function CRM(x₀::Vector,ReflectA::Function, ReflectB::Function; EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [])
     k = 1
     tolCRM = 1.
     xCRM = x₀
@@ -24,8 +25,8 @@ function CRM(x₀::Vector,ReflectA::Function, ReflectB::Function; EPSVAL::Float6
         xCRMOld = copy(xCRM)
         xCRM  = CRMiteration(xCRM, ReflectA, ReflectB)
         printoOnFile(filedir,xCRM')
-        tolCRM = norm(xCRM-xCRMOld,Inf)
+        tolCRM = Tolerance(xCRM,xCRMOld,xSol)
         k += 1
     end
-    return xCRM, tolCRM, k
+    return Results(iter_total= k,final_tol=tolCRM,xApprox=xCRM,method="CRM")
 end
