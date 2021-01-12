@@ -1,5 +1,6 @@
 using Plots
 using LaTeXStrings
+pgfplotsx(size=(400,400),fg_colour_axis=:lightgray,framestyle=:origin,aspect_ratio=:equal,draw_arrow=true)
 
 """
 Creates plot with the path of method. 
@@ -9,7 +10,7 @@ function MethodPath(plt::Plots.Plot,mat::Array;color=:dodgerblue2,ltype = :dash,
     y = mat[2][1:end-1]
     vx = .97(mat[1][2:end] - x)
     vy = .97(mat[2][2:end] - y)
-    quiver!(plt,x,y,quiver=(vx,vy),arrow=true,ls=ltype,c=color,lw=lwidth,label=false)
+    quiver!(plt,x,y,quiver=(vx,vy),arrow=true,ls=ltype,c=color,lw=lwidth,label="")
 end
 ##
 
@@ -37,13 +38,13 @@ function FigureQuadratic(α::Number,β::Number, x₀::Vector, xSol::Vector,ε::N
     
     # Plots
     ymax = 1.25
-    plt = plot(x -> α*x^2 + β,-0.5,sqrt((ymax - β)/α),lw=1,c=:blue,fill = (ymax, 0.5, :dodgerblue))
-    scatter!([x₀[1]],[x₀[2]],label=false)
+    plt = plot(x -> α*x^2 + β,-0.5,sqrt((ymax - β)/α),lw=1,c=:blue,fill = (ymax, 0.5, :dodgerblue),label="")
+    scatter!([x₀[1]],[x₀[2]],label="",marker=:diamond)
     MAPscatter = [xMAPDir[:,1],xMAPDir[:,2]]
     scatter!(MAPscatter[1][2:end],MAPscatter[2][2:end], label="MAP ($(MAPResult.iter_total) it.)")
     MethodPath(plt,MAPscatter,color=:green)
     CRMscatter = [xCRMDir[:,1],xCRMDir[:,2]]
-    scatter!(CRMscatter[1][2:end],CRMscatter[2][2:end], label="CRM ($(CRMResult.iter_total) it.)")
+    scatter!(CRMscatter[1][2:end],CRMscatter[2][2:end], label="CRM ($(CRMResult.iter_total) it.)",marker=:square)
     MethodPath(plt,CRMscatter,color=:yellow)
     annotate!([(x₀[1], yH -.1 ,text(L"x_0",12))])
     if β  ≈ 0.0
