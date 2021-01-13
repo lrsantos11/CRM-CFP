@@ -21,7 +21,7 @@ function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function; EPSVAL::Float6
     tolCRM = 1.
     xCRM = x₀
     ReflecA(x) = Reflection(x,ProjectA)
-    ReflecA(x) = Reflection(x,ProjectA)
+    ReflecB(x) = Reflection(x,ProjectB)
     printoOnFile(filedir,xCRM',deletefile=true)
     while tolCRM > EPSVAL && k <= itmax
         xCRMOld = copy(xCRM)
