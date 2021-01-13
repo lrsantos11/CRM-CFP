@@ -10,7 +10,7 @@ function MAPiteration(xMAP::Vector, ProjectA, ProjectB,filedir)
     return xMAP  
 end 
 
-function MAP(x₀::Vector,ProjectA, ProjectB;EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "",xSol::Vector=[])
+function MAP(x₀::Vector,ProjectA::Function, ProjectB::Function; EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "",xSol::Vector = [])
     k = 1
     tolMAP = 1.
     xMAP = x₀
