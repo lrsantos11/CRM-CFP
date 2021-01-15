@@ -40,11 +40,10 @@ function FigureQuadratic(α::Number,β::Number, x₀::Vector, xSol::Vector,ε::N
         scatter_points_Proj_y = @view xmtd[2:2:end,2]
         scatter_points_mtd_x = @view xmtd[3:2:end,1]
         scatter_points_mtd_y = @view xmtd[3:2:end,2]
-        scatter!(scatter_points_mtd_x,scatter_points_mtd_y, c=mrk_color[index], marker=(3,:circle),
-                label="$(String(mtd)) ($(Result.iter_total) it.)")
         scatter!(scatter_points_Proj_x,scatter_points_Proj_y, c=:blue, marker=(2,:circle),
                 label="")                
-        MethodPath(plt,xmtd)
+        scatter!(scatter_points_mtd_x,scatter_points_mtd_y, c=mrk_color[index], marker=(3,:circle),
+                label="$(String(mtd)) ($(Result.iter_total) it.)")        MethodPath(plt,xmtd)
     end
     return plt
 end
