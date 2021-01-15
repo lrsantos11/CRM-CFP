@@ -6,8 +6,8 @@ plotlyjs
 Creates plot with the path of method. 
 """
 function MethodPath(plt::Plots.Plot,mat::Array;ltype = :dash,lwidth=.5,color=:dodgerblue2)
-    x = mat[1]
-    y = mat[2]
+    x = @view mat[:,1]
+    y = @view mat[:,2]
     num_arrows = length(x)-1
     λ = .97
     for index = 1:num_arrows
@@ -34,12 +34,17 @@ function FigureQuadratic(α::Number,β::Number, x₀::Vector, xSol::Vector,ε::N
         func = getfield(Main,mtd)
         Result = func(x₀, ProjectARight,ProjectBRight,itmax=itmax,filedir=filedir,EPSVAL=ε,xSol=xSol)
         @show Result
-        pts_plotted_mtd = 2*min(Result.iter_total,max_iter_plotted) + 1
-        xmtd = (readdlm(filedir))[1:pts_plotted_mtd,:]
-        scatter_points = [xmtd[:,1],xmtd[:,2]]
-        scatter!(scatter_points[1][2:end],scatter_points[2][2:end], c=mrk_color[index], marker=(3,:circle),
+        pts_read_mtd = 2*min(Result.iter_total,max_iter_plotted) + 1
+        xmtd = (readdlm(filedir))[1:pts_read_mtd,:]
+        scatter_points_Proj_x = @view xmtd[2:2:end,1]
+        scatter_points_Proj_y = @view xmtd[2:2:end,2]
+        scatter_points_mtd_x = @view xmtd[3:2:end,1]
+        scatter_points_mtd_y = @view xmtd[3:2:end,2]
+        scatter!(scatter_points_mtd_x,scatter_points_mtd_y, c=mrk_color[index], marker=(3,:circle),
                 label="$(String(mtd)) ($(Result.iter_total) it.)")
-        MethodPath(plt,scatter_points)
+        scatter!(scatter_points_Proj_x,scatter_points_Proj_y, c=:blue, marker=(2,:circle),
+                label="")                
+        MethodPath(plt,xmtd)
     end
     return plt
 end
