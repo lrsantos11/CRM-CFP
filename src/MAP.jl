@@ -11,7 +11,7 @@ function MAPiteration(xMAP::Vector, ProjectA, ProjectB,filedir)
 end 
 
 function MAP(x₀::Vector,ProjectA::Function, ProjectB::Function; EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "",xSol::Vector = [])
-    k = 1
+    k = 0
     tolMAP = 1.
     xMAP = x₀
     printoOnFile(filedir,xMAP',deletefile=true)

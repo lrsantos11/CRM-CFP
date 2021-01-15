@@ -1,65 +1,59 @@
 using Plots
 using LaTeXStrings
-pgfplotsx(size=(400,400),fg_colour_axis=:lightgray,framestyle=:origin,aspect_ratio=:equal,draw_arrow=true)
-
+pgfplotsx()
+plotlyjs
 """
 Creates plot with the path of method. 
 """
-function MethodPath(plt::Plots.Plot,mat::Array;color=:dodgerblue2,ltype = :dash,lwidth=.5)
-    x = mat[1][1:end-1]
-    y = mat[2][1:end-1]
-    vx = .97(mat[1][2:end] - x)
-    vy = .97(mat[2][2:end] - y)
-    quiver!(plt,x,y,quiver=(vx,vy),arrow=true,ls=ltype,c=color,lw=lwidth,label="")
+function MethodPath(plt::Plots.Plot,mat::Array;ltype = :dash,lwidth=.5,color=:dodgerblue2)
+    x = mat[1]
+    y = mat[2]
+    num_arrows = length(x)-1
+    λ = .97
+    for index = 1:num_arrows
+        x2 = x[index] + λ*(x[index+1] - x[index])
+        y2 = y[index] + λ*(y[index+1] - y[index])
+        plot!(plt,[x[index],x2],[y[index],y2],st=:path,ls=ltype,c=color,label=false,lw=lwidth,arrow=:closed)
+    end
 end
-##
 
-function FigureQuadratic(α::Number,β::Number, x₀::Vector, xSol::Vector,ε::Number, itmax::Int64=6)
-##
+function FigureQuadratic(α::Number,β::Number, x₀::Vector, xSol::Vector,ε::Number; itmax::Int64=6,  
+    methods = [:MAP, :CRM], mrk_color = [:green, :blue], max_iter_plotted ::Int=13, ymax::Number = 1.25)
     # On the Right
     # f(t) = α t^2 + β 
     shiftvec = [0,β]
-    yH = 0.0
     Hyper = IndAffine([0,1.], 0.0)
     ProjectARight(x) =  ProjectEpiQuadratic(x-shiftvec,α) + shiftvec
     ProjectBRight(x) =  ProjectIndicator(Hyper,x)
-    ReflectARight(x) = Reflection(x,ProjectARight)
-    ReflectBRight(x) =  ReflectIndicator(Hyper,x)
-    #MAP
-    MAPfile = datadir("sims","xMAP.dat")
-    MAPResult = MAP(x₀, ProjectARight,ProjectBRight,itmax=itmax,filedir=MAPfile,EPSVAL=ε,xSol=xSol)
-    xMAPDir = (readdlm(MAPfile))[1:20,:]
-    
-    #CRM
-    CRMfile = datadir("sims","CRM.dat")
-    CRMResult = CRM(x₀, ReflectARight,ReflectBRight,itmax=itmax,filedir=CRMfile,EPSVAL=ε,xSol=xSol)
-    xCRMDir = readdlm(CRMfile)
-##
-    
-    # Plots
-    ymax = 1.25
-    plt = plot(x -> α*x^2 + β,-0.5,sqrt((ymax - β)/α),lw=1,c=:blue,fill = (ymax, 0.5, :dodgerblue),label="")
-    scatter!([x₀[1]],[x₀[2]],label="",marker=:diamond)
-    MAPscatter = [xMAPDir[:,1],xMAPDir[:,2]]
-    scatter!(MAPscatter[1][2:end],MAPscatter[2][2:end], label="MAP ($(MAPResult.iter_total) it.)")
-    MethodPath(plt,MAPscatter,color=:green)
-    CRMscatter = [xCRMDir[:,1],xCRMDir[:,2]]
-    scatter!(CRMscatter[1][2:end],CRMscatter[2][2:end], label="CRM ($(CRMResult.iter_total) it.)",marker=:square)
-    MethodPath(plt,CRMscatter,color=:yellow)
-    annotate!([(x₀[1], yH -.1 ,text(L"x_0",12))])
-    if β  ≈ 0.0
-        annotate!([(0.35, .75 ,text(L"f(t) = | t|^\alpha",12))])
-    else
-        annotate!([(0.35, .75 ,text(L"f(t) = | t|^\alpha + \beta",12))])
+    plt = plot(size=(400,400),fg_colour_axis=:lightgray,framestyle=:origin,
+               aspect_ratio=:equal,draw_arrow=true,ticks=:none,grid=:none,legend=:topright)
+    plot!(x -> α*x^2 + β,-0.5,sqrt((ymax - β)/α),lw=1,c=:blue,fill = (ymax, 0.5, :dodgerblue),label="")
+    scatter!([x₀[1]],[x₀[2]],label="",marker=(3,:circle))
+    for (index,mtd) in enumerate(methods)
+        filedir = datadir("sims","x"*String(mtd)*".dat")
+        func = getfield(Main,mtd)
+        Result = func(x₀, ProjectARight,ProjectBRight,itmax=itmax,filedir=filedir,EPSVAL=ε,xSol=xSol)
+        @show Result
+        pts_plotted_mtd = 2*min(Result.iter_total,max_iter_plotted) + 1
+        xmtd = (readdlm(filedir))[1:pts_plotted_mtd,:]
+        scatter_points = [xmtd[:,1],xmtd[:,2]]
+        scatter!(scatter_points[1][2:end],scatter_points[2][2:end], c=mrk_color[index], marker=(3,:circle),
+                label="$(String(mtd)) ($(Result.iter_total) it.)")
+        MethodPath(plt,scatter_points)
     end
-    ##
-    # annotate!([(-0.4, .9 ,text(L"X",12))])
-    # plot!(x->yH,-2.2,1.2,c=:black,lw=1,fill = (-.64+yH, 0.8, :ivory3))
-    # plot!(x->-(x+2.2)^2 + yH,-3.,-2.2,c=:black,lw=1,fill = (-.64+yH, 0.8, :ivory3))
-    # plot!(x->-2(x-1.2)^2 + yH,1.2,sqrt(.32)+1.2,c=:black,lw=1,fill = (-.64+yH, 0.8, :ivory3))
-    # plot!(x->yH,-0.5,0.,c=:red,lw=2);
-    # plot!(x->0,-0.5,0.,c=:red,lw=2,fill = (1.5, 0.5, :dodgerblue));
-    # scatter!([1,-2],[.5+yH,.5+yH],c=:white,lc=:black,lw=2,marker=(3,:circle))
-   
+    return plt
+end
+
+function print_points!(plt::Plots.Plot,mtd::Symbol,num_points::Int=5;var_name::String="x", 
+                      print_proj::Bool=false,num_print_proj::Int=1)
+    filedir = datadir("sims","x"*String(mtd)*".dat")
+    xmtd = (readdlm(filedir))[1:num_points,:]
+    for pto in  eachrow(xmtd)
+        if isodd(pto.indices[1])
+            annotate!(plt,[(pto[1], -.075 ,text(L"%$(var_name)^{%$(div(pto.indices[1]-1,2))}",12))])
+        elseif print_proj && pto.indices[1] <= 2*num_print_proj
+            annotate!(plt,[(pto[1]-.05, pto[2]+0.075 ,text(L"P_K(%$(var_name)^{%$(div(pto.indices[1]-1,2))})",8))])
+        end    
+    end
     return plt
 end
