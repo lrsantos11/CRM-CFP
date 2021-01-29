@@ -57,16 +57,13 @@ function FindCircumcentermSet(X)
                 G[icol,irow] = G[irow,icol]
             end
         end
-        # println(rank(G))
-        y = G\b
-        # if isposdef(G)
-        #     L = cholesky(G)
-        #     y = L\b
-        # else
-        #     @warn "Gram matrix is not SPD"
-        #     L = qr(G)
-        #     y=L\b
-        # end
+        if isposdef(G)
+            L = cholesky(G)
+            y = L\b
+        else
+            @warn "Circumcenter matrix is not positive definite. Circumcenter is not unique"
+           y = L\b 
+        end
         CC = X[1]
         for ind in 1:dimG
             CC += .5*y[ind]*V[ind]
@@ -174,6 +171,21 @@ function ProjectEpiQuadratic(x::AbstractArray, α::Float64=1.0)
     return [x;t]
 end
 
+####################################
+"""
+    ProjectBall(x, v, r)
+Returns the orthogonal projection of `x` onto the L2-Ball  centered in `v` with radius `r`.
+Uses the `ProximalOperators.jl` toolbox
+
+"""
+function ProjectBall(x::Vector, v::Vector, r::Number)
+        Ball = IndBallL2(r)
+        proj, fproj = prox(Translate(Ball,-v),x)
+        return proj
+end
+####################################
+
+
 """
         Tolerance(x,xold;xsol,normytpe)
 """
@@ -184,3 +196,4 @@ function  Tolerance(x::Vector,xold::Vector,xsol::Vector;norm_p::Number=Inf)
         return norm(x-xsol,norm_p)
     end
 end
+
