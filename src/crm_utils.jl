@@ -144,7 +144,7 @@ end
         ProjectEpiQuadratic(s,v,α)
 Project ``(s,v) ∈ R^{n+1}`` onto the epigraph of ``f(x) = αx^Tx``, such that ``f(v) '≤ s``.
 """
-function ProjectEpiQuadratic(s::Number,v::Union{AbstractArray,Number}, α::Float64=1.0)
+function ProjectEpiQuadratic(s::Number,v::Union{AbstractArray,Number}, α::Number=1.0)
         if α*dot(v,v) <= s
                 return s, v
         end
@@ -166,7 +166,7 @@ end
         ProjectEpiQuadratic(x,α)
 Project ``x = [x₀,t₀] ∈ R^{n+1}`` onto the epigraph of ``f(u) = αu^Tu``, such that ``f(x₀) '≤ t₀   ``.
 """
-function ProjectEpiQuadratic(x::AbstractArray, α::Float64=1.0)
+function ProjectEpiQuadratic(x::AbstractArray, α::Number=1.0)
     t, x = ProjectEpiQuadratic(x[end],x[1:end-1], α)
     return [x;t]
 end
