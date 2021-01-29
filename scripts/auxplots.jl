@@ -1,6 +1,7 @@
 using Plots
 using LaTeXStrings
 pgfplotsx()
+
 """
 Creates plot with the path of method. 
 """
@@ -60,4 +61,16 @@ function print_points!(plt::Plots.Plot,mtd::Symbol,num_points::Int=5;var_name::S
         end    
     end
     return plt
+end
+
+"""
+circleShape(h::Float64,k::Float64,r::Float64)
+
+Returns the parametric function for a circle with center `v=(h,k)` and radius `r`.
+"""
+function circleShape(v,r::Float64)
+    h = v[1]
+    k = v[2]
+    θ = LinRange(0.,2*π,500)
+    return h .+ r*sin.(θ), k .+ r*cos.(θ)
 end
