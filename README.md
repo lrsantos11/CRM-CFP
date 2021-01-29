@@ -1,15 +1,16 @@
-# CRM-CFP - CRM to solve the Convex Feasibility Problem
+# CRM-CFP 
+## CRM to solve the Convex Feasibility Problem
 
 This code base is using the Julia Language and [DrWatson](https://juliadynamics.github.io/DrWatson.jl/stable/)
 to make a reproducible scientific project named
 > CRM-CFP
 
-CRM-CFP concerns numerical results presented in [1] and [2] where the Circumcentered-Reflection Method (CRM) was used to solve the Convex Feasibility Problem (CFP) of finding a common point to the nonempty intersection of closed and convex sets in `\mathbb{R}^n`.
+CRM-CFP concerns numerical results presented in [1][1] and [2][2] where the Circumcentered-Reflection Method (CRM) was used to solve the Convex Feasibility Problem (CFP) of finding a common point to the nonempty intersection of closed and convex sets.
 
 
 It is authored by Luiz-Rafael Santos in co-authorship with Reza Arefidamghani, Roger Behling, Yunier Bello-Cruz and Alfredo N. Iusem. 
 
-## How to use it
+## How to use CRM-CFP
 
 To (locally) reproduce this project, do the following:
 
