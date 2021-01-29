@@ -17,9 +17,8 @@ function MethodPath(plt::Plots.Plot,mat::Array;ltype = :dash,lwidth=.5,color=:do
     end
 end
 
-function print_points!(plt::Plots.Plot,mtd::Symbol,num_points::Int=5;var_name::String="x", 
+function print_points!(plt::Plots.Plot,filedir::String,num_points::Int=5;var_name::String="x", 
                       print_proj::Bool=false,num_print_proj::Int=1)
-    filedir = datadir("sims","x"*String(mtd)*".dat")
     xmtd = (readdlm(filedir))[1:num_points,:]
     for pto in  eachrow(xmtd)
         if isodd(pto.indices[1])
