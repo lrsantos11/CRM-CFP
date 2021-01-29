@@ -1,7 +1,6 @@
 using Plots
 using LaTeXStrings
 pgfplotsx()
-plotlyjs
 """
 Creates plot with the path of method. 
 """
