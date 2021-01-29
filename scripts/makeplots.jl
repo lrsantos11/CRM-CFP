@@ -1,3 +1,10 @@
+"""
+This script builds the plots that are presented in Example 4.12 from [^Arefidamghani2020]
+
+[^Arefidamghani2000] R. Arefidamghani, R. Behling, J.-Y. Bello-Cruz, A. N. Iusem, e L.-R. Santos, 
+“The circumcentered-reflection method achieves better rates than alternating projections”, 
+arXiv, ago. 2020, [Online]. Disponível em: http://arxiv.org/abs/2007.14466.
+"""
 include("auxplots.jl")
 #
 itmax = 10^6
@@ -51,5 +58,3 @@ savefig(plt,plotsdir("FigureQuadraditcLackEB_EB.pdf"))
 savefig(pltLackEB,plotsdir("FigureQuadraticLackEB.pdf"))
 savefig(pltEB,plotsdir("FigureQuadraticEB.pdf"))
 ##
-savefig(pltLackEB,"../../../Draft/New/CRM-Convergence-CFP/FigureQuadraticLackEB.pdf")
-savefig(pltEB,"../../../Draft/New/CRM-Convergence-CFP/FigureQuadraticEB.pdf")

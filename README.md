@@ -29,8 +29,8 @@ everything should work out of the box.
 ## References
 
 
-<a id="1">[Behling2020]</a>  R. Behling, J.-Y. Bello-Cruz, e L.-R. Santos, “On the Circumcentered-Reflection Method for the Convex Feasibility Problem”, Numer. Algorithms, jul. 2020, doi: [10.1007/s11075-020-00941-6](doi.org/10.1007/s11075-020-00941-6).
+<a id="1">[Behling2020]</a>  R. Behling, J.-Y. Bello-Cruz, e L.-R. Santos, “On the Circumcentered-Reflection Method for the Convex Feasibility Problem”, Numer. Algorithms, jul. 2020, doi: [10.1007/s11075-020-00941-6](https://doi.org/10.1007/s11075-020-00941-6).
 
 <a id="2">[Arefidamghani2020]</a>  R. Arefidamghani, R. Behling, J.-Y. Bello-Cruz, A. N. Iusem, e L.-R. Santos, 
 “The circumcentered-reflection method achieves better rates than alternating projections”, 
-arXiv:2007.14466, ago. 2020, (online).  [http://arxiv.org/abs/2007.14466].
+arXiv:2007.14466, ago. 2020, (online).  [https://arxiv.org/abs/2007.14466].
