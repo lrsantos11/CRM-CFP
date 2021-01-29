@@ -1,11 +1,49 @@
-"""
+"""juliadocs
 This script builds the plots that are presented in Example 4.12 from [^Arefidamghani2020]
 
 [^Arefidamghani2000] R. Arefidamghani, R. Behling, J.-Y. Bello-Cruz, A. N. Iusem, e L.-R. Santos, 
 “The circumcentered-reflection method achieves better rates than alternating projections”, 
 arXiv, ago. 2020, [Online]. Disponível em: http://arxiv.org/abs/2007.14466.
 """
-include("auxplots.jl")
+
+include("plots_util.jl")
+
+"""
+    FigureQuadratic(α,β,x₀,xSol,ε,itmax=itmax,methods=[mtd],mrk_color = [:red], max_iter_plotted=5)
+"""
+function FigureQuadratic(α::Number,β::Number, x₀::Vector, xSol::Vector,ε::Number; itmax::Int64=6,  
+    methods = [:MAP, :CRM], mrk_color = [:green, :blue], max_iter_plotted ::Int=13, ymax::Number = 1.25)
+    # On the Right
+    # f(t) = α t^2 + β 
+    shiftvec = [0,β]
+    Hyper = IndAffine([0,1.], 0.0)
+    ProjectARight(x) =  ProjectEpiQuadratic(x-shiftvec,α) + shiftvec
+    ProjectBRight(x) =  ProjectIndicator(Hyper,x)
+    plt = plot(size=(400,400),fg_colour_axis=:lightgray,framestyle=:origin,
+               aspect_ratio=:equal,draw_arrow=true,ticks=:none,grid=:none,legend=:topright)
+    plot!(x -> α*x^2 + β,-0.5,sqrt((ymax - β)/α),lw=1,c=:blue,fill = (ymax, 0.5, :dodgerblue),label="")
+    scatter!([x₀[1]],[x₀[2]],label="",marker=(3,:circle))
+    for (index,mtd) in enumerate(methods)
+        filedir = datadir("sims","x"*String(mtd)*".dat")
+        func = getfield(Main,mtd)
+        Result = func(x₀, ProjectARight,ProjectBRight,itmax=itmax,filedir=filedir,EPSVAL=ε,xSol=xSol)
+        @show Result
+        pts_read_mtd = 2*min(Result.iter_total,max_iter_plotted) + 1
+        xmtd = (readdlm(filedir))[1:pts_read_mtd,:]
+        scatter_points_Proj_x = @view xmtd[2:2:end,1]
+        scatter_points_Proj_y = @view xmtd[2:2:end,2]
+        scatter_points_mtd_x = @view xmtd[3:2:end,1]
+        scatter_points_mtd_y = @view xmtd[3:2:end,2]
+        scatter!(scatter_points_Proj_x,scatter_points_Proj_y, c=:blue, marker=(2,:circle),
+                label="")                
+        scatter!(scatter_points_mtd_x,scatter_points_mtd_y, c=mrk_color[index], marker=(3,:circle),
+                label="$(String(mtd)) ($(Result.iter_total) it.)")        
+        MethodPath(plt,xmtd)
+    end
+    return plt
+end
+
+
 #
 itmax = 10^6
 ε = 1e-3
