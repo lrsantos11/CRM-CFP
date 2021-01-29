@@ -11,8 +11,8 @@ include("plots_util.jl")
 
 
 function plotBalls(x₀::Vector,ProjectA::Function,ProjectB::Function; 
-            xSol::Vector=[], ε::Number=1e-6, itmax::Int64=10, methods = [:MAP, :CRM],
-            mrk_color = [:green, :blue], mrk_type = [:square, :diamond])
+            xSol::Vector=[], ε::Number=1e-6, itmax::Int64=10, methods = [:MAP, :DRM, :CRM],
+            mrk_color = [:green, :red,  :blue], mrk_type = [:square, :circle, :diamond])
     timenow = Dates.now()
     filedirs = String[]
     for (index,mtd) in enumerate(methods)
@@ -56,4 +56,15 @@ plotBalls(xzero,ProjectA,ProjectB)
 annotate!([(xzero[1],  xzero[2]-τ,text(L"x^0",14))])
 ylims!(xzero[2]-2*τ,max(v1[2],v2[2]) + max(r1,r2) +τ)
 
-savefig(plt,plotsdir("BBS20Fig1_L2Balls.pdf"))
+# savefig(plt,plotsdir("BBS20Fig1_L2Balls.pdf"))
+
+    # xDR = readdlm("tables/xDR.dat")
+    # k = size(xDR,1)-1
+    # scatter!(xDR[:,1],xDR[:,2], color=:red,line=(:path, .7), marker=(5,:circle),label="DRM - $k it")
+    # XCRM = readdlm("tables/xCRM.dat")
+    # k = size(XCRM,1) - 1
+    # scatter!(XCRM[:,1],XCRM[:,2], color=:blue, line=(:path, .7), marker=(5,:diamond),label="CRM - $k it")
+    # # xCRMProd = readdlm("tables/xCRM-prod-FigBalls1.dat")
+    # # k = size(xCRMProd,1) - 1
+    # # scatter!(xCRMProd[:,1],xCRMProd[:,2], color=:black, line=(:path, .7), marker=(5,:utriangle),label="CRM-prod - $k it")
+plt
