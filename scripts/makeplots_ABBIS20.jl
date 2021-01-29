@@ -60,12 +60,12 @@ xSol = [0.0, 0.0]
 mtd = :CRM
 pltCRM1,filedirs = FigureQuadratic(α,β,x₀,xSol,ε,itmax=itmax,methods=[mtd],mrk_color = [:red], max_iter_plotted=5)
 annotate!([(0.35, .75 ,text(L"\phi(t) = |t|^\alpha",12))])
-print_points!(pltCRM1,filedirs[1],7,print_proj=true,num_print_proj=2)
+label_points!(pltCRM1,filedirs[1],7,print_proj=true,num_print_proj=2)
 ##
 mtd = :MAP
 pltMAP1,filedirs = FigureQuadratic(α,β,x₀,xSol,ε,itmax=itmax,methods=[mtd], mrk_color = [:green], max_iter_plotted=21)
 annotate!([(0.35, .75 ,text(L"\phi(t) = |t|^\alpha",12))])
-print_points!(pltMAP1,filedirs[1],7,print_proj=true,var_name="z",num_print_proj=2)
+label_points!(pltMAP1,filedirs[1],7,print_proj=true,var_name="z",num_print_proj=2)
 
 ##
 # Quadratic with error bound \phi(t) = αx² + β 
@@ -76,13 +76,13 @@ xSol = [sqrt(abs(β)/α), 0.0]
 mtd = :CRM
 pltCRM2,filedirs = FigureQuadratic(α,β,x₀,xSol,ε,itmax=itmax,methods=[mtd],mrk_color = [:red], max_iter_plotted=31)
 annotate!([(0.35, .75 ,text(L"\phi(t) = |t|^\alpha - \beta",12))])
-print_points!(pltCRM2,filedirs[1],5,print_proj=true,num_print_proj=2)
+label_points!(pltCRM2,filedirs[1],5,print_proj=true,num_print_proj=2)
 ##
 
 mtd = :MAP
 pltMAP2,filedirs = FigureQuadratic(α,β,x₀,xSol,ε,itmax=itmax,methods=[mtd], mrk_color = [:green], max_iter_plotted=15)
 annotate!([(0.35, .75 ,text(L"\phi(t) = |t|^\alpha - \beta",12))])
-print_points!(pltMAP2,filedirs[1],7,print_proj=true,var_name="z",num_print_proj=2)
+label_points!(pltMAP2,filedirs[1],7,print_proj=true,var_name="z",num_print_proj=2)
 
 
 
