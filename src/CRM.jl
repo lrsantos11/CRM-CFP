@@ -16,7 +16,8 @@ function CRMiteration(xCRM::Vector, ReflectA, ReflectB)
 end 
 
 
-function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function; EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [])
+function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function; 
+    EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [],print_intermediate::Bool=false)
     k = 0
     tolCRM = 1.
     xCRM = x₀
@@ -25,7 +26,7 @@ function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function; EPSVAL::Float6
     printoOnFile(filedir,xCRM',deletefile=true)
     while tolCRM > EPSVAL && k <= itmax
         xCRMOld = copy(xCRM)
-        printoOnFile(filedir,ProjectA(xCRM)')
+        print_intermediate ?  printoOnFile(filedir,ProjectA(xCRM)') : nothing
         xCRM  = CRMiteration(xCRM, ReflectA, ReflectB)
         printoOnFile(filedir,xCRM')
         tolCRM = Tolerance(xCRM,xCRMOld,xSol)

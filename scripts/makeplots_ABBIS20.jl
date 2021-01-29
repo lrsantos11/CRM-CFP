@@ -9,7 +9,7 @@ arXiv, ago. 2020, [Online]. Disponível em: http://arxiv.org/abs/2007.14466.
 include("plots_util.jl")
 
 """
-    FigureQuadratic(α,β,x₀,xSol,ε,itmax=itmax,methods=[mtd],mrk_color = [:red], max_iter_plotted=5)
+    FigureQuadratic(α,β,x₀,xSol,ε)
 """
 function FigureQuadratic(α::Number,β::Number, x₀::Vector, xSol::Vector,ε::Number; itmax::Int64=6,  
     methods = [:MAP, :CRM], mrk_color = [:green, :blue], max_iter_plotted ::Int=13, ymax::Number = 1.25)
@@ -30,7 +30,7 @@ function FigureQuadratic(α::Number,β::Number, x₀::Vector, xSol::Vector,ε::N
         filedir = datadir("sims",filename)
         push!(filedirs,filedir)
         func = getfield(Main,mtd)
-        Result = func(x₀, ProjectARight,ProjectBRight,itmax=itmax,filedir=filedir,EPSVAL=ε,xSol=xSol)
+        Result = func(x₀, ProjectARight,ProjectBRight,itmax=itmax,filedir=filedir,EPSVAL=ε,xSol=xSol,print_intermediate = true)
         @show Result
         pts_read_mtd = 2*min(Result.iter_total,max_iter_plotted) + 1
         xmtd = (readdlm(filedir))[1:pts_read_mtd,:]
