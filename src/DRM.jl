@@ -11,7 +11,8 @@ end
 
 
 function DRM(x₀::Vector,ProjectA::Function, ProjectB::Function; 
-    EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [],print_intermediate::Bool=false)
+    EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [],
+    print_intermediate::Bool=false,gap_distance::Bool=false)
     k = 0
     tolDRM = 1.
     xDRM = x₀
@@ -23,8 +24,8 @@ function DRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
         print_intermediate ?  printoOnFile(filedir,ProjectA(xDRM)') : nothing
         xDRM  = DRMiteration(xDRM, ReflectA, ReflectB)
         printoOnFile(filedir,xDRM')
-        tolDRM = Tolerance(xDRM,xDRMOld,xSol)
+        tolDRM = gap_distance ? norm(ProjectA(xDRM)-ProjectB(xDRM)) : Tolerance(xDRM,xDRMOld,xSol)
         k += 1
     end
-    return Results(iter_total= k,final_tol=tolDRM,xApprox=xDRM,method="DRM")
+    return Results(iter_total= k,final_tol=tolDRM,xApprox=xDRM,method=:DRM)
 end

@@ -23,7 +23,8 @@ end
 Cirumcentered-Reflection method
 """
 function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function; 
-    EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [],print_intermediate::Bool=false)
+    EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [],
+    print_intermediate::Bool=false,gap_distance::Bool=false)
     k = 0
     tolCRM = 1.
     xCRM = x₀
@@ -35,10 +36,10 @@ function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
         print_intermediate ?  printoOnFile(filedir,ProjectA(xCRM)') : nothing
         xCRM  = CRMiteration(xCRM, ReflectA, ReflectB)
         printoOnFile(filedir,xCRM')
-        tolCRM = Tolerance(xCRM,xCRMOld,xSol)
+        tolCRM = gap_distance ? norm(ProjectA(xCRM)-xCRM) : Tolerance(xCRM,xCRMOld,xSol)
         k += 1
     end
-    return Results(iter_total= k,final_tol=tolCRM,xApprox=xCRM,method="CRM")
+    return Results(iter_total= k,final_tol=tolCRM,xApprox=xCRM,method=:CRM)
 end
 """
     CRMprod(x₀, SetsProjections)
@@ -46,7 +47,8 @@ end
 Cirumcentered-Reflection method on Pierra's product space reformulation
 """
 function CRMprod(x₀::Vector{Float64},SetsProjections::Vector{Function}; 
-    EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [],print_intermediate::Bool=false)
+    EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [],
+    print_intermediate::Bool=false,gap_distance::Bool=false)
     k = 0
     tolCRMprod = 1.
     # dim_space = length(x₀)
@@ -66,11 +68,12 @@ function CRMprod(x₀::Vector{Float64},SetsProjections::Vector{Function};
         print_intermediate ?  printoOnFile(filedir,(ProjectA(xCRMprod))[1]') : nothing
         xCRMprod  = CRMiteration(xCRMprod, ReflectA, ReflectB)
         printoOnFile(filedir,xCRMprod[1]')
-        tolCRMprod = Tolerance(xCRMprod,xCRMprodOld,xSol)
+        tolCRMprod = gap_distance ? norm(ProjectAprod(xCRMprod)-xCRMprod) : Tolerance(xCRMprod,xCRMprodOld,xSol)
+        norm(ProjectA(x)-ProjectB(x))
         k += 1
     end
     return Results(iter_total= k,
-                  final_tol=tolCRMprod,xApprox=xCRMprod[1],method="CRMprod")
+                  final_tol=tolCRMprod,xApprox=xCRMprod[1],method=:CRMprod)
 end    
 
 

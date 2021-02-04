@@ -12,7 +12,7 @@ import Base.@kwdef
     iter_total::Int
     final_tol::Float64
     xApprox::Vector
-    method::String
+    method::Symbol
     date::DateTime = Dates.now()
 end
 """
@@ -219,7 +219,8 @@ end
 """
         Tolerance(x,xold;xsol,normytpe)
 """
-function  Tolerance(x::Vector,xold::Vector,xsol::Vector;norm_p::Number=Inf)
+function  Tolerance(x::Vector,xold::Vector,xsol::Vector;
+    norm_p::Number=2)
     if isempty(xsol)
         return norm(x-xold,norm_p)
     else
