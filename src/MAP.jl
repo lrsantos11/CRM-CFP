@@ -1,8 +1,11 @@
 """
-MAP
+    MAPiteration(xMAP,ProjectA,ProjectB)
+
+Computes a MAP iteration
 """
 
-function MAPiteration(xMAP::Vector, ProjectA, ProjectB,filedir,print_intermediate)
+function MAPiteration(xMAP::Vector, ProjectA::Function, ProjectB::Function,
+                    filedir::String="",print_intermediate::Bool=true)
     xMAP = ProjectA(xMAP)
     print_intermediate ? printoOnFile(filedir,xMAP') : nothing
     xMAP = ProjectB(xMAP)
@@ -10,13 +13,19 @@ function MAPiteration(xMAP::Vector, ProjectA, ProjectB,filedir,print_intermediat
     return xMAP  
 end 
 
+
+"""
+    MAP(x₀,ProjectA, ProjectB)
+
+    Method of Alternating Projections
+"""
 function MAP(x₀::Vector,ProjectA::Function, ProjectB::Function; 
         EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "",xSol::Vector = [],print_intermediate::Bool=true)
     k = 0
     tolMAP = 1.
     xMAP = x₀
     printoOnFile(filedir,xMAP',deletefile=true)
-    while tolMAP > EPSVAL && k <= itmax
+    while tolMAP > EPSVAL && k < itmax
         xMAPOld = copy(xMAP)
         xMAP  = MAPiteration(xMAP, ProjectA, ProjectB,filedir,print_intermediate)
         tolMAP = Tolerance(xMAP,xMAPOld,xSol)

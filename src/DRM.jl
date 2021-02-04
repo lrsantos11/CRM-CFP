@@ -2,7 +2,7 @@
 DRM
 """
 
-function DRMiteration(xDRM::Vector, ReflectA, ReflectB)
+function DRMiteration(xDRM::Vector, ReflectA::Function, ReflectB::Function)
     xDRM_RA = ReflectA(xDRM)
     xDRM_RBRA = ReflectB(xDRM_RA)
     xDRM = 0.5*(xDRM + xDRM_RBRA)
@@ -18,7 +18,7 @@ function DRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
     ReflectA(x) = Reflection(x,ProjectA)
     ReflectB(x) = Reflection(x,ProjectB)
     printoOnFile(filedir,xDRM',deletefile=true)
-    while tolDRM > EPSVAL && k <= itmax
+    while tolDRM > EPSVAL && k < itmax
         xDRMOld = copy(xDRM)
         print_intermediate ?  printoOnFile(filedir,ProjectA(xDRM)') : nothing
         xDRM  = DRMiteration(xDRM, ReflectA, ReflectB)

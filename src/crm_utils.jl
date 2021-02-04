@@ -13,7 +13,7 @@ import Base.@kwdef
     final_tol::Float64
     xApprox::Vector
     method::String
-    date::Date = Dates.now()
+    date::DateTime = Dates.now()
 end
 """
 FindCircumcentermSet(X)
@@ -62,7 +62,7 @@ function FindCircumcentermSet(X)
             y = L\b
         else
             @warn "Circumcenter matrix is not positive definite. Circumcenter is not unique"
-           y = L\b 
+           y = G\b 
         end
         CC = X[1]
         for ind in 1:dimG
@@ -184,7 +184,37 @@ function ProjectBall(x::Vector, v::Vector, r::Number)
         return proj
 end
 ####################################
+"""
+ProjectProdDiagonal(X,num_sets)
 
+
+"""
+function ProjectProdDiagonal(X::Vector,num_sets::Int)
+    inner_proj = similar(X[1])
+    for index in eachindex(X)
+        inner_proj += X[index]
+    end
+    inner_proj ./= num_sets
+    proj = similar(X)
+    for index in eachindex(proj)
+        proj[index] = inner_proj
+    end
+    return proj
+end
+####################################
+"""
+ProjectProdSets(X,Projections)
+
+
+"""
+function ProjectProdSets(X::Vector,SetsProjections::Vector{Function})
+    proj = similar(X)
+    for index in eachindex(proj)
+        proj[index] = SetsProjections[index](X[index])
+    end
+    return proj
+end
+####################################
 
 """
         Tolerance(x,xold;xsol,normytpe)
