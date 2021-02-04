@@ -1,3 +1,4 @@
+__precompile__
 """
 This script builds the plot that is presented in Figure 1 in [^Behling2020]
 
@@ -6,6 +7,18 @@ for the Convex Feasibility Problem”, Numer. Algorithms, jul. 2020, doi: [10.10
 """
 
 include(scriptsdir("plots_util.jl"))
+
+"""
+circleShape(h::Float64,k::Float64,r::Float64)
+
+Returns the parametric function for a circle with center `v=(h,k)` and radius `r`.
+"""
+function circleShape(v,r::Float64)
+    h = v[1]
+    k = v[2]
+    θ = LinRange(0.,2*π,500)
+    return h .+ r*sin.(θ), k .+ r*cos.(θ)
+end
 
 function plotBalls(x₀::Vector,ProjectA::Function,ProjectB::Function; 
             xSol::Vector=[], ε::Number=1e-6, itmax::Int64=10, methods = [:MAP, :DRM, :CRM, :CRMprod],
