@@ -4,8 +4,8 @@ This script builds the plot that is presented in Figure 1 in [^Behling2020]
 [^Behling2020] R. Behling, J.-Y. Bello-Cruz, e L.-R. Santos, “On the Circumcentered-Reflection Method 
 for the Convex Feasibility Problem”, Numer. Algorithms, jul. 2020, doi: [10.1007/s11075-020-00941-6](https://doi.org/10.1007/s11075-020-00941-6). 
 """
-include("plots_util.jl")
 
+include(scriptsdir("plots_util.jl"))
 
 function plotBalls(x₀::Vector,ProjectA::Function,ProjectB::Function; 
             xSol::Vector=[], ε::Number=1e-6, itmax::Int64=10, methods = [:MAP, :DRM, :CRM, :CRMprod],

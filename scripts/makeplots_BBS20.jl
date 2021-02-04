@@ -1,3 +1,4 @@
+__precompile__
 """
 This script builds the plots and numerical results that are presented in [^Behling2020]
 
