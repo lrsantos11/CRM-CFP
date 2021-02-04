@@ -2,6 +2,8 @@ name = "CRM-CFP"
 authors = ["Reza Arefidamghani", "Roger Behling", "Yunier Bello-Cruz", "Alfredo N. Iusem", "Luiz-Rafael Santos"]
 
 [deps]
+BenchmarkProfiles = "ecbce9bc-3e5e-569d-9e29-55181f61f8d0"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 PGFPlotsX = "8314cec4-20b6-5062-9cdb-752b83310925"

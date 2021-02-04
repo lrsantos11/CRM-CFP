@@ -1,5 +1,7 @@
 using Plots
 using LaTeXStrings
+using BenchmarkProfiles
+using DataFrames
 pgfplotsx()
 
 """
@@ -30,14 +32,3 @@ function label_points!(plt::Plots.Plot,filedir::String,num_points::Int=5;var_nam
     return plt
 end
 
-"""
-circleShape(h::Float64,k::Float64,r::Float64)
-
-Returns the parametric function for a circle with center `v=(h,k)` and radius `r`.
-"""
-function circleShape(v,r::Float64)
-    h = v[1]
-    k = v[2]
-    θ = LinRange(0.,2*π,500)
-    return h .+ r*sin.(θ), k .+ r*cos.(θ)
-end
