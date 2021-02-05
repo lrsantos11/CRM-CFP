@@ -15,6 +15,7 @@ import Base.@kwdef
     method::Symbol
     date::DateTime = Dates.now()
 end
+####################################
 """
 FindCircumcentermSet(X)
 
@@ -211,6 +212,19 @@ function ProjectProdSets(X::Vector,SetsProjections::Vector{Function})
     proj = similar(X)
     for index in eachindex(proj)
         proj[index] = SetsProjections[index](X[index])
+    end
+    return proj
+end
+####################################
+
+"""
+ProjectSetsIndicators(X,SetsIndicators)
+Projection on the Product Space of Half Spaces
+"""
+function ProjectSetsIndicators(X::Vector,SetsIndicators::Vector{ProximableFunction})
+    proj = similar(X)
+    for index in eachindex(SetsIndicators)
+        proj[index] = ProjectIndicator(SetsIndicators[index],X[index])
     end
     return proj
 end

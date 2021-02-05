@@ -11,7 +11,9 @@ function TestAffineSOC(;n::Int64 = 200,samples::Int64 = 10, restarts::Int64 = 1,
         EPSVAL::Float64 = 1e-6,itmax::Int64 = 2_000)
     # Fix Random
     Random.seed!(10)
+    # Defines DataFrame for Results
     dfResults= DataFrame(Problem=String[],CRMit=Int[],DRMit=Int[],MAPit=Int[])
+    #md Defines Indicator Function of Second Order Cone from `ProximalOperators.jl`
     SOC = IndSOC()
     for j in 1:samples
         #########################

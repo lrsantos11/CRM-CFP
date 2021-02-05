@@ -52,10 +52,8 @@ function CRMprod(x₀::Vector{Float64},SetsProjections::Vector{Function};
     print_intermediate::Bool=false,gap_distance::Bool=false)
     k = 0
     tolCRMprod = 1.
-    # dim_space = length(x₀)
     num_sets = length(SetsProjections)
     xCRMprod = Vector[]
-    # sizehint!(xCRMprod,num_sets*dim_space)
     for i = 1:num_sets
         push!(xCRMprod,x₀)
     end
@@ -78,3 +76,36 @@ end
 
 
 CRMprod(x₀::Vector,ProjectA::Function, ProjectB::Function; kwargs...) =   CRMprod(x₀,[ProjectA,ProjectB];kwargs...)
+
+"""
+    CRMprod(x₀, SetsIndicators)
+
+Cirumcentered-Reflection method on Pierra's product space reformulation using
+indicator functinos from `ProximalOperators.jl`
+"""
+function CRMprod(x₀::Vector{Float64},SetsIndicators::Vector{ProximableFunction}; 
+    EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [],
+    print_intermediate::Bool=false,gap_distance::Bool=false)
+    k = 0
+    tolCRMprod = 1.
+    num_sets = length(SetsIndicators)
+    xCRMprod = Vector[]
+    for i = 1:num_sets
+        push!(xCRMprod,x₀)
+    end
+    ProjectAprod(x) = ProjectSetsIndicators(x,SetsIndicators)
+    ProjectBprod(x) = ProjectProdDiagonal(x,num_sets)
+    ReflectA(x) = Reflection(x,ProjectAprod)
+    ReflectB(x) = Reflection(x,ProjectBprod)
+    printoOnFile(filedir,hcat(k, tolCRMprod, xCRMprod[1]'),deletefile=true)
+    while tolCRMprod > EPSVAL && k < itmax
+        xCRMprodOld = copy(xCRMprod)
+        print_intermediate ?  printoOnFile(filedir,hcat(nothing,nothing,(ProjectA(xCRMprod))[1]')) : nothing
+        xCRMprod  = CRMiteration(xCRMprod, ReflectA, ReflectB)
+        tolCRMprod = gap_distance ? norm(ProjectAprod(xCRMprod)-xCRMprod) : Tolerance(xCRMprod,xCRMprodOld,xSol)
+        k += 1
+        printoOnFile(filedir,hcat(k, tolCRMprod, xCRMprod[1]'))
+    end
+    return Results(iter_total= k,
+                  final_tol=tolCRMprod,xApprox=xCRMprod[1],method=:CRMprod)
+end 
