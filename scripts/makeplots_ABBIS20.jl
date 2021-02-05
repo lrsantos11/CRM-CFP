@@ -33,7 +33,7 @@ function FigureQuadratic(α::Number,β::Number, x₀::Vector, xSol::Vector,ε::N
         Result = func(x₀, ProjectARight,ProjectBRight,itmax=itmax,filedir=filedir,EPSVAL=ε,xSol=xSol,print_intermediate = true)
         @show Result
         pts_read_mtd = 2*min(Result.iter_total,max_iter_plotted) + 1
-        xmtd = (readdlm(filedir))[1:pts_read_mtd,:]
+        xmtd = (readdlm(filedir))[1:pts_read_mtd,3:end]
         scatter_points_Proj_x = @view xmtd[2:2:end,1]
         scatter_points_Proj_y = @view xmtd[2:2:end,2]
         scatter_points_mtd_x = @view xmtd[3:2:end,1]

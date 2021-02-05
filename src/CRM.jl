@@ -30,14 +30,15 @@ function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
     xCRM = x₀
     ReflectA(x) = Reflection(x,ProjectA)
     ReflectB(x) = Reflection(x,ProjectB)
-    printoOnFile(filedir,xCRM',deletefile=true)
+    printoOnFile(filedir,hcat(k, tolCRM, xCRM'),deletefile=true)
     while tolCRM > EPSVAL && k < itmax
         xCRMOld = copy(xCRM)
-        print_intermediate ?  printoOnFile(filedir,ProjectA(xCRM)') : nothing
+        print_intermediate ?  printoOnFile(filedir,hcat(nothing,nothing,ProjectA(xCRM)')) : nothing
         xCRM  = CRMiteration(xCRM, ReflectA, ReflectB)
-        printoOnFile(filedir,xCRM')
         tolCRM = gap_distance ? norm(ProjectA(xCRM)-xCRM) : Tolerance(xCRM,xCRMOld,xSol)
         k += 1
+        printoOnFile(filedir,hcat(k, tolCRM, xCRM'))
+
     end
     return Results(iter_total= k,final_tol=tolCRM,xApprox=xCRM,method=:CRM)
 end
@@ -62,15 +63,14 @@ function CRMprod(x₀::Vector{Float64},SetsProjections::Vector{Function};
     ProjectBprod(x) = ProjectProdDiagonal(x,num_sets)
     ReflectA(x) = Reflection(x,ProjectAprod)
     ReflectB(x) = Reflection(x,ProjectBprod)
-    printoOnFile(filedir,xCRMprod[1]',deletefile=true)
+    printoOnFile(filedir,hcat(k, tolCRMprod, xCRMprod[1]'),deletefile=true)
     while tolCRMprod > EPSVAL && k < itmax
         xCRMprodOld = copy(xCRMprod)
-        print_intermediate ?  printoOnFile(filedir,(ProjectA(xCRMprod))[1]') : nothing
+        print_intermediate ?  printoOnFile(filedir,hcat(nothing,nothing,(ProjectA(xCRMprod))[1]')) : nothing
         xCRMprod  = CRMiteration(xCRMprod, ReflectA, ReflectB)
-        printoOnFile(filedir,xCRMprod[1]')
         tolCRMprod = gap_distance ? norm(ProjectAprod(xCRMprod)-xCRMprod) : Tolerance(xCRMprod,xCRMprodOld,xSol)
-        norm(ProjectA(x)-ProjectB(x))
         k += 1
+        printoOnFile(filedir,hcat(k, tolCRMprod, xCRMprod[1]'))
     end
     return Results(iter_total= k,
                   final_tol=tolCRMprod,xApprox=xCRMprod[1],method=:CRMprod)

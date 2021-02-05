@@ -21,7 +21,7 @@ end
 
 function label_points!(plt::Plots.Plot,filedir::String,num_points::Int=5;var_name::String="x", 
                       print_proj::Bool=false,num_print_proj::Int=1)
-    xmtd = (readdlm(filedir))[1:num_points,:]
+    xmtd = (readdlm(filedir))[1:num_points,3:end]
     for pto in  eachrow(xmtd)
         if isodd(pto.indices[1])
             annotate!(plt,[(pto[1], -.075 ,text(L"%$(var_name)^{%$(div(pto.indices[1]-1,2))}",12))])

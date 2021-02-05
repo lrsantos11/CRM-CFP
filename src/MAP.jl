@@ -7,9 +7,8 @@ Computes a MAP iteration
 function MAPiteration(xMAP::Vector, ProjectA::Function, ProjectB::Function,
                     filedir::String="",print_intermediate::Bool=true)
     xMAP = ProjectA(xMAP)
-    print_intermediate ? printoOnFile(filedir,xMAP') : nothing
+    print_intermediate ? printoOnFile(filedir,hcat(nothing, nothing, xMAP')) : nothing
     xMAP = ProjectB(xMAP)
-    printoOnFile(filedir,xMAP')
     return xMAP  
 end 
 
@@ -25,12 +24,13 @@ function MAP(x₀::Vector,ProjectA::Function, ProjectB::Function;
     k = 0
     tolMAP = 1.
     xMAP = x₀
-    printoOnFile(filedir,xMAP',deletefile=true)
+    printoOnFile(filedir,hcat(k, tolMAP, xMAP'),deletefile=true)
     while tolMAP > EPSVAL && k < itmax
         xMAPOld = copy(xMAP)
         xMAP  = MAPiteration(xMAP, ProjectA, ProjectB,filedir,print_intermediate)
         tolMAP = gap_distance ? norm(ProjectA(xMAP)-xMAP) : Tolerance(xMAP,xMAPOld,xSol)
         k += 1
+        printoOnFile(filedir,hcat(k, tolMAP, xMAP'))
     end
     return Results(iter_total= k,final_tol=tolMAP,xApprox=xMAP,method=:MAP)
 end

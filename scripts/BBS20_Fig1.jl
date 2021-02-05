@@ -32,7 +32,7 @@ function plotBalls(x₀::Vector,ProjectA::Function,ProjectB::Function;
         func = getfield(Main,mtd)
         Result = func(x₀, ProjectA,ProjectB,itmax=itmax,filedir=filedir,EPSVAL=ε,xSol=xSol)
         @show Result
-        xmtd = readdlm(filedir)
+        xmtd = readdlm(filedir)[:,3:4]
         scatter_points_mtd_x = @view xmtd[:,1]
         scatter_points_mtd_y = @view xmtd[:,2]
         scatter!(scatter_points_mtd_x,scatter_points_mtd_y, c=mrk_color[index], marker=(3,mrk_type[index]), 
