@@ -20,9 +20,11 @@ function TestPolyhedral(;n::Int64 = 200,samples::Int64 = 1,
     # Defines DataFrame for Results
     dfResults= DataFrame(Problem=String[],CRMit=Int[],DRMit=Int[],MAPit=Int[])
     for j in 1:samples
+        n = rand(n:2*n)
         # Generates Matrix m × n  with m < n
         m = rand(1:n-1)
-        A  = StartingPoint(m,n)
+        rand()
+        A  = randn(m,n)
         @show m, n = size(A)
         xbar = StartingPoint(n)
         bbar = A*xbar
@@ -54,14 +56,14 @@ function TestPolyhedral(;n::Int64 = 200,samples::Int64 = 1,
     return dfResults
 end
 n = 200
-samples = 10
+samples = 1
 restarts = 1
 ε = 1e-5
-itmax = 2000
+itmax = 20000
 mtd=:CRMProd
+print_file = true
 
-
-dfResultsPoly = TestPolyhedral(n = n, samples = samples,itmax=itmax, EPSVAL = ε, restarts = restarts,print_file=true)
+dfResultsPoly = TestPolyhedral(n = n, samples = samples,itmax=itmax, EPSVAL = ε, restarts = restarts,print_file=print_file)
 describe(dfResultsPoly)
 ##
 plt_poly = plot(xCRM[:,1],xCRM[:,2],scale=:log10, label="CRM-prod",

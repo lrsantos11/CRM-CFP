@@ -21,6 +21,7 @@ To (locally) reproduce this project, do the following:
    julia> using Pkg
    julia> Pkg.activate("path/to/this/project")
    julia> Pkg.instantiate()
+   julia> include(scriptdir("runtests.jl")
    ```
 
 This will install all necessary packages for you to be able to run the scripts and

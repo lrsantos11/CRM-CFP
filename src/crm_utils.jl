@@ -99,11 +99,8 @@ function StartingPoint(n::Int64)
     end
     # norm between 5 and 15
     foonorm = (15-5)*rand() + 5
-    x *= foonorm/norm(x)
-    if n == 1
-        x = x[1]
-    end
-    return x 
+    return foonorm*x/norm(x);
+
 end
 
 ####################################
