@@ -12,19 +12,19 @@ TestPolyhedral(;n::Int64 = 100,samples::Int64 = 2,
         EPS_VAL::Float64 = 1e-5,printfile::Bool=false,itmax::Int64 = 200)
 
 """
-function TestPolyhedral(;n::Int64 = 200,samples::Int64 = 1,
+function TestPolyhedral(;ninit::Int64 = 200,samples::Int64 = 1,
         EPSVAL::Float64 = 1e-5,itmax::Int64 = 1000, restarts = 1,print_file::Bool=false)
     # X = R^n
-    # Fix Random
-    Random.seed!(1)
     # Defines DataFrame for Results
     dfResults= DataFrame(Problem=String[],CRMit=Int[],DRMit=Int[],MAPit=Int[])
+
+    # Fix Random
+    Random.seed!(1)
     for j in 1:samples
-        n = rand(n:2*n)
+        # n = rand(ninit:2*ninit)
+        n= ninit
         # Generates Matrix m × n  with m < n
-        m = rand(1:n-1)
-        rand()
-        A  = randn(m,n)
+        A  = GenerateSamples(n,false)[1]
         @show m, n = size(A)
         xbar = StartingPoint(n)
         bbar = A*xbar
@@ -56,14 +56,14 @@ function TestPolyhedral(;n::Int64 = 200,samples::Int64 = 1,
     return dfResults
 end
 n = 200
-samples = 1
-restarts = 1
-ε = 1e-5
+samples = 100
+restarts = 20
+ε = 1e-6
 itmax = 20000
 mtd=:CRMProd
-print_file = true
+print_file = false
 
-dfResultsPoly = TestPolyhedral(n = n, samples = samples,itmax=itmax, EPSVAL = ε, restarts = restarts,print_file=print_file)
+dfResultsPoly = TestPolyhedral(ninit = n, samples = samples,itmax=itmax, EPSVAL = ε, restarts = restarts,print_file=print_file)
 describe(dfResultsPoly)
 ##
 plt_poly = plot(xCRM[:,1],xCRM[:,2],scale=:log10, label="CRM-prod",

@@ -2,6 +2,7 @@ __precompile__()
 using LinearAlgebra
 using Printf
 using Random
+using Distributions
 using ProximalOperators
 using PolynomialRoots
 using DelimitedFiles
@@ -113,6 +114,22 @@ function StartingPoint(m::Int64,n::Int64)
     return X
 end
 ####################################
+    function GenerateSamples(n::Int64,affine::Bool=true)
+        ma = rand(1:n-1) ## number of extra normals of A
+        mb = rand(1:n-1-ma) ## number of extra normals of B
+        A = randn(ma,n)
+        B = randn(mb,n)
+        if affine
+            a = randn(ma)
+            b = randn(mb)
+        else
+            a = zeros(ma)
+            b = zeros(mb)
+        end
+
+        return A, a, ma, B, b, mb
+    end
+####################################
 function printoOnFile(filename::String,printline::AbstractArray; deletefile::Bool=false)
     if isempty(filename)
         return
@@ -121,7 +138,7 @@ function printoOnFile(filename::String,printline::AbstractArray; deletefile::Boo
         try
             rm(filename)
         catch e
-            @warn e
+            # @warn e
         end
     end
     open(filename,"a") do file
@@ -187,12 +204,8 @@ ProjectProdDiagonal(X,num_sets)
 
 
 """
-function ProjectProdDiagonal(X::Vector,num_sets::Int)
-    inner_proj = similar(X[1])
-    for index in eachindex(X)
-        inner_proj += X[index]
-    end
-    inner_proj ./= num_sets
+function ProjectProdDiagonal(X::Vector)
+    inner_proj = mean(X)
     proj = similar(X)
     for index in eachindex(proj)
         proj[index] = inner_proj
@@ -205,10 +218,10 @@ ProjectProdSets(X,Projections)
 
 
 """
-function ProjectProdSets(X::Vector,SetsProjections::Vector{Function})
+function ProjectProdSets(X::Vector,SetsProjections::Vector{ProximableFunction})
     proj = similar(X)
     for index in eachindex(proj)
-        proj[index] = SetsProjections[index](X[index])
+        proj[index] = ProjectIndicator(SetsProjections[index],X[index])
     end
     return proj
 end

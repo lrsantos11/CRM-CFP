@@ -47,18 +47,18 @@ end
 
 Cirumcentered-Reflection method on Pierra's product space reformulation
 """
-function CRMprod(x₀::Vector{Float64},SetsProjections::Vector{Function}; 
+function CRMprod(x₀::Vector{Float64},SetsIndicators::Vector; 
     EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [],
     print_intermediate::Bool=false,gap_distance::Bool=false)
     k = 0
     tolCRMprod = 1.
-    num_sets = length(SetsProjections)
+    num_sets = length(SetsIndicators)
     xCRMprod = Vector[]
     for i = 1:num_sets
         push!(xCRMprod,x₀)
     end
-    ProjectAprod(x) = ProjectProdSets(x,SetsProjections)
-    ProjectBprod(x) = ProjectProdDiagonal(x,num_sets)
+    ProjectAprod(x) = ProjectProdSets(x,SetsIndicators)
+    ProjectBprod(x) = ProjectProdDiagonal(x)
     ReflectA(x) = Reflection(x,ProjectAprod)
     ReflectB(x) = Reflection(x,ProjectBprod)
     printoOnFile(filedir,hcat(k, tolCRMprod, xCRMprod[1]'),deletefile=true)
@@ -94,7 +94,7 @@ function CRMprod(x₀::Vector{Float64},SetsIndicators::Vector{ProximableFunction
         push!(xCRMprod,x₀)
     end
     ProjectAprod(x) = ProjectSetsIndicators(x,SetsIndicators)
-    ProjectBprod(x) = ProjectProdDiagonal(x,num_sets)
+    ProjectBprod(x) = ProjectProdDiagonal(x)
     ReflectA(x) = Reflection(x,ProjectAprod)
     ReflectB(x) = Reflection(x,ProjectBprod)
     printoOnFile(filedir,hcat(k, tolCRMprod, xCRMprod[1]'),deletefile=true)
