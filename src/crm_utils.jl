@@ -212,16 +212,18 @@ function ProjectProdDiagonal(X::Vector)
     end
     return proj
 end
+
+
 ####################################
 """
 ProjectProdSets(X,Projections)
 
 
 """
-function ProjectProdSets(X::Vector,SetsProjections::Vector{ProximableFunction})
+function ProjectProdSets(X::Vector,SetsProjections::Vector{Function})
     proj = similar(X)
     for index in eachindex(proj)
-        proj[index] = ProjectIndicator(SetsProjections[index],X[index])
+        proj[index] = SetsProjections[index](X[index])
     end
     return proj
 end

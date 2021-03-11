@@ -47,17 +47,17 @@ end
 
 Cirumcentered-Reflection method on Pierra's product space reformulation
 """
-function CRMprod(x₀::Vector{Float64},SetsIndicators::Vector; 
+function CRMprod(x₀::Vector{Float64},SetsProjections::Vector{Function}; 
     EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [],
     print_intermediate::Bool=false,gap_distance::Bool=false)
     k = 0
     tolCRMprod = 1.
-    num_sets = length(SetsIndicators)
+    num_sets = length(SetsProjections)
     xCRMprod = Vector[]
     for i = 1:num_sets
         push!(xCRMprod,x₀)
     end
-    ProjectAprod(x) = ProjectProdSets(x,SetsIndicators)
+    ProjectAprod(x) = ProjectProdSets(x,SetsProjections)
     ProjectBprod(x) = ProjectProdDiagonal(x)
     ReflectA(x) = Reflection(x,ProjectAprod)
     ReflectB(x) = Reflection(x,ProjectBprod)
