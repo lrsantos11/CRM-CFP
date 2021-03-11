@@ -240,6 +240,12 @@ function ProjectSetsIndicators(X::Vector,SetsIndicators::Vector{ProximableFuncti
     end
     return proj
 end
+
+####################################
+
+ProjectProdSpace(X::Vector,Projections::Vector{Function}) = ProjectProdSetSpace(X,Projections)
+ProjectProdSpace(X::Vector,Projections::Vector{ProximableFunction}) = ProjectSetsIndicators(X,Projections)
+
 ####################################
 
 """

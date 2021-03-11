@@ -51,7 +51,7 @@ function MAPprod(x₀::Vector{Float64},Projections::Vector;
     for i = 1:num_sets
         push!(xMAPprod,x₀)
     end
-    ProjectAprod(x) = ProjectProds(x,Projections)
+    ProjectAprod(x) = ProjectProdSpace(x,Projections)
     ProjectBprod(x) = ProjectProdDiagonal(x)
     printoOnFile(filedir,hcat(k, tolMAPprod, xMAPprod[1]'),deletefile=true)
     while tolMAPprod > EPSVAL && k < itmax
@@ -64,3 +64,8 @@ function MAPprod(x₀::Vector{Float64},Projections::Vector;
     return Results(iter_total= k,
                   final_tol=tolMAPprod,xApprox=xMAPprod[1],method=:MAPprod)
 end    
+
+"""
+    MAPprod(x₀, ProjectA, ProjectB)
+"""
+MAPprod(x₀::Vector{Float64},ProjectA::Function, ProjectB::Function;kwargs...) = MAPprod(x₀,[ProjectA,ProjectB],kwargs...) 
