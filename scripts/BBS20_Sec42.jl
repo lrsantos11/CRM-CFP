@@ -16,15 +16,16 @@ function TestPolyhedral(;ninit::Int64 = 200,samples::Int64 = 1,
         EPSVAL::Float64 = 1e-5,itmax::Int64 = 1000, restarts = 1,print_file::Bool=false)
     # X = R^n
     # Defines DataFrame for Results
-    dfResults= DataFrame(Problem=String[],CRMit=Int[],DRMit=Int[],MAPit=Int[])
+    dfResults= DataFrame(Problem=String[],CRMit=Int[],DRMit=Int[])#,MAPit=Int[])
 
     # Fix Random
     Random.seed!(1)
     for j in 1:samples
         # n = rand(ninit:2*ninit)
-        n= ninit
+        n = ninit
         # Generates Matrix m × n  with m < n
-        A  = GenerateSamples(n,false)[1]
+        m = rand(1:n-1)
+        A  = randn(m,n)
         @show m, n = size(A)
         xbar = StartingPoint(n)
         bbar = A*xbar
@@ -43,41 +44,43 @@ function TestPolyhedral(;ninit::Int64 = 200,samples::Int64 = 1,
             timenow= Dates.now()
             dfrow = []
             push!(dfrow,prob_name)
-            methods = [:CRMprod]#, :DRMprod, :MAPprod]
+            methods = [:CRMprod, :DRMprod]#, :MAPprod]
+            row = Any[]
+            push!(row,prob_name)
             for mtd in methods
-                filename = savename("BBS20Sec42",(mtd=:CRMprod,time=timenow),"csv",sort=false)
+                func = getfield(Main,mtd) 
+                filename = savename("BBS20Sec42",(mtd=mtd,time=timenow),"csv",sort=false)
                 print_file ? filedir = datadir("sims",filename) : filedir = ""
-                resultCRM  = CRMprod(xzero,halfspacesInd,itmax=itmax,EPSVAL=EPSVAL,gap_distance=true,filedir=filedir)
-                # @show resultCRM
-                push!(dfResults,(prob_name,resultCRM.iter_total,resultCRM.iter_total,resultCRM.iter_total))
+                results  = func(xzero,halfspacesInd,itmax=itmax,EPSVAL=EPSVAL,gap_distance=true,filedir=filedir)
+                push!(row,results.iter_total)
             end    
+            push!(dfResults,row)
         end
     end
     return dfResults
 end
 n = 200
-samples = 100
-restarts = 20
+samples = 1
+restarts = 1
 ε = 1e-6
 itmax = 20000
-mtd=:CRMProd
 print_file = false
 
 dfResultsPoly = TestPolyhedral(ninit = n, samples = samples,itmax=itmax, EPSVAL = ε, restarts = restarts,print_file=print_file)
 describe(dfResultsPoly)
 ##
-plt_poly = plot(xCRM[:,1],xCRM[:,2],scale=:log10, label="CRM-prod",
-           title="Comparison using Product Space reformulation",
-           framestyle = :box,
-           xlabel = "Number of iterations (log scale)",
-           ylabel = "Gap error (log scale)",
-           minorticks=true);
-plot!(xDRM[:,1],xDRM[:,2],scale=:log10, label="DRM-prod",linestyle=:dash);
-plot!(xMAP[:,1],xMAP[:,2],scale=:log10, label="MAP-prod",linestyle=:dot); # linestyles=[:solid, :dash, :dot])
+# plt_poly = plot(xCRM[:,1],xCRM[:,2],scale=:log10, label="CRM-prod",
+#            title="Comparison using Product Space reformulation",
+#            framestyle = :box,
+#            xlabel = "Number of iterations (log scale)",
+#            ylabel = "Gap error (log scale)",
+#            minorticks=true);
+# plot!(xDRM[:,1],xDRM[:,2],scale=:log10, label="DRM-prod",linestyle=:dash);
+# plot!(xMAP[:,1],xMAP[:,2],scale=:log10, label="MAP-prod",linestyle=:dot); # linestyles=[:solid, :dash, :dot])
 
-savefig(plt_poly,plotsdir("BBS20Fig4_TestPolyhedral.pdf"))
-@show describe(dfResultsPoly)
-plt_poly
+# savefig(plt_poly,plotsdir("BBS20Fig4_TestPolyhedral.pdf"))
+# @show describe(dfResultsPoly)
+# plt_poly
 
 # p1 = plot(xCRM[:,1],xCRM[:,2],scale=:log10, label="CRM-prod",
 #            title="Comparison using Product Space reformulation",
