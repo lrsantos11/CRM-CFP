@@ -57,9 +57,9 @@ function DRMprod(x₀::Vector{Float64},Projections::Vector;
     printoOnFile(filedir,hcat(k, tolDRMprod, xDRMprod[1]'),deletefile=true)
     while tolDRMprod > EPSVAL && k < itmax
         xDRMprodOld = copy(xDRMprod)
-        print_intermediate ?  printoOnFile(filedir,hcat(nothing,nothing,(ProjectA(xDRMprod))[1]')) : nothing
+        print_intermediate ?  printoOnFile(filedir,hcat(nothing,nothing,(ProjectAprod(xDRMprod))[1]')) : nothing
         xDRMprod  = DRMiteration(xDRMprod, ReflectA, ReflectB)
-        tolDRMprod = gap_distance ? norm(ProjectAprod(xDRMprod)-xDRMprod) : Tolerance(xDRMprod,xDRMprodOld,xSol)
+        tolDRMprod = gap_distance ? norm(ProjectAprod(xDRMprod)-ProjectBprod(xDRMprod)) : Tolerance(xDRMprod,xDRMprodOld,xSol)
         k += 1
         printoOnFile(filedir,hcat(k, tolDRMprod, xDRMprod[1]'))
     end
