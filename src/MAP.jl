@@ -34,3 +34,33 @@ function MAP(x₀::Vector,ProjectA::Function, ProjectB::Function;
     end
     return Results(iter_total= k,final_tol=tolMAP,xApprox=xMAP,method=:MAP)
 end
+
+
+"""
+    MAPprod(x₀, SetsProjections)
+
+    Method of Alternating projections on Pierra's product space reformulation
+"""
+function MAPprod(x₀::Vector{Float64},Projections::Vector; 
+    EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [],
+    print_intermediate::Bool=false,gap_distance::Bool=false)
+    k = 0
+    tolMAPprod = 1.
+    num_sets = length(Projections)
+    xMAPprod = Vector[]
+    for i = 1:num_sets
+        push!(xMAPprod,x₀)
+    end
+    ProjectAprod(x) = ProjectProds(x,Projections)
+    ProjectBprod(x) = ProjectProdDiagonal(x)
+    printoOnFile(filedir,hcat(k, tolMAPprod, xMAPprod[1]'),deletefile=true)
+    while tolMAPprod > EPSVAL && k < itmax
+        xMAPprodOld = copy(xMAPprod)
+        xMAPprod  = MAPiteration(xMAPprod, ProjectAprod, ProjectBprod,filedir,print_intermediate)
+        tolMAPprod = gap_distance ? norm(ProjectAprod(xMAPprod)-xMAPprod) : Tolerance(xMAPprod,xMAPprodOld,xSol)
+        k += 1
+        printoOnFile(filedir,hcat(k, tolMAPprod, xMAPprod[1]'))
+    end
+    return Results(iter_total= k,
+                  final_tol=tolMAPprod,xApprox=xMAPprod[1],method=:MAPprod)
+end    
