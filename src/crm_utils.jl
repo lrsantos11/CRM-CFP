@@ -260,3 +260,17 @@ function  Tolerance(x::Vector,xold::Vector,xsol::Vector;
     end
 end
 
+####################################
+"""
+    ApproxProject(x,g,∂g)
+
+"""
+function ApproxProject(x::Vector,g::Function,∂g::Function;λ::Float64=1.0)
+    gx = g(x)
+    if gx ≤ 0
+        return x
+    else
+        ∂gx = ∂g(x)
+        return λ*( x .- (gx/dot(∂gx,∂gx))*∂gx ).+ (1-λ)*x
+    end
+end
