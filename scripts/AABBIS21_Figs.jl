@@ -1,9 +1,3 @@
-"""juliadocs
-This script builds the plots that are presented in  [^Araujo20]
-
-[^Araujo20] G. Arauújo, R. Arefidamghani, R. Behling, J.-Y. Bello-Cruz, A. N. Iusem, e L.-R. Santos, 
-"""
-
 include("plots_util.jl")
 
 """
