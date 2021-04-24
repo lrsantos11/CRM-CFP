@@ -7,9 +7,9 @@ using LaTeXStrings, Plots
 pgfplotsx()
 
 
-# include("makeplots_ABBIS20.jl")
-# include("makeplots_BBS20.jl")
-# include("runtests_AABBIS20.jl")
+# include("runtests_ABBIS20.jl")
+# include("runtests_BBS20.jl")
+include("runtests_AABBIS20.jl")
 
 
 
