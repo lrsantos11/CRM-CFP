@@ -176,17 +176,17 @@ for n in size_spaces, m in num_sets
     append!(dfResultsEllips,dfResults)
     # append!(dfEllipFilenames,dfFilesname)
 end
-describe(dfResultsEllips)
 ##
+@show df_describe = describe(dfResultsEllips)
+CSV.write(datadir("sims","AABBIS21Fig1_EllipsoidsTable.csv"),df_describe,transform = (col, val) -> something(val, missing))
 
 perprof = performance_profile(hcat(dfResultsEllips.CRMprod_elapsed,dfResultsEllips.MAPprod_elapsed,
                             dfResultsEllips.CRMprodApprox_elapsed, dfResultsEllips.MAPprodApprox_elapsed), 
                             ["CRM", "MAP", "CARM", "MAAP"],
-    title=L"Performance Profile -- Gap error -- $\varepsilon = 10^{-6}$",
+    title=L"Performance Profile -- Elapsed time comparison -- Gap error -- $\varepsilon = 10^{-6}$",
     legend = :bottomright, framestyle = :box, linestyles=[:solid, :dash, :dot, :dashdot])
 ylabel!("Percentage of problems solved")
-# savefig(perprof,plotsdir("BBS20Fig3_AffineSOC.pdf"))
-@show describe(dfResultsEllips)
+savefig(perprof,plotsdir("AABBIS21Fig1_Ellipsoids.pdf"))
 perprof
 
 

@@ -2,7 +2,7 @@ using DrWatson
 @quickactivate "CRM-CFP"
 include(srcdir("CRM-CFP.jl"))
 
-using DataFrames
+using CSV, DataFrames
 using LaTeXStrings, Plots
 pgfplotsx()
 
