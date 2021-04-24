@@ -27,7 +27,7 @@ function TestEllipsoids(;n :: Int = 10, num_sets :: Int = 5, samples :: Int = 1,
             η = -2.
             # x₀ = StartingPoint(n)
             x₀ = fill(η, n)
-            prob_name  = savename((Prob=j,Rest=i,n=n,nsets=num_set))
+            prob_name  = savename((Prob=j,Rest=i,n=n,nsets=num_sets))
             timenow= Dates.now()
             dfrow = []
             dfrowFilename = []
@@ -161,7 +161,7 @@ end
 # # Constructs BBS20Fig4_TestPolyhedral
 
 size_spaces = [10, 50, 100, 200]
-num_sets = [5, 10, 20 , 50]
+num_ellipsoids = [5, 10, 20 , 50]
 samples = 10
 # restarts = 1
 ε = 1e-6
@@ -170,7 +170,8 @@ itmax = 50000
 method = [:CRMprod, :MAPprod]
 useapprox = true
 dfResultsEllips, dfEllipFilenames  = createDaframes(method,useapprox)
-for n in size_spaces, m in num_sets
+for n in size_spaces, m in num_ellipsoids
+    print(m)
     dfResults, dfFilesname = TestEllipsoids(n=n, num_sets = m, samples = samples, itmax=itmax, 
                                 ε=ε, bench_time=true, useapprox=useapprox)
     append!(dfResultsEllips,dfResults)
