@@ -177,34 +177,19 @@ for n in size_spaces, m in num_sets
     # append!(dfEllipFilenames,dfFilesname)
 end
 describe(dfResultsEllips)
+##
+
+perprof = performance_profile(hcat(dfResultsEllips.CRMprod_elapsed,dfResultsEllips.MAPprod_elapsed,
+                            dfResultsEllips.CRMprodApprox_elapsed, dfResultsEllips.MAPprodApprox_elapsed), 
+                            ["CRM", "MAP", "CARM", "MAAP"],
+    title=L"Performance Profile -- Gap error -- $\varepsilon = 10^{-6}$",
+    legend = :bottomright, framestyle = :box, linestyles=[:solid, :dash, :dot, :dashdot])
+ylabel!("Percentage of problems solved")
+# savefig(perprof,plotsdir("BBS20Fig3_AffineSOC.pdf"))
+@show describe(dfResultsEllips)
+perprof
 
 
-# dfResultsPoly,dfrowFilename = TestPolyhedral(ninit = ninit, samples = samples,itmax=itmax, ε = ε, restarts = restarts,print_file=print_file)
-
-# xCRM = readdlm(dfrowFilename.CRMfilename[1])
-# xDRM = readdlm(dfrowFilename.DRMfilename[1])
-# xMAP = readdlm(dfrowFilename.MAPfilename[1])
-# plt_poly = plot(xCRM[1:end,1].+1,xCRM[1:end,2],scale=:log10, label="CRM-prod",
-#             title="Comparison using Product Space reformulation",
-#             framestyle = :box,
-#            xlabel = "Number of iterations (log scale)",
-#            ylabel = "Gap error (log scale)",
-#            minorticks=true)
-# plot!(xDRM[1:end,1].+1,xDRM[1:end,2] .+ 1e-6,scale=:log10, label="DRM-prod",linestyle=:dash,minorticks=false)
-# plot!(xMAP[1:end,1].+1,xMAP[1:end,2],scale=:log10, label="MAP-prod",linestyle=:dot)
-# ##
-# savefig(plt_poly,plotsdir("BBS20Fig4_TestPolyhedral.pdf"))
-# ##
-# # Constructs BBS20Sec4 Table
-# ninit = 200
-# samples = 100
-# restarts = 10
-# ε = 1e-6
-# itmax = 20000
-# print_file = false
-
-# dfResultsPoly,dfrowFilename = TestPolyhedral(ninit = ninit, samples = samples,itmax=itmax, ε = ε, restarts = restarts,print_file=print_file)
-# describe(dfResultsPoly)
 
 
 
