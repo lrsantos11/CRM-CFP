@@ -5,4 +5,5 @@ This script builds the plots that are presented in  [^Araujo20]
 """
 
 
-include("AABBIS21_Figs.jl")
+# include("AABBIS21_Figs.jl")
+include("AABBSI21_ProjEllipsoids.jl")

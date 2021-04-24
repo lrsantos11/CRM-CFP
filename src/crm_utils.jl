@@ -1,12 +1,15 @@
 __precompile__()
-using LinearAlgebra
-using Printf
-using Random
-using Distributions
-using ProximalOperators
-using PolynomialRoots
+
 using DelimitedFiles
 using Dates
+using Distributions
+using LinearAlgebra
+using PolynomialRoots
+using Printf
+using ProximalOperators
+using Random
+using SparseArrays 
+
 import Base.@kwdef
 ####################################
 @kwdef struct Results
@@ -16,6 +19,8 @@ import Base.@kwdef
     method::Symbol
     date::DateTime = Dates.now()
 end
+
+Results() = Results(iter_total = 0, final_tol=0.0, xApprox = [], method = :None)
 ####################################
 """
 FindCircumcentermSet(X)
@@ -130,7 +135,7 @@ end
         return A, a, ma, B, b, mb
     end
 ####################################
-function printoOnFile(filename::String,printline::AbstractArray; deletefile::Bool=false)
+function printOnFile(filename::String,printline::AbstractArray; deletefile::Bool=false)
     if isempty(filename)
         return
     end
@@ -141,6 +146,24 @@ function printoOnFile(filename::String,printline::AbstractArray; deletefile::Boo
             # @warn e
         end
     end
+    open(filename,"a") do file
+        writedlm(file,printline)
+    end
+end
+
+####################################
+function printOnFile(filename::String, k::Int, tolCRM::Float64, xCRM::Vector; deletefile::Bool=false, isprod = false)
+    if isempty(filename)
+        return
+    end
+    if deletefile
+        try
+            rm(filename)
+        catch e
+            # @warn e
+        end
+    end
+    isprod ? printline = hcat(k, tolCRM, xCRM[1]') : printline = hcat(k, tolCRM, xCRM')
     open(filename,"a") do file
         writedlm(file,printline)
     end
@@ -243,7 +266,7 @@ end
 
 ####################################
 
-ProjectProdSpace(X::Vector,Projections::Vector{Function}) = ProjectProdSetSpace(X,Projections)
+ProjectProdSpace(X::Vector,Projections::Vector{Function}) = ProjectProdSets(X,Projections)
 ProjectProdSpace(X::Vector,Projections::Vector{ProximableFunction}) = ProjectSetsIndicators(X,Projections)
 
 ####################################

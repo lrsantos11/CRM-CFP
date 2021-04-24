@@ -1,9 +1,3 @@
-using Plots
-using LaTeXStrings
-using BenchmarkProfiles
-using DataFrames
-pgfplotsx()
-
 """
 Creates plot with the path of method. 
 """
