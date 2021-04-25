@@ -173,9 +173,9 @@ dfResultsEllips, dfEllipFilenames  = createDaframes(method,useapprox)
 for n in size_spaces, m in num_ellipsoids
     print(m)
     dfResults, dfFilesname = TestEllipsoids(n=n, num_sets = m, samples = samples, itmax=itmax, 
-                                ε=ε, bench_time=true, useapprox=useapprox)
+                                ε=ε, bench_time=false, useapprox=useapprox)
     append!(dfResultsEllips,dfResults)
-    # append!(dfEllipFilenames,dfFilesname)
+    append!(dfEllipFilenames,dfFilesname)
 end
 ##
 @show df_describe = describe(dfResultsEllips)
