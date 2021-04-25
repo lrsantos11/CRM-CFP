@@ -52,14 +52,15 @@ function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
     tolCRM = 1.
     printOnFile(filedir,k, tolCRM, xCRM ,deletefile=true, isprod=isprod)
     while tolCRM > EPSVAL && k < itmax
+        print_intermediate ?  printOnFile(filedir,0, 0., ProjA,isprod=isprod) : nothing
         if gap_distance
-            print_intermediate ?  printOnFile(filedir,0, 0., ProjA,isprod=isprod) : nothing
             xCRM  = CRMiteration(xCRM, ProjA, ReflectB)
             ProjA = ProjectA(xCRM)
             tolCRM = norm(ProjA-xCRM)
         else
             xCRMOld = copy(xCRM)
-            xCRM  = CRMiteration(xCRM, ReflectA, ReflectB)
+            xCRM  = CRMiteration(xCRM, ProjA, ReflectB)
+            ProjA = ProjectA(xCRM)
             tolCRM = Tolerance(xCRM,xCRMOld,xSol)
         end
         k += 1

@@ -28,16 +28,18 @@ function MAP(x₀::Vector,ProjectA::Function, ProjectB::Function;
     k = 0
     tolMAP = 1.
     xMAP = x₀
-    printOnFile(filedir,k, tolMAP, xMAP ,deletefile=true, isprod=isprod)
+    printOnFile(filedir,k, tolMAP, xMAP , deletefile=true, isprod=isprod)
     ProjA = ProjectA(xMAP)
     while tolMAP > EPSVAL && k < itmax
         ProjA = ProjectA(xMAP)
+        print_intermediate ? printOnFile(filedir, 0, 0., ProjA , isprod=isprod) : nothing
+
         if gap_distance
-            xMAP  = MAPiteration(xMAP, ProjA, ProjectB, filedir, print_intermediate, isprod)
+            xMAP  = ProjectB(ProjA)
             tolMAP = norm(ProjA-xMAP)
         else
             xMAPOld = copy(xMAP)
-            xMAP  =  MAPiteration(xMAP, ProjA, ProjectB, filedir, print_intermediate, isprod)
+            xMAP  = ProjectB(ProjA)
             tolMAP = Tolerance(xMAP,xMAPOld,xSol)
         end
         k += 1
