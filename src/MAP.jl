@@ -12,7 +12,7 @@ Computes a MAP iteration
 
 function MAPiteration(xMAP::Vector, ProjA::Vector, ProjectB::Function,
                     filedir::String="", print_intermediate::Bool=true, isprod::Bool=false)
-    print_intermediate ? printOnFile(filedir,k, tolMAP, ProjA ,deletefile=true, isprod=isprod) : nothing
+    print_intermediate ? printOnFile(filedir, 0, 0., ProjA ,deletefile=true, isprod=isprod) : nothing
     xMAP = ProjectB(ProjA)
     return xMAP  
 end 

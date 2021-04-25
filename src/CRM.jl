@@ -95,4 +95,4 @@ end
 """
     CRMprod(x₀, ProjectA, ProjectB)
 """
-CRMprod(x₀::Vector{Float64},ProjectA::Function, ProjectB::Function;kwargs...) = CRMprod(x₀,[ProjectA,ProjectB],kwargs...) 
+CRMprod(x₀::Vector{Float64},ProjectA::Function, ProjectB::Function;kwargs...) = CRMprod(x₀,[ProjectA,ProjectB];kwargs...) 
