@@ -1,9 +1,3 @@
-using Plots
-using LaTeXStrings
-using BenchmarkProfiles
-using DataFrames
-pgfplotsx()
-
 """
 Creates plot with the path of method. 
 """
@@ -20,13 +14,13 @@ function MethodPath(plt::Plots.Plot,mat::Array;
 end
 
 function label_points!(plt::Plots.Plot,filedir::String,num_points::Int=5;var_name::String="x", 
-                      print_proj::Bool=false,num_print_proj::Int=1)
+                      print_proj::Bool=false,num_print_proj::Int=1,ProjName::String = "P_K")
     xmtd = (readdlm(filedir))[1:num_points,3:end]
     for pto in  eachrow(xmtd)
         if isodd(pto.indices[1])
             annotate!(plt,[(pto[1], -.075 ,text(L"%$(var_name)^{%$(div(pto.indices[1]-1,2))}",12))])
         elseif print_proj && pto.indices[1] <= 2*num_print_proj
-            annotate!(plt,[(pto[1]-.05, pto[2]+0.075 ,text(L"P_K(%$(var_name)^{%$(div(pto.indices[1]-1,2))})",8))])
+            annotate!(plt,[(pto[1]+.05, pto[2]+0.075 ,text(L"%$(ProjName) (%$(var_name)^{%$(div(pto.indices[1]-1,2))})",8))])
         end    
     end
     return plt

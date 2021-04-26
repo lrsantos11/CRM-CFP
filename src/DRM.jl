@@ -23,14 +23,14 @@ function DRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
     xDRM = x₀
     ReflectA(x) = Reflection(x,ProjectA)
     ReflectB(x) = Reflection(x,ProjectB)
-    printoOnFile(filedir,hcat(k, tolDRM, xDRM'),deletefile=true)
+    printOnFile(filedir,hcat(k, tolDRM, xDRM'),deletefile=true)
     while tolDRM > EPSVAL && k < itmax
         xDRMOld = copy(xDRM)
-        print_intermediate ?  printoOnFile(filedir,hcat(nothing,nothing,ProjectA(xDRM)')) : nothing
+        print_intermediate ?  printOnFile(filedir,hcat(nothing,nothing,ProjectA(xDRM)')) : nothing
         xDRM  = DRMiteration(xDRM, ReflectA, ReflectB)
         tolDRM = gap_distance ? norm(ProjectA(xDRM)-ProjectB(xDRM)) : Tolerance(xDRM,xDRMOld,xSol)
         k += 1
-        printoOnFile(filedir,hcat(k, tolDRM, xDRM'))
+        printOnFile(filedir,hcat(k, tolDRM, xDRM'))
     end
     return Results(iter_total= k,final_tol=tolDRM,xApprox=xDRM,method=:DRM)
 end
@@ -54,14 +54,14 @@ function DRMprod(x₀::Vector{Float64},Projections::Vector;
     ProjectBprod(x) = ProjectProdDiagonal(x)
     ReflectA(x) = Reflection(x,ProjectAprod)
     ReflectB(x) = Reflection(x,ProjectBprod)
-    printoOnFile(filedir,hcat(k, tolDRMprod, xDRMprod[1]'),deletefile=true)
+    printOnFile(filedir,hcat(k, tolDRMprod, xDRMprod[1]'),deletefile=true)
     while tolDRMprod > EPSVAL && k < itmax
         xDRMprodOld = copy(xDRMprod)
-        print_intermediate ?  printoOnFile(filedir,hcat(nothing,nothing,(ProjectAprod(xDRMprod))[1]')) : nothing
+        print_intermediate ?  printOnFile(filedir,hcat(nothing,nothing,(ProjectAprod(xDRMprod))[1]')) : nothing
         xDRMprod  = DRMiteration(xDRMprod, ReflectA, ReflectB)
         tolDRMprod = gap_distance ? norm(ProjectAprod(xDRMprod)-ProjectBprod(xDRMprod)) : Tolerance(xDRMprod,xDRMprodOld,xSol)
         k += 1
-        printoOnFile(filedir,hcat(k, tolDRMprod, xDRMprod[1]'))
+        printOnFile(filedir,hcat(k, tolDRMprod, xDRMprod[1]'))
     end
     return Results(iter_total= k,
                   final_tol=tolDRMprod,xApprox=xDRMprod[1],method=:DRMprod)

@@ -27,7 +27,7 @@ function TestPolyhedral(;ninit::Int64 = 200,samples::Int64 = 1,
         # Generates Matrix m × n  with m < n
         m = rand(1:n-1)
         A  = randn(m,n)
-        @show m, n = size(A)
+        m, n = size(A)
         xbar = StartingPoint(n)
         bbar = A*xbar
         # Number of halfspaces
