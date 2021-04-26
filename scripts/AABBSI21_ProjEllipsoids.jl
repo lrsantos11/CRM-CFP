@@ -166,18 +166,20 @@ end
 # # restarts = 1
 # ε = 1e-6
 # itmax = 50000
-# # print_file = true
 # method = [:CRMprod, :MAPprod]
 # useapprox = true
+# # Too much time. It took 3 days for the results to be finished.
+# bench_time = false
 # dfResultsEllips, dfEllipFilenames  = createDaframes(method,useapprox)
 # for n in size_spaces, m in num_ellipsoids
 #     print(m)
 #     dfResults, dfFilesname = TestEllipsoids(n=n, num_sets = m, samples = samples, itmax=itmax, 
-#                                 ε=ε, bench_time=false, useapprox=useapprox)
+#                                 ε=ε, bench_time=benhc_time, useapprox=useapprox)
 #     append!(dfResultsEllips,dfResults)
 #     append!(dfEllipFilenames,dfFilesname)
 # end
 # ##
+# To write data. 
 # CSV.write(datadir("sims","AABBIS21_EllipsoidsTable.csv"),dfResultsEllips,
 #                     transform = (col, val) -> something(val, missing))
 # @show df_describe = describe(dfResultsEllips)
@@ -187,7 +189,7 @@ end
 # To consult the results.
 
 dfResultsEllips = CSV.read(datadir("sims","AABBIS21_EllipsoidsTable.csv"), DataFrame)
-@show df_Summary = describe(dfResultsEllips)
+@show df_Summary = describe(dfResultsEllips)[2:end,1:end-2]
 
 
 
@@ -198,7 +200,7 @@ perprof = performance_profile(hcat(dfResultsEllips.CRMprod_elapsed,dfResultsElli
     title=L"Performance Profile -- Elapsed time comparison -- Gap error -- $\varepsilon = 10^{-6}$",
     legend = :bottomright, framestyle = :box, linestyles=[:solid, :dash, :dot, :dashdot])
 ylabel!("Percentage of problems solved")
-savefig(perprof,plotsdir("AABBIS21_Ellipsoids.pdf"))
+savefig(perprof,plotsdir("AABBIS21_Ellipsoids_PerProf.pdf"))
 perprof
 
 
