@@ -158,28 +158,39 @@ function createEllipsoids(n::Int, p::Real, m::Int)
 end
 
 
-# # Constructs BBS20Fig4_TestPolyhedral
+# # To generate the results.
 
-size_spaces = [10, 50, 100, 200]
-num_ellipsoids = [5, 10, 20 , 50]
-samples = 10
-# restarts = 1
-ε = 1e-6
-itmax = 50000
-# print_file = true
-method = [:CRMprod, :MAPprod]
-useapprox = true
-dfResultsEllips, dfEllipFilenames  = createDaframes(method,useapprox)
-for n in size_spaces, m in num_ellipsoids
-    print(m)
-    dfResults, dfFilesname = TestEllipsoids(n=n, num_sets = m, samples = samples, itmax=itmax, 
-                                ε=ε, bench_time=false, useapprox=useapprox)
-    append!(dfResultsEllips,dfResults)
-    append!(dfEllipFilenames,dfFilesname)
-end
-##
-@show df_describe = describe(dfResultsEllips)
-CSV.write(datadir("sims","AABBIS21Fig1_EllipsoidsTable.csv"),df_describe,transform = (col, val) -> something(val, missing))
+# size_spaces = [10, 50, 100, 200]
+# num_ellipsoids = [5, 10, 20 , 50]
+# samples = 10
+# # restarts = 1
+# ε = 1e-6
+# itmax = 50000
+# # print_file = true
+# method = [:CRMprod, :MAPprod]
+# useapprox = true
+# dfResultsEllips, dfEllipFilenames  = createDaframes(method,useapprox)
+# for n in size_spaces, m in num_ellipsoids
+#     print(m)
+#     dfResults, dfFilesname = TestEllipsoids(n=n, num_sets = m, samples = samples, itmax=itmax, 
+#                                 ε=ε, bench_time=false, useapprox=useapprox)
+#     append!(dfResultsEllips,dfResults)
+#     append!(dfEllipFilenames,dfFilesname)
+# end
+# ##
+# CSV.write(datadir("sims","AABBIS21_EllipsoidsTable.csv"),dfResultsEllips,
+#                     transform = (col, val) -> something(val, missing))
+# @show df_describe = describe(dfResultsEllips)
+# CSV.write(datadir("sims","AABBIS21_EllipsoidsTableSummary.csv"),
+#                     df_describe,transform = (col, val) -> something(val, missing))
+
+# To consult the results.
+
+dfResultsEllips = CSV.read(datadir("sims","AABBIS21_EllipsoidsTable.csv"), DataFrame)
+@show df_Summary = describe(dfResultsEllips)
+
+
+
 
 perprof = performance_profile(hcat(dfResultsEllips.CRMprod_elapsed,dfResultsEllips.MAPprod_elapsed,
                             dfResultsEllips.CRMprodApprox_elapsed, dfResultsEllips.MAPprodApprox_elapsed), 
@@ -187,7 +198,7 @@ perprof = performance_profile(hcat(dfResultsEllips.CRMprod_elapsed,dfResultsElli
     title=L"Performance Profile -- Elapsed time comparison -- Gap error -- $\varepsilon = 10^{-6}$",
     legend = :bottomright, framestyle = :box, linestyles=[:solid, :dash, :dot, :dashdot])
 ylabel!("Percentage of problems solved")
-savefig(perprof,plotsdir("AABBIS21Fig1_Ellipsoids.pdf"))
+savefig(perprof,plotsdir("AABBIS21_Ellipsoids.pdf"))
 perprof
 
 
