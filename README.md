@@ -21,8 +21,15 @@ To (locally) reproduce this project, do the following:
    julia> using Pkg
    julia> Pkg.activate("path/to/this/project")
    julia> Pkg.instantiate()
+```
+   The last line is mandatory so julia install all packages. It is recommended that you build the packages in order to get the files running. For that, use
+```julia
+   julia> Pkg.build()
+```
+2. Use the following to run all tests. 
+```julia
    julia> include(scriptdir("runtests.jl")
-   ```
+```
 
 This will install all necessary packages for you to be able to run the scripts and
 everything should work out of the box.
