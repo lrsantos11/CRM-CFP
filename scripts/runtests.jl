@@ -5,18 +5,19 @@ using CSV, DataFrames
 using BenchmarkProfiles, LaTeXStrings, Plots
 pgfplotsx()
 
-"""markdown
+
+"""
 * Use the following to run the tests and generate the pictures that appear in [^Behling2020].
 ```
 julia> include(scriptsdir("runtests_BBS20.jl"))
 ```
 * Use the following to run the tests and generate the pictures that appear in  [^Arefidamghani21].
 ```
-julia> include(scriptsdir("runtests_ABBIS20.jl")
+julia> include(scriptsdir("runtests_ABBIS20.jl"))
 ```
 * Use the following to run the tests and generate the pictures that appear in [^Araujo21].
 ```
-julia> include(scriptsdir("runtests_AABBIS20.jl")
+julia> include(scriptsdir("runtests_AABBIS20.jl"))
 ```
 
 * References
@@ -31,4 +32,6 @@ for the Convex Feasibility Problem”, Numer. Algorithms, jul. 2020,
 doi: [10.1007/s11075-020-00941-6](https://doi.org/10.1007/s11075-020-00941-6). 
 """
 
-
+# include(scriptsdir("runtests_BBS20.jl"))
+# include(scriptsdir("runtests_ABBIS20.jl"))
+# include(scriptsdir("runtests_AABBIS21.jl"))

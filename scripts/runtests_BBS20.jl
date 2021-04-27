@@ -1,4 +1,10 @@
 __precompile__
+using DrWatson
+@quickactivate "CRM-CFP"
+include(srcdir("CRM-CFP.jl"))
+using CSV, DataFrames
+using BenchmarkProfiles, LaTeXStrings, Plots
+pgfplotsx()
 """
 This script builds the plots and numerical results that are presented in [^Behling2020]
 

@@ -1,3 +1,11 @@
+__precompile__()
+using DrWatson
+@quickactivate "CRM-CFP"
+include(srcdir("CRM-CFP.jl"))
+using CSV, DataFrames
+using BenchmarkProfiles, LaTeXStrings, Plots
+# pgfplotsx()
+
 """juliadocs
 This script builds the plots that are presented in Figure 4.1 of Example 4.12 from [^Arefidamghani20]
 
