@@ -195,19 +195,34 @@ end
 # To consult the results.
 
 dfResultsEllips = CSV.read(datadir("sims","AABBIS21_EllipsoidsTable.csv"), DataFrame)
-@show df_Summary = describe(dfResultsEllips)[2:end,1:end-2]
+@show df_Summary = describe(dfResultsEllips,:mean,:max,:min,:std,:median)[2:end,:]
 
 
 
 
-perprof = performance_profile(hcat(dfResultsEllips.CRMprod_elapsed,dfResultsEllips.MAPprod_elapsed,
-                            dfResultsEllips.CRMprodApprox_elapsed, dfResultsEllips.MAPprodApprox_elapsed), 
-                            ["CRM", "MAP", "CARM", "MAAP"],
+perprof = performance_profile(hcat(dfResultsEllips.CRMprodApprox_elapsed, dfResultsEllips.MAPprodApprox_elapsed,
+                                    dfResultsEllips.CRMprod_elapsed,dfResultsEllips.MAPprod_elapsed), 
+                            ["CARM", "MAAP","CRM", "MAP"],
     title=L"Performance Profile -- Elapsed time comparison -- Gap error -- $\varepsilon = 10^{-6}$",
     legend = :bottomright, framestyle = :box, linestyles=[:solid, :dash, :dot, :dashdot])
 ylabel!("Percentage of problems solved")
 savefig(perprof,plotsdir("AABBIS21_Ellipsoids_PerProf.pdf"))
 perprof
+perprof2 = performance_profile(hcat(dfResultsEllips.CRMprodApprox_elapsed, dfResultsEllips.MAPprodApprox_elapsed), 
+                            ["CARM", "MAAP"],
+    title=L"Performance Profile -- Elapsed time comparison -- Gap error -- $\varepsilon = 10^{-6}$",
+    legend = :bottomright, framestyle = :box, linestyles=[:solid, :dash,],logscale=false)
+ylabel!("Percentage of problems solved")
+savefig(perprof2,plotsdir("AABBIS21_Ellipsoids_PerProf2.pdf"))
+perprof2
+perprof3 = performance_profile(hcat(dfResultsEllips.CRMprodApprox_elapsed, dfResultsEllips.CRMprod_elapsed), 
+                            ["CARM", "CRM"],
+    title=L"Performance Profile -- Elapsed time comparison -- Gap error -- $\varepsilon = 10^{-6}$",
+    legend = :bottomright, framestyle = :box, linestyles=[:solid, :dash,],logscale=false)
+ylabel!("Percentage of problems solved")
+savefig(perprof3,plotsdir("AABBIS21_Ellipsoids_PerProf3.pdf"))
+perprof3
+
 
 
 
