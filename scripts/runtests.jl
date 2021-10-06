@@ -4,8 +4,8 @@ include(srcdir("CRM-CFP.jl"))
 using CSV, DataFrames
 using BenchmarkProfiles, LaTeXStrings, Plots
 pgfplotsx()
-
-
+include(scriptsdir("plots_util.jl"))
+##
 """
 * Use the following to run the tests and generate the pictures that appear in [^Behling2020].
 ```

@@ -1,17 +1,41 @@
 """
+    MAPiteration!(xMAP,ProjA,ProjectB)
+
+Computes a MAP iteration
+"""
+function MAP_iteration!(xMAP::Vector, 
+                        ProjA::Vector, 
+                        ProjectB::Function)
+    xMAP = ProjectB(ProjA)
+    return xMAP  
+end 
+
+"""
+    MAPiteration!(xMAP,ProjectA,ProjectB)
+
+Computes a MAP iteration
+"""
+function MAP_iteration!(xMAP::Vector, 
+                        ProjectA::Function, 
+                        ProjectB::Function)
+    return MAP_iteration!(xMAP, ProjectA(xMAP), ProjectB)  
+end 
+
+
+
+
+"""
     MAPiteration(xMAP,ProjectA,ProjectB)
 
 Computes a MAP iteration
 """
 
-"""
-    MAPiteration(xMAP,ProjectA,ProjectB)
-
-Computes a MAP iteration
-"""
-
-function MAPiteration(xMAP::Vector, ProjA::Vector, ProjectB::Function,
-                    filedir::String="", print_intermediate::Bool=true, isprod::Bool=false)
+function MAPiteration(xMAP::Vector, 
+                      ProjA::Vector, 
+                      ProjectB::Function,
+                      filedir::String = "",
+                     print_intermediate::Bool = true, 
+                     isprod::Bool = false)
     print_intermediate ? printOnFile(filedir, 0, 0., ProjA ,deletefile=true, isprod=isprod) : nothing
     xMAP = ProjectB(ProjA)
     return xMAP  
@@ -22,9 +46,14 @@ end
 
     Method of Alternating Projections
 """
-function MAP(x₀::Vector,ProjectA::Function, ProjectB::Function; 
-        EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "",xSol::Vector = [],
-        print_intermediate::Bool=true,gap_distance::Bool=false, isprod::Bool = false)
+function MAP(x₀::Vector, ProjectA::Function, ProjectB::Function; 
+        EPSVAL::Float64 = 1e-5,
+        itmax::Int = 100,
+        filedir::String = "",
+        xSol::Vector = [],
+        print_intermediate::Bool=true,
+        gap_distance::Bool=false, 
+        isprod::Bool = false)
     k = 0
     tolMAP = 1.
     xMAP = x₀
@@ -42,7 +71,7 @@ function MAP(x₀::Vector,ProjectA::Function, ProjectB::Function;
             xMAP  = ProjectB(ProjA)
             tolMAP = Tolerance(xMAP,xMAPOld,xSol)
         end
-        k += 1
+        k += 2
         printOnFile(filedir,k, tolMAP, xMAP , isprod=isprod)
     end
     isprod ? method = :MAPprod : method = :MAP

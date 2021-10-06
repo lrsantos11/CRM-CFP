@@ -59,7 +59,8 @@ function centralizedCRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
                         EPSVAL::Float64=1e-5, itmax::Int = 100,
                         filedir::String = "", xSol::Vector = [],
                         print_intermediate::Bool = false,
-                        gap_distance::Bool = false, isprod :: Bool = false)
+                        gap_distance::Bool = true, isprod :: Bool = false,
+                        centralized_onlyfirst :: Bool = false)
     xCRM = x₀
     ReflectA(x) = Reflection(x,ProjectA)
     ReflectB(x) = Reflection(x,ProjectB)

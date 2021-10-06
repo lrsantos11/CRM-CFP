@@ -1,16 +1,56 @@
 using BenchmarkTools
 using JuMP, NLPModelsJuMP, NLPModelsAlgencan
-
-
+import LazySets: Ellipsoid
+import Base: in
 """
 Structure of an Ellipsoid satisfying dot(x,A*x) + 2*dot(b,x) ≤ α
 """
-@kwdef struct EllipsoidI
+@kwdef struct EllipsoidBBSI
     A::SparseMatrixCSC
     b::Vector
     α::Float64
 end
 
+
+function in(x₀::Vector, ell::EllipsoidBBSI)
+    A, b, α  = ell.A, ell.b, ell.α
+    if dot(x₀,A*x₀) + 2*dot(b,x₀) ≤ α
+        return true
+    else
+        return false
+    end
+end
+"""
+Transform Ellipsoid in format dot(x-c,Q⁻¹*(x-c)) ≤ 1 
+into format  dot(x,A*x) + 2*dot(b,x) ≤ α
+from shape matrix Q and center of ellipsoid c
+"""
+function EllipsoidBBSI(c::Vector, Q::AbstractMatrix)
+    A = inv(Matrix(Q))
+    b = -A*c
+    α = 1 + dot(c,b)
+    return EllipsoidBBSI(A,b,α)
+end
+
+
+"""
+Transform Ellipsoid in format dot(x-c,Q⁻¹*(x-c)) ≤ 1 from LazySets
+into format  dot(x,A*x) + 2*dot(b,x) ≤ α
+from shape matrix Q and center of ellipsoid c
+"""
+EllipsoidBBSI(ell::Ellipsoid) = EllipsoidBBSI(ell.center,ell.shape_matrix)
+
+
+"""
+Transform Ellipsoid in format  dot(x,A*x) + 2*dot(b,x) ≤ α to format dot(x-c,Q⁻¹*(x-c)) ≤ 1 from LazySets
+from shape matrix Q and center of ellipsoid c
+"""
+function Ellipsoid(ell::EllipsoidBBSI) 
+    c = - (ell.A \ ell.b)
+    β = ell.α - dot(c,ell.b)
+    Q = Symmetric(inv(Matrix(ell.A)/β))   
+   return Ellipsoid(c,Q)
+end
 
 """
 This script builds the results and plots presented in XXXX
@@ -69,11 +109,10 @@ end
 
 
 function Proj_Ellipsoid(x₀::Vector,
-                        ell::EllipsoidI)
-  A, b, α  = ell.A, ell.b, ell.α
-  if dot(x₀,A*x₀) + 2*dot(b,x₀) ≤ α
-    return x₀
-  else
+                        ell::EllipsoidBBSI)
+    
+    x₀ ∉ ell ?  nothing : return x₀
+    A, b, α  = ell.A, ell.b, ell.α
     n = length(b)
     model = Model()
     @variable(model, x[1:n])
@@ -86,7 +125,6 @@ function Proj_Ellipsoid(x₀::Vector,
     stats = algencan(nlp,specfnm=algencan_specs_file)
     proj = stats.solution
     return proj
-  end
 end
 
 
@@ -102,8 +140,42 @@ function createDataframes(methods::Vector{Symbol})
     return dfResults, dfFilenames
 end
 
+function createTwoEllipsoids(n::Int, 
+                             p::Real; 
+                             λ::Real = 1.0)
+    Ellipsoids = EllipsoidBBSI[]
+    A  = sprandn(n,n,p)
+    γ = 1.5
+    A = (γ*I + A'*A)
+    a = rand(n)
+    b = A*a
+    adotAa = dot(a,b)
+    b .*= -1.
+    α = (1+γ)*adotAa
+    push!(Ellipsoids,EllipsoidBBSI(A, b, α))
+    push!(Ellipsoids, TouchingEllipsoid(Ellipsoids[1], n, λ=λ))
+    return Ellipsoids
+end
+
+function TouchingEllipsoid(ell::EllipsoidBBSI,
+                           n::Int;
+                           λ::Real = 1.0)
+    c = rand(n)
+    while c ∈ ell
+        c *= 1.5
+    end
+    x̂ = Proj_Ellipsoid(c,ell)
+    d = λ*(x̂ - c)
+    Λ = Diagonal([norm(d); norm(d) .+ 2*rand(n-1)])
+    Q, = qr(d)
+    A2 = Λ*Q
+    M2 = Symmetric(A2'*A2)
+    return EllipsoidBBSI(c,M2)
+end
+
+
 function createEllipsoids(n::Int, p::Real, m::Int)
-    Ellipsoids = EllipsoidI[]
+    Ellipsoids = EllipsoidBBSI[]
     for index  in  1:m
         A  = sprandn(n,n,p)
         γ = 1.5
@@ -113,14 +185,14 @@ function createEllipsoids(n::Int, p::Real, m::Int)
         adotAa = dot(a,b)
         b .*= -1.
         α = (1+γ)*adotAa
-        push!(Ellipsoids,EllipsoidI(A, b, α))
+        push!(Ellipsoids,EllipsoidBBSI(A, b, α))
     end
     return Ellipsoids
 end
 
 
 function centralizedCRM(x₀::Vector,
-                        Ellipsoids::Vector{EllipsoidI}; 
+                        Ellipsoids::Vector{EllipsoidBBSI}; 
                         kwargs...)
     ProjectA(x) = Proj_Ellipsoid(x,Ellipsoids[1])
     ProjectB(x) = Proj_Ellipsoid(x,Ellipsoids[2])
@@ -128,7 +200,7 @@ function centralizedCRM(x₀::Vector,
 end
 
 function MAP(x₀::Vector,
-            Ellipsoids::Vector{EllipsoidI}; 
+            Ellipsoids::Vector{EllipsoidBBSI}; 
             kwargs...)
     ProjectA(x) = Proj_Ellipsoid(x,Ellipsoids[1])
     ProjectB(x) = Proj_Ellipsoid(x,Ellipsoids[2])
@@ -198,83 +270,43 @@ end
 
 """
 makeplots_Ellipsoids2D()
-
 Makes plots for Ellipsoids in 2D
 """
-function makeplots_Ellipsoids2D()
+function makeplots_Ellipsoids2D(λ::Real, Title::AbstractString)
     ##
-    ##### Repeating Ellipsoid Examples of the paper  Approximate Douglas-Rachford algorithm for two-sets convex feasibility problems, by R. Díaz Millán, O.P. Ferreira, J. Ugon (arXiv:2105.13005)
-
+    Random.seed!(123)
+    n=2
+    ℰ = createTwoEllipsoids(n,2/n,λ = λ)
+      
+    x₀ = [3,2.]
+    while x₀ ∈ ℰ[1] || x₀ ∈ ℰ[2]
+        x₀ *= 1.2
+    end
+    resultsMAP = MAP(x₀,ℰ,filedir=datadir("sims/MAP.csv"),itmax = 20000)
+    resultscCRM = centralizedCRM(x₀,ℰ,filedir=datadir("sims/centralizedCRM.csv"),itmax = 2000)
     ##
-    # Rotation Matrix
-    Rot(θ) = [cos(θ) sin(θ);-sin(θ) cos(θ)]
-
-    # First ellipse. We will find the intersection between this set and 4 other sets.
-
-    A = diagm([2.0,1/5.0])*Rot(-π/4)
-    M = inv(Symmetric(A'*A))
-    z0=[0.0, 0.]
-    ell = LazySets.Ellipsoid(z0,inv(M)) 
-    ell_BBIS = EllipsoidI(M,z0, 1)
-
-
+    xMAP = readdlm(datadir("sims/MAP.csv")) 
+    xcCRM = readdlm(datadir("sims/centralizedCRM.csv")) 
+    plt =  plot(Ellipsoid.(ℰ), framestyle = :none, leg = :bottomleft)
     ##
-    # One ellipse that intersects with the first ellipse, with Slater point.
-    B = diagm([1/2.0,5.0/2])*Rot(π/3)
-    M1 = Symmetric(B'*B)
-    z1 = [2.3,1.0/2]
-    ell1 = LazySets.Ellipsoid(z1,inv(M1))
-    ell1_BBIS = EllipsoidI((M1),-M1*z1, 1 - dot(z1,M1*z1))
-    Ellipsoids_Ex1 = [ell_BBIS; ell1_BBIS]
-    x₀ = [-1,1.5]
-    resultsMAP = MAP(x₀,Ellipsoids_Ex1,filedir="MAP.csv",print_intermediate=true, itmax = 4000, gap_distance = true, EPSVAL = 1e-6)
-    resultscCRM = centralizedCRM(x₀,Ellipsoids_Ex1,filedir="cCRM.csv", itmax = 400, gap_distance = true, EPSVAL = 1e-6)
-    pointsMAP  = readdlm("MAP.csv")
-    pointscCRM  = readdlm("cCRM.csv")
-    ##
-    plt1 = plot(ell,framestyle = :none, aspect_ratio = :equal , leg = :bottomleft)
-    plot!(plt1,ell1)
-    plot!(plt1,[Singleton(v) for v in eachrow(pointsMAP[:,3:4])], label="MAP -- $(resultsMAP.iter_total) proj")
-    plot!(plt1,[Singleton(v) for v in eachrow(pointscCRM[:,3:4])],c=:red,label="cCRM -- $(resultscCRM.iter_total) proj")
-    MethodPath!(plt1,pointsMAP[:,3:4],color = :green)
-    MethodPath!(plt1,pointscCRM[:,3:4],color = :red)
-    title!(plt1,L"Ellipsoids with  Slater point in intersection ($\varepsilon = 10^{-6}$)")
-    label_points!(plt1,[x₀],num_points=1,label_size=12,shift=0.15)
-    plot!(plt1,Singleton(x₀), m=:square,c=:black,alpha=1)
-
-
-
-    ##
-    # One ellipse that intersects with the first ellipse, without Slater point.
-    d = [1.273,-1.1968]         # Pick a direction
-    x = d/sqrt(dot((M)*d,d)) # Find a point on the boundary
-    dd = inv(M1)*(M)*x 
-    λ = dd'*M1*dd
-    z2 = dd/λ + x
-    M2 = M1*λ
-    ell2 = LazySets.Ellipsoid(z2,inv(M2))
-    ell2_BBIS = EllipsoidI((M2),-M2*z2, 1 - dot(z2,M2*z2))
-    plt2 = plot(ell,framestyle = :none, aspect_ratio = :equal , leg = :bottomleft)
-    plot!(plt2,ell2)
-    title!(plt2,L"Ellipsoids without  Slater point in intersection ($\varepsilon = 10^{-6}$)")
-
-    ##
-    Ellipsoids_Ex2 = [ell_BBIS; ell2_BBIS]
-    x₀ = [-1,1.5]
-    resultsMAP = MAP(x₀,Ellipsoids_Ex2,filedir="MAP.csv",print_intermediate=true, itmax = 100_000, gap_distance = true, EPSVAL = 1e-6)
-    resultscCRM = centralizedCRM(x₀,Ellipsoids_Ex2,filedir="cCRM.csv", itmax = 400, gap_distance = true, EPSVAL = 1e-6)
-    ##
-    pointsMAP  = readdlm("MAP.csv")
-    pointscCRM  = readdlm("cCRM.csv")
-    plot!(plt2,[Singleton(v) for v in eachrow(pointsMAP[1:30,3:4])], label="MAP -- $(resultsMAP.iter_total) proj")
-    plot!(plt2,[Singleton(v) for v in eachrow(pointscCRM[:,3:4])],c=:red,label="cCRM -- $(resultscCRM.iter_total) proj")
-    MethodPath!(plt2,pointsMAP[1:20,3:4],color = :green)
-    MethodPath!(plt2,pointscCRM[:,3:4],color = :red)
-    label_points!(plt1,[x₀],num_points=1,label_size=12,shift=0.15)
-    plot!(plt1,Singleton(x₀), m=:square,c=:black,alpha=1)
-
-    ##
-    savefig(plt1,plotsdir("BBIS21_Ellipsoids_withSlaterPoint.pdf"))
-    savefig(plt2,plotsdir("BBIS21_Ellipsoids_withhtouSlaterPoint.pdf"))
+    plot!([Singleton(v) for v in eachrow(xMAP[2:100,3:4])],label = "MAP -- $(resultsMAP.iter_total) projs.",c = :red,alpha = 0.8, ms = 3)
+    plot!([Singleton(v) for v in eachrow(xcCRM[2:end,3:4])],label = "cCRM -- $(resultscCRM.iter_total) projs.", c = :green, alpha = 0.8, ms = 4, m = :diamond)
+    MethodPath!(plt,xMAP[1:8,3:4],color = :red)
+    MethodPath!(plt,xcCRM[:,3:4],color = :green)
+    plot!(Singleton(x₀), c = :black, m = :square, alpha = 1)
+    label_points!(plt,[x₀],num_points=1,shift=0.20,label_size=14)
+    title!(plt,Title)
+    figname = savename("BBIS21_Ellipsoids",(@dict λ),"pdf")
+    savefig(plt,plotsdir(figname))
+    return plt
 end
+
+##
+λ = 1.0
+Title = L"Ellipsoids intersection without Slater point ($\varepsilon = 10^{-6}$)"
+plt1 = makeplots_Ellipsoids2D(λ, Title)
+##
+λ = 1.1
+Title = L"Ellipsoids intersection with Slater point ($\varepsilon = 10^{-6}$)"
+plt2 = makeplots_Ellipsoids2D(λ, Title)
 

@@ -4,7 +4,9 @@
 Computes an iteration of the Cirumcentered-Reflection method
 """
 
-function CRMiteration(xCRM::Vector, ReflectA::Function, ReflectB::Function)
+function CRMiteration(xCRM::Vector, 
+                      ReflectA::Function, 
+                      ReflectB::Function)
     xCRM_RA = ReflectA(xCRM)
     xCRM_RBRA = ReflectB(xCRM_RA)
     if norm(xCRM_RA - xCRM)<ZERO_VAL
@@ -23,7 +25,9 @@ end
 Computes an iteration of the Cirumcentered-Reflection method
 """
 
-function CRMiteration(xCRM::Vector, ProjA::Vector, ReflectB::Function)
+function CRMiteration(xCRM::Vector, 
+                      ProjA::Vector, 
+                      ReflectB::Function)
     xCRM_RA = 2*ProjA - xCRM
     xCRM_RBRA = ReflectB(xCRM_RA)
     if norm(xCRM_RA - xCRM)<ZERO_VAL
@@ -42,8 +46,13 @@ end
 Cirumcentered-Reflection method
 """
 function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function; 
-    EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [],
-    print_intermediate::Bool=false,gap_distance::Bool=false,isprod :: Bool = false)
+             EPSVAL::Float64 = 1e-5,
+             itmax::Int = 100,
+             filedir::String = "", 
+             xSol::Vector = [],
+             print_intermediate::Bool = false,
+             gap_distance::Bool = false,
+             isprod::Bool = false)
     xCRM = x₀
     ReflectA(x) = Reflection(x,ProjectA)
     ReflectB(x) = Reflection(x,ProjectB)
@@ -63,7 +72,7 @@ function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
             ProjA = ProjectA(xCRM)
             tolCRM = Tolerance(xCRM,xCRMOld,xSol)
         end
-        k += 1
+        k += 2
         printOnFile(filedir,k, tolCRM, xCRM, isprod=isprod)
 end
     isprod ? method = :CRMprod : method = :CRM

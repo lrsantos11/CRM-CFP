@@ -14,6 +14,26 @@ function MethodPath!(plt::Plots.Plot,mat::Array;
     return plt
 end
 
+function label_points!(plt::Plots.Plot,
+                       mat::Vector;
+                       num_points::Int = 5,
+                       var_name::String = "z",
+                       label_size::Int = 8,
+                       shift::Float64 = 0.05)
+    list_pts = @view mat[1:num_points] 
+    for pto in eachrow(list_pts)
+        ptox = pto[1][1]
+        ptoy = pto[1][2]
+        if isodd(pto.indices[1])
+            annotate!(plt,[(ptox, ptoy+shift ,text(L"%$(var_name)_{%$(pto.indices[1] - 1)}",label_size))])
+        else
+            annotate!(plt,[(ptox, ptoy-shift ,text(L"%$(var_name)_{%$(pto.indices[1] - 1)}",label_size))])
+        end    
+    end
+    return plt
+end
+
+
 function label_points!(plt::Plots.Plot,filedir::String,num_points::Int=5;var_name::String="x", 
                       print_proj::Bool=false,num_print_proj::Int=1,ProjName::String = "P_K")
     xmtd = (readdlm(filedir))[1:num_points,3:end]
