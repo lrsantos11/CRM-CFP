@@ -51,8 +51,8 @@ function MAP(x₀::Vector, ProjectA::Function, ProjectB::Function;
         itmax::Int = 100,
         filedir::String = "",
         xSol::Vector = [],
-        print_intermediate::Bool=true,
-        gap_distance::Bool=false, 
+        print_intermediate::Bool = true,
+        gap_distance::Bool = true, 
         isprod::Bool = false)
     k = 0
     tolMAP = 1.
