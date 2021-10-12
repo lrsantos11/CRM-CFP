@@ -179,6 +179,21 @@ function SPM(x₀::Vector,
     ProjectB(x) = Proj_Ellipsoid(x,Ellipsoids[2])
     return SPM(x₀, ProjectA, ProjectB; kwargs...)
 end
+
+
+"""
+DRM(x₀, Ellipsoids)
+Uses DRM to find  a point into intersection of two EllipsoidBBIS 
+"""
+function DRM(x₀::Vector,
+            Ellipsoids::Vector{EllipsoidBBIS}; 
+            kwargs...)
+    ProjectA(x) = Proj_Ellipsoid(x,Ellipsoids[1])
+    ProjectB(x) = Proj_Ellipsoid(x,Ellipsoids[2])
+    return DRM(x₀, ProjectA, ProjectB; kwargs...)
+end
+
+
 ##################################################################
 ## Generating 2D plots
 ##################################################################
@@ -186,47 +201,73 @@ end
 makeplots_Ellipsoids2D()
 Makes plots for Ellipsoids in 2D
 """
-function makeplots_TwoEllipsoids2D(λ::Real, Title::AbstractString; ε :: Real = 1e-4)
+function makeplots_TwoEllipsoids2D(λ::Real; 
+                                   ε :: Real = 1e-4, 
+                                   itmax :: Int = 10_000,
+                                   generate_results :: Bool = false)
     ##
     Random.seed!(123)
     n=2
-    ℰ = createTwoEllipsoids(n,2/n,λ = λ)
-    x₀ = [3,2.]
+    ℰ = createTwoEllipsoids(n, 2/n, λ = λ)
+    x₀ = [0.5,2.8]
     while x₀ ∈ ℰ[1] || x₀ ∈ ℰ[2]
         x₀ *= 1.2
     end
-    resultsMAP = MAP(x₀,ℰ,filedir=datadir("sims/MAP.csv"),itmax = 20_000, EPSVAL=ε)
-    resultsSPM = SPM(x₀,ℰ,filedir=datadir("sims/SPM.csv"),itmax = 20_000, EPSVAL=ε)
-    resultscCRM = centralizedCRM(x₀,ℰ,filedir=datadir("sims/centralizedCRM.csv"),itmax = 20_000, EPSVAL=ε)
+    MAPfile = datadir("sims",savename("BBIS21_TwoEllip2DMAP",(@dict λ),"csv"))
+    DRMfile = datadir("sims",savename("BBIS21_TwoEllip2DDRM",(@dict λ),"csv"))
+    SPMfile = datadir("sims",savename("BBIS21_TwoEllip2DSPM",(@dict λ),"csv"))
+    cCRMfile = datadir("sims",savename("BBIS21_TwoEllip2DcCRM",(@dict λ),"csv"))
+
+    if generate_results
+        resultsMAP = MAP(x₀, ℰ, filedir=MAPfile,itmax = itmax, EPSVAL=ε)
+        resultsDRM = DRM(x₀, ℰ, filedir=DRMfile,itmax = itmax, EPSVAL=ε)
+        resultsSPM = SPM(x₀, ℰ, filedir=SPMfile,itmax = itmax, EPSVAL=ε)
+        resultscCRM = centralizedCRM(x₀, ℰ, filedir=cCRMfile,itmax = itmax, EPSVAL=ε)
+    end
     ##
-    xMAP = readdlm(datadir("sims/MAP.csv")) 
-    xSPM = readdlm(datadir("sims/SPM.csv")) 
-    xcCRM = readdlm(datadir("sims/centralizedCRM.csv")) 
-    plt =  plot(Ellipsoid.(ℰ), framestyle = :none, leg = :bottomleft, fillcolor = [:turquoise4  :palegreen4] )
+    xMAP = readdlm(MAPfile) 
+    xDRM = readdlm(DRMfile) 
+    xSPM = readdlm(SPMfile) 
+    xcCRM = readdlm(cCRMfile)
+    MAP_iter_total  = Int(xMAP[end,1])
+    DRM_iter_total  = Int(xDRM[end,1])
+    SPM_iter_total  = Int(xSPM[end,1])
+    cCRM_iter_total = Int(xcCRM[end,1])
+    
+    plt =  plot(Ellipsoid.(ℰ), 
+    framestyle = :none, 
+    leg = :bottomleft, fillcolor = [:turquoise4  :palegreen4], 
+    aspect_ratio = :equal
+    )
     ##
-    plot!([Singleton(v) for v in eachrow(xSPM[2:100,3:4])],label = "SPM -- $(resultsSPM.iter_total) projs.",c = :dodgerblue2,alpha = 0.8, ms = 4, m = :utriangle)
-    plot!([Singleton(v) for v in eachrow(xMAP[2:100,3:4])],label = "MAP -- $(resultsMAP.iter_total) projs.",c = :red,alpha = 0.8, ms = 3)
-    plot!([Singleton(v) for v in eachrow(xcCRM[2:end,3:4])],label = "cCRM -- $(resultscCRM.iter_total) projs.", c = :green, alpha = 0.8, ms = 4, m = :diamond)
-    MethodPath!(plt,xMAP[1:8,3:4], color = :red)
-    MethodPath!(plt,xSPM[1:8,3:4], color = :dodgerblue2)
-    MethodPath!(plt,xcCRM[:,3:4], color = :green)
+    plot!([Singleton(v) for v in eachrow(xSPM[2:100,3:4])],label = "SPM -- $(SPM_iter_total) projections",c = :dodgerblue2,alpha = 0.8, ms = 4, m = :utriangle)
+    plot!([Singleton(v) for v in eachrow(xMAP[3:2:101,3:4])],label = "MAP -- $(MAP_iter_total) projections",c = :red,alpha = 0.8, ms = 3)
+    # plot!([Singleton(v) for v in eachrow(xMAP[2:2:100,3:4])],c = :tomato, alpha = 0.4, ms = 3)
+    plot!([Singleton(v) for v in eachrow(xDRM[2:end,3:4])],label = "DRM -- $(DRM_iter_total) projections",alpha = 0.8, ms = 4, m = :dtriangle, c=:darkorange)
+    plot!([Singleton(v) for v in eachrow(xcCRM[2:end,3:4])],label = "cCRM -- $(cCRM_iter_total) projections", c = :green, alpha = 0.8, ms = 4, m = :diamond)
+    MethodPath!(plt, xMAP[1:2:9,3:4], c = :red)
+    MethodPath!(plt,xSPM[1:8,3:4], c = :dodgerblue2)
+    MethodPath!(plt,xDRM[:,3:4], c = :darkorange)
+    MethodPath!(plt,xcCRM[:,3:4], c = :green)
     plot!(Singleton(x₀), c = :black, m = :square, alpha = 1)
-    label_points!(plt,[x₀],num_points=1,shift=0.20,label_size=14)
-    title!(plt,Title)
-    figname = savename("BBIS21_Ellipsoids",(@dict λ),"pdf")
-    savefig(plt,plotsdir(figname))
+    label_points!(plt,[x₀],label_size=14, xshift = 0.25, yshift = 0.01)
     return plt
 end
 ##
-    ε = 1e-4
-    ε_exponent = floor(Int,log10(ε))
-    λ = 1.0
-    Title = L"Ellipsoids intersection without Slater point ($\varepsilon = 10^{%$(ε_exponent)}$)"
-    plt1 = makeplots_TwoEllipsoids2D(λ, Title, ε = ε)
+
+λ = 1.1
+    plt1 = makeplots_TwoEllipsoids2D(λ,  itmax = 1_000, generate_results = false)
+    figname = savename("BBIS21_Ellipsoids",(@dict λ),"pdf")
+    savefig(plt1,plotsdir(figname))
+    plt1
+
 ##
-    λ = 1.1
-    Title = L"Ellipsoids intersection with Slater point ($\varepsilon = 10^{%$(ε_exponent)}$)"
-    plt2 = makeplots_TwoEllipsoids2D(λ, Title, ε = ε)
+
+λ = 1.0
+    plt2 = makeplots_TwoEllipsoids2D(λ, itmax = 100_000, generate_results = true)
+    figname = savename("BBIS21_Ellipsoids",(@dict λ),"pdf")
+    savefig(plt2,plotsdir(figname))
+    plt2
 ##################################################################
 ## Generating Performance Profiles 
 ###################################################################
@@ -237,7 +278,7 @@ TestEllipsoids()
 """
 function tests_TwoEllipsoidsRn(;n :: Int = 100, samples :: Int = 1, λ :: Real = 1.0,   
                                   ε :: Real = 1e-6, 
-                                  itmax :: Int = 10_000, 
+                                  itmax :: Int = 2_000_000, 
                                   restarts :: Int = 1, 
                                   print_file :: Bool = false, 
                                   Methods :: Vector{Symbol} = [:centralizedCRM, :MAP], 
@@ -266,10 +307,10 @@ function tests_TwoEllipsoidsRn(;n :: Int = 100, samples :: Int = 1, λ :: Real =
                 func = eval(mtd) 
                 filename = savename("BBIS21",(mtd=mtd,time=timenow),"csv",sort=false)
                 print_file ? filedir = datadir("sims",filename) : filedir = ""
-                results  = func(x₀, ℰ, EPSVAL=ε, gap_distance=true, filedir=filedir, itmax = itmax)
+                results  = func(x₀, ℰ, EPSVAL=ε, gap_distance=false, filedir=filedir, itmax = itmax)
                 elapsed_time = 0.
                 if bench_time
-                    t = @benchmark $func($x₀,$ℰitmax,EPSVAL=$ε,gap_distance=true,filedir=$filedir)
+                    t = @benchmark $func($x₀,$ℰitmax,EPSVAL=$ε,gap_distance=false,filedir=$filedir)
                     elapsed_time = (mean(t).time)*1e-9            
                 end                
                 push!(dfrow,results.iter_total)
@@ -284,23 +325,25 @@ function tests_TwoEllipsoidsRn(;n :: Int = 100, samples :: Int = 1, λ :: Real =
     return dfResults,dfFilenames
 end
 ##
-Methods = [:centralizedCRM, :MAP, :SPM]
 samples = 30
 ε = 1e-4
 dfResultsEllips, dfEllipFilenames  = createDataframes(Methods)
 
 ## No Slater point in the intersection
+Methods = [:centralizedCRM, :DRM]
 dfResults, dfFilesname = tests_TwoEllipsoidsRn(samples = samples, ε = ε, Methods = Methods, λ = 1.0)
 append!(dfResultsEllips,dfResults)
 append!(dfEllipFilenames,dfFilesname)
 
 ## Slater point in the intersection
+Methods = [:centralizedCRM, :MAP, :DRM]
 dfResults, dfFilesname = tests_TwoEllipsoidsRn(samples = samples, ε = ε, Methods = Methods, λ = 1.1)
 append!(dfResultsEllips,dfResults)
 append!(dfEllipFilenames,dfFilesname)
 
 ## To write data. 
-CSV.write(datadir("sims","BBIS21_TwoEllipsoidsTable.csv"),dfResultsEllips,
+timenow = Dates.now()
+CSV.write(datadir("sims",savename("BBIS21_TwoEllipsoidsTable",(@dict timenow),"csv"),dfResultsEllips,
                     transform = (col, val) -> something(val, missing))
 @show df_describe = describe(dfResultsEllips)
 CSV.write(datadir("sims","BBIS21_TwoEllipsoidsTableSummary.csv"),
@@ -312,11 +355,12 @@ dfResultsEllips = CSV.read(datadir("sims","BBIS21_TwoEllipsoidsTable.csv"), Data
 @show df_Summary = describe(dfResultsEllips,:mean,:max,:min,:std,:median)[2:end,:]
 
 ## To make Performance Profiles.
-perprof = performance_profile(hcat(dfResultsEllips.centralizedCRM_it, dfResultsEllips.MAP_it), 
-                            String.(Methods),
+perprof = performance_profile(PlotsBackend(), Float64.(hcat(
+    dfResultsEllips.centralizedCRM_it, dfResultsEllips.MAP_it,dfResultsEllips.SPM_it)), 
+                           ["cCRM", "MAP", "SPM"],
                             legend = :bottomright, framestyle = :box, 
-                            linestyles=[:solid, :dash, :dot, :dashdot])
+                            linestyles=[:solid, :dash,  :dashdot])
 ylabel!("Percentage of problems solved")
-title!("Performance Profile -- Elapsed time comparison -- Gap error -- $\varepsilon = 10^{-6}$")
+title!(L"Performance Profile -- Elapsed time comparison -- Gap error -- $\varepsilon = 10^{-6}$")
 savefig(perprof,plotsdir("BBIS21_TwoEllipsoids_Perprof.pdf"))
 perprof
