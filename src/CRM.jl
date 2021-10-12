@@ -53,7 +53,7 @@ function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
              print_intermediate::Bool = false,
              gap_distance::Bool = false,
              isprod::Bool = false)
-    xCRM = x₀
+    xCRM = ProjectA(x₀)
     ReflectA(x) = Reflection(x,ProjectA)
     ReflectB(x) = Reflection(x,ProjectB)
     ProjA = ProjectA(xCRM)

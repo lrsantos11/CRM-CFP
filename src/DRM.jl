@@ -29,7 +29,7 @@ function DRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
         print_intermediate ?  printOnFile(filedir,hcat(nothing,nothing,ProjectA(xDRM)')) : nothing
         xDRM  = DRMiteration(xDRM, ReflectA, ReflectB)
         tolDRM = gap_distance ? norm(ProjectA(xDRM)-ProjectB(xDRM)) : Tolerance(xDRM,xDRMOld,xSol)
-        k += 1
+        k += 2
         printOnFile(filedir,hcat(k, tolDRM, xDRM'))
     end
     return Results(iter_total= k,final_tol=tolDRM,xApprox=xDRM,method=:DRM)
