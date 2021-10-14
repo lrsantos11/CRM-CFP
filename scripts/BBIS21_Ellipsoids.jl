@@ -237,8 +237,9 @@ function makeplots_TwoEllipsoids2D(λ::Real;
     plt =  plot(Ellipsoid.(ℰ), 
     framestyle = :none, 
     leg = :bottomleft, fillcolor = [:turquoise4  :palegreen4], 
-    aspect_ratio = :equal
-    )
+    aspect_ratio = :equal,
+     legendfont=font(18)
+     )
     ##
     plot!([Singleton(v) for v in eachrow(xSPM[2:100,3:4])],label = "SPM -- $(SPM_iter_total) projections",c = :dodgerblue2,alpha = 0.8, ms = 4, m = :utriangle)
     plot!([Singleton(v) for v in eachrow(xMAP[3:2:101,3:4])],label = "MAP -- $(MAP_iter_total) projections",c = :red,alpha = 0.8, ms = 3)
@@ -264,7 +265,7 @@ end
 ##
 
 λ = 1.0
-    plt2 = makeplots_TwoEllipsoids2D(λ, itmax = 100_000, generate_results = true)
+    plt2 = makeplots_TwoEllipsoids2D(λ, itmax = 100_000, generate_results = false)
     figname = savename("BBIS21_Ellipsoids",(@dict λ),"pdf")
     savefig(plt2,plotsdir(figname))
     plt2
@@ -276,9 +277,10 @@ end
 TestEllipsoids()
 
 """
-function tests_TwoEllipsoidsRn(;n :: Int = 100, samples :: Int = 1, λ :: Real = 1.0,   
+function tests_TwoEllipsoidsRn(;n :: Int = 100, samples :: Int = 1, 
+                                  λ :: Real = 1.0,   
                                   ε :: Real = 1e-6, 
-                                  itmax :: Int = 2_000_000, 
+                                  itmax :: Int = 100_000, 
                                   restarts :: Int = 1, 
                                   print_file :: Bool = false, 
                                   Methods :: Vector{Symbol} = [:centralizedCRM, :MAP], 
@@ -310,7 +312,7 @@ function tests_TwoEllipsoidsRn(;n :: Int = 100, samples :: Int = 1, λ :: Real =
                 results  = func(x₀, ℰ, EPSVAL=ε, gap_distance=false, filedir=filedir, itmax = itmax)
                 elapsed_time = 0.
                 if bench_time
-                    t = @benchmark $func($x₀,$ℰitmax,EPSVAL=$ε,gap_distance=false,filedir=$filedir)
+                    t = @benchmark $func($x₀,$ℰ, $itmax, EPSVAL=$ε,gap_distance=false,filedir=$filedir)
                     elapsed_time = (mean(t).time)*1e-9            
                 end                
                 push!(dfrow,results.iter_total)
@@ -336,7 +338,7 @@ append!(dfResultsEllips,dfResults)
 append!(dfEllipFilenames,dfFilesname)
 
 ## Slater point in the intersection
-Methods = [:centralizedCRM, :MAP, :DRM]
+Methods = [:centralizedCRM, :DRM, :MAP, :SPM]
 dfResults, dfFilesname = tests_TwoEllipsoidsRn(samples = samples, ε = ε, Methods = Methods, λ = 1.1)
 append!(dfResultsEllips,dfResults)
 append!(dfEllipFilenames,dfFilesname)
