@@ -238,7 +238,7 @@ function makeplots_TwoEllipsoids2D(λ::Real;
     framestyle = :none, 
     leg = :bottomleft, fillcolor = [:turquoise4  :palegreen4], 
     aspect_ratio = :equal,
-     legendfont=font(18)
+     legendfont=font(11)
      )
     ##
     plot!([Singleton(v) for v in eachrow(xSPM[2:100,3:4])],label = "SPM -- $(SPM_iter_total) projections",c = :dodgerblue2,alpha = 0.8, ms = 4, m = :utriangle)
@@ -277,14 +277,15 @@ end
 TestEllipsoids()
 
 """
-function tests_TwoEllipsoidsRn(;n :: Int = 100, samples :: Int = 1, 
-                                  λ :: Real = 1.0,   
-                                  ε :: Real = 1e-6, 
-                                  itmax :: Int = 100_000, 
-                                  restarts :: Int = 1, 
-                                  print_file :: Bool = false, 
-                                  Methods :: Vector{Symbol} = [:centralizedCRM, :MAP], 
-                                  bench_time :: Bool = false)
+function tests_TwoEllipsoidsRn(;n :: Int = 100, 
+                                samples :: Int = 1, 
+                                λ :: Real = 1.0,   
+                                ε :: Real = 1e-6, 
+                                itmax :: Int = 100_000, 
+                                restarts :: Int = 1, 
+                                print_file :: Bool = false, 
+                                Methods :: Vector{Symbol} = [:centralizedCRM, :DRM], 
+                                bench_time :: Bool = false)
     # X = R^n
     # Defines DataFrame for Results
     dfResults, dfFilenames = createDataframes(Methods)
@@ -307,7 +308,7 @@ function tests_TwoEllipsoidsRn(;n :: Int = 100, samples :: Int = 1,
             push!(dfrowFilename,prob_name)
             for mtd in Methods
                 func = eval(mtd) 
-                filename = savename("BBIS21",(mtd=mtd,time=timenow),"csv",sort=false)
+                filename = savename("BBIS21",(mtd=mtd,time=timenow,prob=prob_name),"csv",sort=false)
                 print_file ? filedir = datadir("sims",filename) : filedir = ""
                 results  = func(x₀, ℰ, EPSVAL=ε, gap_distance=false, filedir=filedir, itmax = itmax)
                 elapsed_time = 0.
@@ -327,42 +328,38 @@ function tests_TwoEllipsoidsRn(;n :: Int = 100, samples :: Int = 1,
     return dfResults,dfFilenames
 end
 ##
+Methods = [:centralizedCRM, :DRM, :MAP]
 samples = 30
 ε = 1e-4
-dfResultsEllips, dfEllipFilenames  = createDataframes(Methods)
+
+## Slater point in the intersection
+dfResults, dfFilesname = tests_TwoEllipsoidsRn(samples = samples, ε = ε, Methods = Methods, λ = 1.1)
+# To write data. 
+timenow = Dates.now()
+CSV.write(datadir("sims",savename("BBIS21_TwoEllipsoidsTableSlaterPoint",(@dict timenow),"csv"),dfResults, transform = (col, val) -> something(val, missing))
+
 
 ## No Slater point in the intersection
 Methods = [:centralizedCRM, :DRM]
 dfResults, dfFilesname = tests_TwoEllipsoidsRn(samples = samples, ε = ε, Methods = Methods, λ = 1.0)
-append!(dfResultsEllips,dfResults)
-append!(dfEllipFilenames,dfFilesname)
-
-## Slater point in the intersection
-Methods = [:centralizedCRM, :DRM, :MAP, :SPM]
-dfResults, dfFilesname = tests_TwoEllipsoidsRn(samples = samples, ε = ε, Methods = Methods, λ = 1.1)
-append!(dfResultsEllips,dfResults)
-append!(dfEllipFilenames,dfFilesname)
-
-## To write data. 
+# To write data. 
 timenow = Dates.now()
-CSV.write(datadir("sims",savename("BBIS21_TwoEllipsoidsTable",(@dict timenow),"csv"),dfResultsEllips,
-                    transform = (col, val) -> something(val, missing))
-@show df_describe = describe(dfResultsEllips)
-CSV.write(datadir("sims","BBIS21_TwoEllipsoidsTableSummary.csv"),
-                    df_describe,transform = (col, val) -> something(val, missing))
+CSV.write(datadir("sims",savename("BBIS21_TwoEllipsoidsTableNoSlaterPoint",(@dict timenow),"csv"),dfResults, transform = (col, val) -> something(val, missing))
+
+
 
 ## To consult the results.
 
-dfResultsEllips = CSV.read(datadir("sims","BBIS21_TwoEllipsoidsTable.csv"), DataFrame)
-@show df_Summary = describe(dfResultsEllips,:mean,:max,:min,:std,:median)[2:end,:]
+# dfResultsEllips = CSV.read(datadir("sims","BBIS21_TwoEllipsoidsTable.csv"), DataFrame)
+# @show df_Summary = describe(dfResultsEllips,:mean,:max,:min,:std,:median)[2:end,:]
 
-## To make Performance Profiles.
-perprof = performance_profile(PlotsBackend(), Float64.(hcat(
-    dfResultsEllips.centralizedCRM_it, dfResultsEllips.MAP_it,dfResultsEllips.SPM_it)), 
-                           ["cCRM", "MAP", "SPM"],
-                            legend = :bottomright, framestyle = :box, 
-                            linestyles=[:solid, :dash,  :dashdot])
-ylabel!("Percentage of problems solved")
-title!(L"Performance Profile -- Elapsed time comparison -- Gap error -- $\varepsilon = 10^{-6}$")
-savefig(perprof,plotsdir("BBIS21_TwoEllipsoids_Perprof.pdf"))
-perprof
+# ## To make Performance Profiles.
+# perprof = performance_profile(PlotsBackend(), Float64.(hcat(
+#     dfResultsEllips.centralizedCRM_it, dfResultsEllips.MAP_it,dfResultsEllips.SPM_it)), 
+#                            ["cCRM", "MAP", "SPM"],
+#                             legend = :bottomright, framestyle = :box, 
+#                             linestyles=[:solid, :dash,  :dashdot])
+# ylabel!("Percentage of problems solved")
+# title!(L"Performance Profile -- Elapsed time comparison -- Gap error -- $\varepsilon = 10^{-6}$")
+# savefig(perprof,plotsdir("BBIS21_TwoEllipsoids_Perprof.pdf"))
+# perprof
