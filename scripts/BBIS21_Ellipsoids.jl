@@ -301,6 +301,7 @@ function tests_TwoEllipsoidsRn(;n :: Int = 100,
                 x₀ *= 1.2
             end
             prob_name  = savename((Prob=j,Rest=i,n=n))
+            @show prob_name
             timenow= Dates.now()
             dfrow = []
             dfrowFilename = []
@@ -311,6 +312,7 @@ function tests_TwoEllipsoidsRn(;n :: Int = 100,
                 filename = savename("BBIS21",(mtd=mtd,time=timenow,prob=prob_name),"csv",sort=false)
                 print_file ? filedir = datadir("sims",filename) : filedir = ""
                 results  = func(x₀, ℰ, EPSVAL=ε, gap_distance=false, filedir=filedir, itmax = itmax)
+                @show mtd, results.iter_total
                 elapsed_time = 0.
                 if bench_time
                     t = @benchmark $func($x₀,$ℰ, $itmax, EPSVAL=$ε,gap_distance=false,filedir=$filedir)
