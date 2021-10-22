@@ -14,8 +14,8 @@ import Base.@kwdef
 ####################################
 @kwdef struct Results
     iter_total::Int
-    final_tol::Float64
-    xApprox::Vector
+    final_tol::Number
+    xApprox::AbstractVector
     method::Symbol
     date::DateTime = Dates.now()
 end
@@ -45,7 +45,7 @@ function FindCircumcentermSet(X)
             return .5*(X[1] + X[2])
         end
         V = []
-        b = Float64[]
+        b = Number[]
         # Forms V = [X[2] - X[1] ... X[n]-X[1]]
         # and b = [dot(V[1],V[1]) ... dot(V[n-1],V[n-1])]
         for ind in 2:lengthX
@@ -77,6 +77,21 @@ function FindCircumcentermSet(X)
         end
         return CC
     end
+####################################
+function FindCircumcentermSet(X::Vector{Vector{BigFloat}})
+    length(X) != 3 && error("Only computes BigFloat vector of three")
+    x, y, z = X
+	Sᵤ = y - x
+	Sᵥ = z - x
+	norm_Sᵤ = dot(Sᵤ,Sᵤ)
+	norm_Sᵥ = dot(Sᵥ,Sᵥ)
+	prod = dot(Sᵤ, Sᵥ)
+	A_inv = [norm_Sᵥ -prod; -prod norm_Sᵤ]./(norm_Sᵤ*norm_Sᵥ - prod^2)
+	b = [1/2 .*norm_Sᵤ; 1/2 .*norm_Sᵥ]
+	sol = A_inv*b
+	C = x + sol[1]*Sᵤ + sol[2]*Sᵥ
+	return C
+end
 ####################################
 """
     proj = ProjectIndicator(indicator,x)
@@ -152,7 +167,7 @@ function printOnFile(filename::String,printline::AbstractArray; deletefile::Bool
 end
 
 ####################################
-function printOnFile(filename::String, k::Int, tolCRM::Float64, xCRM::Vector; deletefile::Bool=false, isprod = false)
+function printOnFile(filename::String, k::Int, tolCRM::Number, xCRM::AbstractVector; deletefile::Bool=false, isprod::Bool = false)
     if isempty(filename)
         return
     end
@@ -216,7 +231,7 @@ Returns the orthogonal projection of `x` onto the L2-Ball  centered in `v` with 
 Uses the `ProximalOperators.jl` toolbox
 
 """
-function ProjectBall(x::Vector, v::Vector, r::Number)
+function ProjectBall(x::AbstractVector, v::AbstractVector, r::Number)
         Ball = IndBallL2(r)
         proj, fproj = prox(Translate(Ball,-v),x)
         return proj
@@ -227,7 +242,7 @@ ProjectProdDiagonal(X,num_sets)
 
 
 """
-function ProjectProdDiagonal(X::Vector)
+function ProjectProdDiagonal(X::AbstractVector)
     inner_proj = mean(X)
     proj = similar(X)
     for index in eachindex(proj)
@@ -243,7 +258,7 @@ ProjectProdSets(X,Projections)
 
 
 """
-function ProjectProdSets(X::Vector,SetsProjections::Vector{Function})
+function ProjectProdSets(X::AbstractVector,SetsProjections::AbstractVector{Function})
     proj = similar(X)
     for index in eachindex(proj)
         proj[index] = SetsProjections[index](X[index])
@@ -256,7 +271,7 @@ end
 ProjectSetsIndicators(X,SetsIndicators)
 Projection on the Product Space of Half Spaces
 """
-function ProjectSetsIndicators(X::Vector,SetsIndicators::Vector{ProximableFunction})
+function ProjectSetsIndicators(X::AbstractVector,SetsIndicators::AbstractVector{ProximableFunction})
     proj = similar(X)
     for index in eachindex(SetsIndicators)
         proj[index] = ProjectIndicator(SetsIndicators[index],X[index])
@@ -266,15 +281,15 @@ end
 
 ####################################
 
-ProjectProdSpace(X::Vector,Projections::Vector{Function}) = ProjectProdSets(X,Projections)
-ProjectProdSpace(X::Vector,Projections::Vector{ProximableFunction}) = ProjectSetsIndicators(X,Projections)
+ProjectProdSpace(X::AbstractVector,Projections::AbstractVector{Function}) = ProjectProdSets(X,Projections)
+ProjectProdSpace(X::AbstractVector,Projections::AbstractVector{ProximableFunction}) = ProjectSetsIndicators(X,Projections)
 
 ####################################
 
 """
         Tolerance(x,xold;xsol,normytpe)
 """
-function  Tolerance(x::Vector,xold::Vector,xsol::Vector;
+function  Tolerance(x::AbstractVector,xold::AbstractVector,xsol::AbstractVector;
     norm_p::Number=2)
     if isempty(xsol)
         return norm(x-xold,norm_p)
@@ -288,7 +303,7 @@ end
     ApproxProject(x,g,∂g)
 
 """
-function ApproxProject(x::Vector,g::Function,∂g::Function;λ::Float64=1.0)
+function ApproxProject(x::AbstractVector,g::Function,∂g::Function;λ::Number=1.0)
     gx = g(x)
     if gx ≤ 0
         return x
