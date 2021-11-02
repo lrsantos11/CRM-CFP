@@ -45,7 +45,7 @@ function FindCircumcentermSet(X)
             return .5*(X[1] + X[2])
         end
         V = []
-        b = Number[]
+        b = Float64[]
         # Forms V = [X[2] - X[1] ... X[n]-X[1]]
         # and b = [dot(V[1],V[1]) ... dot(V[n-1],V[n-1])]
         for ind in 2:lengthX
@@ -79,7 +79,13 @@ function FindCircumcentermSet(X)
     end
 ####################################
 function FindCircumcentermSet(X::Vector{Vector{BigFloat}})
-    length(X) != 3 && error("Only computes BigFloat vector of three")
+     lengthX = length(X)
+    lengthX > 3 && error("Only computes BigFloat Circumcenter up to three")
+     if lengthX  == 1
+            return X[1]
+        elseif lengthX == 2
+            return .5*(X[1] + X[2])
+    end
     x, y, z = X
 	Sᵤ = y - x
 	Sᵥ = z - x

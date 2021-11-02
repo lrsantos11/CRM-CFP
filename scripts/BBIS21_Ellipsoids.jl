@@ -8,10 +8,10 @@ import Base: in
 """
 Structure of an Ellipsoid satisfying dot(x,A*x) + 2*dot(b,x) ≤ α
 """
-@kwdef struct EllipsoidBBIS
-    A::SparseMatrixCSC
-    b::Vector
-    α::Float64
+@kwdef struct EllipsoidBBIS 
+    A::AbstractMatrix
+    b::AbstractVector
+    α::Number
 end
 
 function in(x₀::Vector, ell::EllipsoidBBIS)
@@ -61,7 +61,7 @@ end
 Proj_Ellipsoid(x₀, ell)
 Projects x₀ onto ell, and EllipsoidBBIS
 """
-function Proj_Ellipsoid(x₀::Vector,
+function Proj_Ellipsoid2(x₀::Vector,
                         ell::EllipsoidBBIS)
     x₀ ∉ ell ?  nothing : return x₀
     A, b, α  = ell.A, ell.b, ell.α
@@ -80,6 +80,66 @@ end
 
 
 
+
+"""
+Proj_Ellipsoid(x₀, ell)
+Projects x₀ onto ell, and EllipsoidBBIS
+"""
+function Proj_Ellipsoid(x₀::Vector,
+                        ell::EllipsoidBBIS; 
+                        itmax::Int = 10_000, 
+                        ε::Real = 1e-8)
+    x₀ ∉ ell ?  nothing : return x₀
+    A, b, α  = ell.A, ell.b, ell.α
+    ϑₖ = 10/norm(A)
+    n = length(x₀)
+    B = sqrt(Matrix(A))
+    issymmetric(B) ? BT = B : BT = B'
+    b̄ = B\(-b)
+    αplusb̄2 =  α + norm(b̄)^2
+    r = sqrt(αplusb̄2)
+    yₖ = ones(n)
+    λₖ = ones(n)
+    xₖ = x₀
+    it = 0
+    tolADMM = 1.0
+    function ProjY(y)
+        normy = norm(y)
+        if αplusb̄2 - normy^2 ≥ 0.0
+            return y
+        else
+            return (r/normy)*y
+        end
+    end
+    Ā = (I+ϑₖ*A)
+    normRxₖ = 0.0
+    while tolADMM ≥ ε^2 && it ≤ itmax
+        uₖ = x₀ + BT*(λₖ + ϑₖ*(yₖ + b̄))
+        xₖ = Ā\uₖ
+        wₖ = B*xₖ - λₖ./ϑₖ - b̄
+        normwₖ = norm(wₖ)
+        normwₖ ≤ r ? yₖ = wₖ : yₖ = (r/normwₖ) * wₖ
+        Rxₖ = xₖ - x₀ - BT*λₖ
+        Ryₖ = yₖ - ProjY(yₖ-λₖ)
+        Rλₖ = B*xₖ - yₖ - b̄
+        λₖ -= ϑₖ*Rλₖ
+        normRxₖ = norm(Rxₖ)
+        normRyₖ = norm(Ryₖ)
+        normRλₖ = norm(Rλₖ)
+        tolADMM = sum([normRxₖ^2,normRyₖ^2,normRλₖ^2])
+        it += 1
+        # if normRxₖ < normRλₖ*(0.1/n)
+        #     ϑₖ *= 2
+        # elseif normRxₖ > normRλₖ*(0.9/n)
+        #     ϑₖ *= 0.5
+        # end
+
+    end
+ 
+    # @show it, normRxₖ
+    return real.(xₖ)
+end
+
 function createDataframes(Methods::Vector{Symbol})
     dfResults= DataFrame(Problem=String[])
     dfFilenames = copy(dfResults)
@@ -96,7 +156,7 @@ function createTwoEllipsoids(n::Int,
                              p::Real; 
                              λ::Real = 1.0)
     Ellipsoids = EllipsoidBBIS[]
-    A  = sprandn(n,n,p)
+    A  = Matrix(sprandn(n,n,p))
     γ = 1.5
     A = (γ*I + A'*A)
     a = rand(n)
@@ -105,14 +165,15 @@ function createTwoEllipsoids(n::Int,
     b .*= -1.
     α = (1+γ)*adotAa
     push!(Ellipsoids,EllipsoidBBIS(A, b, α))
-    push!(Ellipsoids, TouchingEllipsoid(Ellipsoids[1], n, λ=λ))
-    return Ellipsoids
+    TouchEll, TouchPoint = TouchingEllipsoid(Ellipsoids[1], n, λ=λ)
+    push!(Ellipsoids, TouchEll)
+    return Ellipsoids, TouchPoint
 end
 
 function TouchingEllipsoid(ell::EllipsoidBBIS,
                            n::Int;
                            λ::Real = 1.0)
-    c = rand(n)
+    c = randn(n)
     while c ∈ ell
         c *= 1.5
     end
@@ -122,7 +183,7 @@ function TouchingEllipsoid(ell::EllipsoidBBIS,
     Q, = qr(d)
     A2 = Λ*Q
     M2 = Symmetric(A2'*A2)
-    return EllipsoidBBIS(c,M2)
+    return EllipsoidBBIS(c,M2), x̂
 end
 
 
@@ -208,7 +269,7 @@ function makeplots_TwoEllipsoids2D(λ::Real;
     ##
     Random.seed!(123)
     n=2
-    ℰ = createTwoEllipsoids(n, 2/n, λ = λ)
+    ℰ , xSol = createTwoEllipsoids(n, 2/n, λ = λ)
     x₀ = [0.5,2.8]
     while x₀ ∈ ℰ[1] || x₀ ∈ ℰ[2]
         x₀ *= 1.2
@@ -238,11 +299,11 @@ function makeplots_TwoEllipsoids2D(λ::Real;
     framestyle = :none, 
     leg = :bottomleft, fillcolor = [:turquoise4  :palegreen4], 
     aspect_ratio = :equal,
-     legendfont=font(11)
+     legendfontsize=14
      )
     ##
     plot!([Singleton(v) for v in eachrow(xSPM[2:100,3:4])],label = "SPM -- $(SPM_iter_total) projections",c = :dodgerblue2,alpha = 0.8, ms = 4, m = :utriangle)
-    plot!([Singleton(v) for v in eachrow(xMAP[3:2:101,3:4])],label = "MAP -- $(MAP_iter_total) projections",c = :red,alpha = 0.8, ms = 3)
+    plot!([Singleton(v) for v in eachrow(xMAP[3:2:50,3:4])],label = "MAP -- $(MAP_iter_total) projections",c = :red,alpha = 0.8, ms = 3)
     # plot!([Singleton(v) for v in eachrow(xMAP[2:2:100,3:4])],c = :tomato, alpha = 0.4, ms = 3)
     plot!([Singleton(v) for v in eachrow(xDRM[2:end,3:4])],label = "DRM -- $(DRM_iter_total) projections",alpha = 0.8, ms = 4, m = :dtriangle, c=:darkorange)
     plot!([Singleton(v) for v in eachrow(xcCRM[2:end,3:4])],label = "cCRM -- $(cCRM_iter_total) projections", c = :green, alpha = 0.8, ms = 4, m = :diamond)
@@ -256,8 +317,8 @@ function makeplots_TwoEllipsoids2D(λ::Real;
 end
 ##
 
-λ = 1.1
-    plt1 = makeplots_TwoEllipsoids2D(λ,  itmax = 1_000, generate_results = false)
+λ = 1.14
+    plt1 = makeplots_TwoEllipsoids2D(λ,  itmax = 1_000, generate_results = true)
     figname = savename("BBIS21_Ellipsoids",(@dict λ),"pdf")
     savefig(plt1,plotsdir(figname))
     plt1
@@ -265,7 +326,7 @@ end
 ##
 
 λ = 1.0
-    plt2 = makeplots_TwoEllipsoids2D(λ, itmax = 100_000, generate_results = false)
+    plt2 = makeplots_TwoEllipsoids2D(λ, itmax = 100_000, generate_results = true)
     figname = savename("BBIS21_Ellipsoids",(@dict λ),"pdf")
     savefig(plt2,plotsdir(figname))
     plt2
@@ -281,26 +342,27 @@ function tests_TwoEllipsoidsRn(;n :: Int = 100,
                                 samples :: Int = 1, 
                                 λ :: Real = 1.0,   
                                 ε :: Real = 1e-6, 
-                                itmax :: Int = 100_000, 
+                                itmax :: Int = 200_000, 
                                 restarts :: Int = 1, 
                                 print_file :: Bool = false, 
                                 Methods :: Vector{Symbol} = [:centralizedCRM, :DRM], 
-                                bench_time :: Bool = false)
+                                bench_time :: Bool = false,
+                                gap_distance = false)
     # X = R^n
     # Defines DataFrame for Results
     dfResults, dfFilenames = createDataframes(Methods)
     # Fix Random
-    Random.seed!(1)
+    Random.seed!(1234)
     # Sparsity of first ellipsoid
     p = 2*inv(n)
     for j in 1:samples
-        ℰ = createTwoEllipsoids(n, p, λ = λ)
+        ℰ, xSol = createTwoEllipsoids(n, p, λ = λ)
         for i = 1:restarts
             x₀ = StartingPoint(n)
             while x₀ ∈ ℰ[1] || x₀ ∈ ℰ[2]
                 x₀ *= 1.2
             end
-            prob_name  = savename((Prob=j,Rest=i,n=n))
+            prob_name  = savename((Prob=j,Rest=i,n=n,λ=λ))
             @show prob_name
             timenow= Dates.now()
             dfrow = []
@@ -311,11 +373,11 @@ function tests_TwoEllipsoidsRn(;n :: Int = 100,
                 func = eval(mtd) 
                 filename = savename("BBIS21",(mtd=mtd,time=timenow,prob=prob_name),"csv",sort=false)
                 print_file ? filedir = datadir("sims",filename) : filedir = ""
-                results  = func(x₀, ℰ, EPSVAL=ε, gap_distance=false, filedir=filedir, itmax = itmax)
-                @show mtd, results.iter_total
+                results  = func(x₀, ℰ, EPSVAL=ε, gap_distance=gap_distance, filedir=filedir, itmax = itmax, xSol = xSol)
+                @show mtd, results.iter_total, results.final_tol
                 elapsed_time = 0.
                 if bench_time
-                    t = @benchmark $func($x₀,$ℰ, $itmax, EPSVAL=$ε,gap_distance=false,filedir=$filedir)
+                    t = @benchmark $func($x₀,$ℰ, $itmax, EPSVAL=$ε,gap_distance=false,filedir=$filedir, xSol = $xSol)
                     elapsed_time = (mean(t).time)*1e-9            
                 end                
                 push!(dfrow,results.iter_total)
@@ -330,24 +392,57 @@ function tests_TwoEllipsoidsRn(;n :: Int = 100,
     return dfResults,dfFilenames
 end
 ##
-Methods = [:centralizedCRM, :DRM, :MAP]
+
+# Slater point in the intersection
+ε = 1e-6
 samples = 30
-ε = 1e-4
+Methods = [:centralizedCRM, :DRM, :MAP]
+λ = 1.1
+itmax = 10_000
+dfResults, dfFilesname = tests_TwoEllipsoidsRn(samples = samples, ε = ε, Methods = Methods, λ = λ, itmax = itmax, gap_distance=true)
+##
+## # To make Performance Profiles.
+T = Float64[dfResults.centralizedCRM_it dfResults.DRM_it dfResults.MAP_it]
+T[findall(row-> row>=10000, T)] .=Inf
+perprof1 = performance_profile(PlotsBackend(), 
+                                T,
+                           ["cCRM", "DRM", "MAP"],
+                            legend = :bottomright, framestyle = :box, 
+                            linestyles=[:solid, :dash, :dot])
+ylabel!("Percentage of problems solved")
+# title!(L"Performance Profile -- Total projections comparison -- tolerance $\varepsilon = 10^{-4}$")
+savefig(perprof1,plotsdir(savename("BBIS21_TwoEllipsoids_Perprof",(@dict λ),"pdf")))
+perprof1
+##
+# Summary
+df_Summary = describe(dfResults[:,[:centralizedCRM_it,:DRM_it, :MAP_it]],:mean,:std,:median,:min,:max)
 
-## Slater point in the intersection
-dfResults, dfFilesname = tests_TwoEllipsoidsRn(samples = samples, ε = ε, Methods = Methods, λ = 1.1)
-# To write data. 
+## To write data. 
 timenow = Dates.now()
-CSV.write(datadir("sims",savename("BBIS21_TwoEllipsoidsTableSlaterPoint",(@dict timenow),"csv"),dfResults, transform = (col, val) -> something(val, missing))
-
+CSV.write(datadir("sims",savename("BBIS21_TwoEllipsoidsTableSlaterPoint",(@dict timenow λ),"csv")),dfResults)
 
 ## No Slater point in the intersection
-Methods = [:centralizedCRM, :DRM]
-dfResults, dfFilesname = tests_TwoEllipsoidsRn(samples = samples, ε = ε, Methods = Methods, λ = 1.0)
-# To write data. 
+Methods = [:centralizedCRM, :MAP]
+λ = 1.0
+samples = 15
+dfResults, dfFilesname = tests_TwoEllipsoidsRn(samples = samples, ε = 1e-3, Methods = Methods, λ = λ, itmax = 500_000)
+## To write data. 
 timenow = Dates.now()
-CSV.write(datadir("sims",savename("BBIS21_TwoEllipsoidsTableNoSlaterPoint",(@dict timenow),"csv"),dfResults, transform = (col, val) -> something(val, missing))
+CSV.write(datadir("sims",savename("BBIS21_TwoEllipsoidsTableNoSlaterPoint",(@dict timenow λ),"csv")),dfResults)
 
+
+
+##
+perprof2 = performance_profile(PlotsBackend(), 
+                            Float64.(hcat(dfResults.centralizedCRM_it, dfResults.MAP_it)),
+                            ["cCRM", "MAP"],
+                            legend = :bottomright, 
+                            framestyle = :box,
+                            linestyles=[:solid, :dash])
+ylabel!("Percentage of problems solved")
+# title!(L"Performance Profile -- Total projections comparison -- tolerance $\varepsilon = 10^{-4}$")
+savefig(perprof2,plotsdir(savename("BBIS21_TwoEllipsoids_Perprof",(@dict λ),"pdf")))
+perprof2
 
 
 ## To consult the results.
@@ -355,13 +450,3 @@ CSV.write(datadir("sims",savename("BBIS21_TwoEllipsoidsTableNoSlaterPoint",(@dic
 # dfResultsEllips = CSV.read(datadir("sims","BBIS21_TwoEllipsoidsTable.csv"), DataFrame)
 # @show df_Summary = describe(dfResultsEllips,:mean,:max,:min,:std,:median)[2:end,:]
 
-# ## To make Performance Profiles.
-# perprof = performance_profile(PlotsBackend(), Float64.(hcat(
-#     dfResultsEllips.centralizedCRM_it, dfResultsEllips.MAP_it,dfResultsEllips.SPM_it)), 
-#                            ["cCRM", "MAP", "SPM"],
-#                             legend = :bottomright, framestyle = :box, 
-#                             linestyles=[:solid, :dash,  :dashdot])
-# ylabel!("Percentage of problems solved")
-# title!(L"Performance Profile -- Elapsed time comparison -- Gap error -- $\varepsilon = 10^{-6}$")
-# savefig(perprof,plotsdir("BBIS21_TwoEllipsoids_Perprof.pdf"))
-# perprof

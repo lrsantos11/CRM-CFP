@@ -40,9 +40,9 @@ function parallelCRMiteration!(xCRM::Vector,
                                IsometryB::Function)
     xCRM_RA = IsometryA(xCRM)
     xCRM_RB = IsometryB(xCRM)
-    if norm(xCRM_RA - xCRM) < ZERO_VAL
+    if xCRM_RA ≈ xCRM
         xCRM = FindCircumcentermSet([xCRM, xCRM_RB])
-    elseif norm(xCRM_RB - xCRM_RA) < ZERO_VAL
+    elseif xCRM_RB ≈ xCRM_RA
         xCRM = FindCircumcentermSet([xCRM,  xCRM_RA])
     else
         xCRM = FindCircumcentermSet([xCRM, xCRM_RA, xCRM_RB])

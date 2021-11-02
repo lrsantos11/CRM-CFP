@@ -9,9 +9,9 @@ function CRMiteration(xCRM::Vector,
                       ReflectB::Function)
     xCRM_RA = ReflectA(xCRM)
     xCRM_RBRA = ReflectB(xCRM_RA)
-    if norm(xCRM_RA - xCRM)<ZERO_VAL
+    if xCRM_RA ≈ xCRM
         xCRM = FindCircumcentermSet([xCRM, xCRM_RBRA])
-    elseif norm(xCRM_RBRA - xCRM_RA)<ZERO_VAL
+    elseif xCRM_RBRA ≈ xCRM_RA
         xCRM =FindCircumcentermSet([xCRM,  xCRM_RA])
     else
         xCRM = FindCircumcentermSet([xCRM, xCRM_RA, xCRM_RBRA])
@@ -30,9 +30,9 @@ function CRMiteration(xCRM::Vector,
                       ReflectB::Function)
     xCRM_RA = 2*ProjA - xCRM
     xCRM_RBRA = ReflectB(xCRM_RA)
-    if norm(xCRM_RA - xCRM)<ZERO_VAL
+    if (xCRM_RA ≈ xCRM)
         xCRM = FindCircumcentermSet([xCRM, xCRM_RBRA])
-    elseif norm(xCRM_RBRA - xCRM_RA)<ZERO_VAL
+    elseif (xCRM_RBRA ≈ xCRM_RA)
         xCRM =FindCircumcentermSet([xCRM,  xCRM_RA])
     else
         xCRM = FindCircumcentermSet([xCRM, xCRM_RA, xCRM_RBRA])
