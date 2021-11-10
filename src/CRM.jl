@@ -84,7 +84,7 @@ end
 
 Cirumcentered-Reflection method on Pierra's product space reformulation
 """
-function CRMprod(x₀::Vector{Float64},Projections::Vector; 
+function CRMprod(x₀::Vector{Float64},Projections::Vector{Function}; 
     EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [],
     print_intermediate::Bool=false,gap_distance::Bool=false)
     k = 0
