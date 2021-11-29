@@ -49,4 +49,4 @@ doi: [10.1007/s10589-021-00275-6](https://doi.org/10.1007/s10589-021-00275-6), [
 
 <a id="3">[Araujo2021]</a>  G. Araújo, R. Arefidamghani, R. Behling, J.-Y. Bello-Cruz, A. N. Iusem, and L.-R. Santos,  _“Circumcentering approximate reflections for solving the convex feasibility problem”_, 2021. [arXiv:2105.00497](http://arxiv.org/abs/2105.00497) 
 
-<a id="4">[Behling2021a]</a>  R. Behling, J.-Y. Bello-Cruz, A. N. Iusem  and  L.-R. Santos, _“On the centralization of the circumcentered-reflection method”_, 2021. [arXiv:XXXX.XXXXX](http://arxiv.org/abs/XXXX.XXXXX).
+<a id="4">[Behling2021a]</a>  R. Behling, J.-Y. Bello-Cruz, A. N. Iusem  and  L.-R. Santos, _“On the centralization of the circumcentered-reflection method”_, 2021. [arXiv:2111.07022](http://arxiv.org/abs/2111.07022).
