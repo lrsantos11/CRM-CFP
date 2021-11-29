@@ -36,7 +36,7 @@ function FigureQuadraticApprox(α::Number,β::Number, x₀::Vector, xSol::Vector
                 label="")                
         scatter!(scatter_points_mtd_x,scatter_points_mtd_y, c=mrk_color[index], marker=(3,:circle),
                 label="A$(String(mtd)) ($(Result.iter_total) it.)")        
-        MethodPath(plt,xmtd)
+       method_path(plt,xmtd)
     end
     return plt,filedirs
 end

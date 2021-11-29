@@ -1,7 +1,10 @@
 """
 Creates plot with the path of method. 
 """
-function MethodPath!(plt::Plots.Plot,mat::Array; λ::Float64 = .97,  kwargs...)
+function method_path!(plt::Plots.Plot,
+                    mat::Array; 
+                    λ::Float64 = .97,  
+                    kwargs...)
     x = @view mat[:,1]
     y = @view mat[:,2]
     num_arrows = length(x)-1
