@@ -132,7 +132,7 @@ end
 
 
 function ProjectEllipsoids_ProdSpace(X::Vector,
-                                     Ellipsoids::Vector{EllipsoidBBIS})
+    Ellipsoids::Vector{EllipsoidBBIS})
     proj = similar(X)
     for index in eachindex(proj)
         proj[index] = Proj_Ellipsoid(X[index], Ellipsoids[index])
@@ -142,7 +142,7 @@ end
 
 
 function ApproxProjectEllipsoids_ProdSpace(X::Vector,
-                                           Ellipsoids::Vector{EllipsoidBBIS})
+    Ellipsoids::Vector{EllipsoidBBIS})
     proj = similar(X)
     for index in eachindex(proj)
         proj[index] = ApproxProj_Ellipsoid(X[index], Ellipsoids[index])
@@ -168,22 +168,6 @@ function ApproxProj_Ellipsoid(x::Vector,
 end
 
 
-function createDaframes(method::Vector{Symbol}, useapprox::Bool)
-    dfResults = DataFrame(Problem = String[])
-    dfFilenames = copy(dfResults)
-    for mtd in method
-        insertcols!(dfResults, join([mtd, "_it"]) => Int[])
-        insertcols!(dfResults, join([mtd, "_elapsed"]) => Real[])
-        insertcols!(dfFilenames, join([mtd, "filename"]) => String[])
-        if useapprox
-            insertcols!(dfResults, join([mtd, "Approx_it"]) => Int[])
-            insertcols!(dfResults, join([mtd, "Approx_elapsed"]) => Real[])
-            insertcols!(dfFilenames, join([mtd, "Approxfilename"]) => String[])
-        end
-    end
-    return dfResults, dfFilenames
-end
-
 function createEllipsoids(n::Int, p::Real, num_sets::Int)
     Ellipsoids = EllipsoidBBIS[]
     for index = 1:num_sets
@@ -199,12 +183,40 @@ function createEllipsoids(n::Int, p::Real, num_sets::Int)
     end
     return Ellipsoids
 end
+"""
+make_blocks()
 
-##
+"""
+
+function make_blocks(num_sets::Int)
+    max_size = 5
+    min_size = 3
+    block_indexes = []
+    flag = true
+    indexes = collect(1:num_sets)
+    sum_blocks = 0
+    while sum_blocks != num_sets && flag
+        blocksize = rand(min_size:max_size)
+        sum_blocks += blocksize
+        if sum_blocks > num_sets
+            blocksize -= (sum_blocks - num_sets)
+            flag = false
+        end
+        push!(block_indexes, indexes[1:blocksize])
+        deleteat!(indexes, 1:blocksize)
+    end
+    return block_indexes
+end
+
+
+##################################################################
+## Methods specialized for this set of experiments.
+##################################################################
+
 
 """
 CRMprod(x₀, Ellipsoids)
-Uses cCRM to find a point into intersection of two EllipsoidBBIS 
+Uses CRMprod to find a point into intersection of a finite number of  EllipsoidBBIS 
 """
 function CRMprod(x₀::Vector,
     Ellipsoids::Vector{EllipsoidBBIS};
@@ -218,8 +230,26 @@ end
 
 
 """
+fneCRMprod(x₀, Ellipsoids)
+Uses fneCRMprod to find a point into intersection of a finite number of  EllipsoidBBIS 
+"""
+function fneCRMprod(x₀::Vector,
+    Ellipsoids::Vector{EllipsoidBBIS};
+    kwargs...)
+    num_sets = length(Ellipsoids)
+    block_indexes = make_blocks(num_sets)
+    num_blocks = length(block_indexes)
+    Projections = Function[]
+    for block in block_indexes
+        push!(Projections, x -> mean([Proj_Ellipsoid(x, ell) for ell in Ellipsoids[block]]))
+    end
+    return CRMprod(x₀, Projections; kwargs...)
+end
+
+
+"""
 CARMprod(x₀, Ellipsoids)
-Uses CARMprod to find a point into intersection of p EllipsoidBBIS 
+Uses CARMprod to find a point into intersection of a finite number of  EllipsoidBBIS 
 """
 function CARMprod(x₀::Vector,
     Ellipsoids::Vector{EllipsoidBBIS};
@@ -232,10 +262,26 @@ function CARMprod(x₀::Vector,
 end
 
 
+"""
+fneCARMprod(x₀, Ellipsoids)
+Uses fneCARMprod to find a point into intersection of a finite number of  EllipsoidBBIS 
+"""
+function fneCARMprod(x₀::Vector,
+    Ellipsoids::Vector{EllipsoidBBIS};
+    kwargs...)
+    Projections = Function[]
+    for ell in Ellipsoids
+        push!(Projections, x -> ApproxProj_Ellipsoid(x, ell))
+    end
+    return CRMprod(x₀, Projections; kwargs...)
+end
+
+
+
 
 """
 MAP(x₀, Ellipsoids)
-Uses MAP to find  a point into intersection of p EllipsoidBBIS 
+Uses MAP to find  a point into intersection of a finite number of  EllipsoidBBIS 
 """
 function MAPprod(x₀::Vector,
     Ellipsoids::Vector{EllipsoidBBIS};
@@ -251,7 +297,7 @@ end
 
 """
 MAAP(x₀, Ellipsoids)
-Uses MAAP to find  a point into intersection of p EllipsoidBBIS 
+Uses MAAP to find  a point into intersection of a finite number of  EllipsoidBBIS 
 """
 function MAAPprod(x₀::Vector,
     Ellipsoids::Vector{EllipsoidBBIS};
@@ -263,27 +309,43 @@ function MAAPprod(x₀::Vector,
     return MAPprod(x₀, Projections; kwargs...)
 end
 
+##################################################################
+## Functions to run the benchmark
+##################################################################
 
-##
-
-
-
-"""
-TestEllipsoids()
 
 """
-function TestEllipsoids(; n::Int = 100,
+createDataFrames()
+
+"""
+function createDataFrames(method::Vector{Symbol}, bench_time::Bool)
+    dfResults = DataFrame(Problem = String[])
+    dfFilenames = copy(dfResults)
+    for mtd in method
+        insertcols!(dfResults, join([mtd, "_it"]) => Int[])
+        bench_time ? insertcols!(dfResults, join([mtd, "_elapsed"]) => Real[]) : nothing
+        insertcols!(dfFilenames, join([mtd, "filename"]) => String[])
+    end
+    return dfResults, dfFilenames
+end
+
+"""
+Benchmark_Ellipsoids()
+
+"""
+function Benchmark_Ellipsoids(;
+    n::Int = 100,
     num_sets::Int = 10,
     samples::Int = 1,
     ε::Real = 1e-6,
     itmax::Int = 1000,
     restarts::Int = 1,
     print_file::Bool = false,
-    method::Vector{Symbol} = [:CARMprod, :CRMprod],
+    method::Vector{Symbol} = [:CRMprod, :fneCRMprod],
     bench_time::Bool = false)
     # X = R^n
     # Defines DataFrame for Results
-    dfResults, dfFilenames = createDaframes(method, useapprox)
+    dfResults, dfFilenames = createDataFrames(method, bench_time)
     # Fix Random
     Random.seed!(1)
     p = 2 * inv(n)
@@ -304,31 +366,14 @@ function TestEllipsoids(; n::Int = 100,
                 filename = savename("Are21", (mtd = mtd, time = timenow), "csv", sort = false)
                 print_file ? filedir = datadir("sims", filename) : filedir = ""
                 results = func(x₀, Ellipsoids, itmax = itmax, EPSVAL = ε, gap_distance = true, filedir = filedir)
-                elapsed_time = 0.0
+                push!(dfrow, results.iter_total)
                 if bench_time
                     t = @benchmark $func($x₀, $Ellipsoids, itmax = $itmax, EPSVAL = $ε, gap_distance = true, filedir = $filedir)
                     elapsed_time = (mean(t).time) * 1e-9
-                end
-                push!(dfrow, results.iter_total)
-                push!(dfrow, elapsed_time)
-                push!(dfrowFilename, filedir)
-                if useapprox
-                    Ellipsoids[begin][:useapprox] = true
-                    mtd = Symbol("Approx" * String(mtd))
-                    filename = savename("AABBIS21", (mtd = mtd, time = timenow), "csv", sort = false)
-                    print_file ? filedir = datadir("sims", filename) : filedir = ""
-                    results = func(x₀, Ellipsoids, itmax = itmax, EPSVAL = ε, gap_distance = true, filedir = filedir)
-                    elapsed_time = 0.0
-                    if bench_time
-                        t = @benchmark $func($x₀, $Ellipsoids, itmax = $itmax, EPSVAL = $ε, gap_distance = true, filedir = $filedir)
-                        elapsed_time = (mean(t).time) * 1e-9
-                    end
-                    push!(dfrow, results.iter_total)
                     push!(dfrow, elapsed_time)
-                    push!(dfrowFilename, filedir)
-                    Ellipsoids[begin][:useapprox] = false
 
                 end
+                push!(dfrowFilename, filedir)
             end
             push!(dfResults, dfrow)
             push!(dfFilenames, dfrowFilename)
@@ -337,43 +382,46 @@ function TestEllipsoids(; n::Int = 100,
     return dfResults, dfFilenames
 end
 
-##
+##################################################################
+## Benchmark #1 - CRMProd vs MAPprod vs fneCRMprod
+##################################################################
+
 
 # # To generate the results.
 
-# size_spaces = [10, 50, 100, 200]
-# num_ellipsoids = [5, 10, 20 , 50]
-# samples = 10
-# # restarts = 1
-# ε = 1e-6
-# itmax = 50000
-# method = [:CRMprod, :MAPprod]
-# useapprox = true
+size_spaces = [10, 100]
+num_ellipsoids = [10, 30 , 50, 100, 200]
+samples = 10
+# restarts = 1
+ε = 1e-6
+itmax = 50000
+method = [:CRMprod, :fneCRMprod, :MAPprod, :CARMprod, :MAAPprod]
 # # Too much time. It took 3 days for the results to be finished.
-# bench_time = false
-# dfResultsEllips, dfEllipFilenames  = createDaframes(method,useapprox)
-# for n in size_spaces, m in num_ellipsoids
-#     print(m)
-#     dfResults, dfFilesname = TestEllipsoids(n=n, num_sets = m, samples = samples, itmax=itmax, 
-#                                 ε=ε, bench_time=benhc_time, useapprox=useapprox)
-#     append!(dfResultsEllips,dfResults)
-#     append!(dfEllipFilenames,dfFilesname)
-# end
-# ##
-# To write data. 
-# CSV.write(datadir("sims","AABBIS21_EllipsoidsTable.csv"),dfResultsEllips,
-#                     transform = (col, val) -> something(val, missing))
-# @show df_describe = describe(dfResultsEllips)
-# CSV.write(datadir("sims","AABBIS21_EllipsoidsTableSummary.csv"),
+bench_time = false
+dfResultsEllips, dfEllipFilenames  = createDataFrames(method,bench_time)
+for n in size_spaces, num_sets in num_ellipsoids
+    print(num_sets)
+    dfResults, dfFilesname = Benchmark_Ellipsoids(n=n, num_sets = num_sets, samples = samples, itmax = itmax, ε = ε, bench_time=bench_time, method = method)
+     append!(dfResultsEllips,dfResults)
+     append!(dfEllipFilenames,dfFilesname)
+end
+
+##
+# Write data. 
+CSV.write(datadir("sims","Are21_EllipsoidsTable.csv"),dfResultsEllips,
+                    transform = (col, val) -> something(val, missing))
+@show df_describe = describe(dfResultsEllips)
+# CSV.write(datadir("sims","Are21_EllipsoidsTableSummary.csv"),
 #                     df_describe,transform = (col, val) -> something(val, missing))
 
 # To consult the results.
 
-# dfResultsEllips = CSV.read(datadir("sims","AABBIS21_EllipsoidsTable.csv"), DataFrame)
+# dfResultsEllips = CSV.read(datadir("sims","Are21_EllipsoidsTable.csv"), DataFrame)
 # @show df_Summary = describe(dfResultsEllips,:mean,:max,:min,:std,:median)[2:end,:]
 
 
 
+## Generate Peformance Profiles
 
 # perprof = performance_profile(hcat(dfResultsEllips.CRMprodApprox_elapsed, dfResultsEllips.MAPprodApprox_elapsed,
 #                                     dfResultsEllips.CRMprod_elapsed,dfResultsEllips.MAPprod_elapsed), 
@@ -381,25 +429,26 @@ end
 #     title=L"Performance Profile -- Elapsed time comparison -- Gap error -- $\varepsilon = 10^{-6}$",
 #     legend = :bottomright, framestyle = :box, linestyles=[:solid, :dash, :dot, :dashdot])
 # ylabel!("Percentage of problems solved")
-# savefig(perprof,plotsdir("AABBIS21_Ellipsoids_PerProf.pdf"))
+# savefig(perprof,plotsdir("Are21_Ellipsoids_PerProf.pdf"))
 # perprof
 # perprof2 = performance_profile(hcat(dfResultsEllips.CRMprodApprox_elapsed, dfResultsEllips.MAPprodApprox_elapsed), 
 #                             ["CARM", "MAAP"],
 #     title=L"Performance Profile -- Elapsed time comparison -- Gap error -- $\varepsilon = 10^{-6}$",
 #     legend = :bottomright, framestyle = :box, linestyles=[:solid, :dash,],logscale=false)
 # ylabel!("Percentage of problems solved")
-# savefig(perprof2,plotsdir("AABBIS21_Ellipsoids_PerProf2.pdf"))
+# savefig(perprof2,plotsdir("Are21_Ellipsoids_PerProf2.pdf"))
 # perprof2
 # perprof3 = performance_profile(hcat(dfResultsEllips.CRMprodApprox_elapsed, dfResultsEllips.CRMprod_elapsed), 
 #                             ["CARM", "CRM"],
 #     title=L"Performance Profile -- Elapsed time comparison -- Gap error -- $\varepsilon = 10^{-6}$",
 #     legend = :bottomright, framestyle = :box, linestyles=[:solid, :dash,],logscale=false)
 # ylabel!("Percentage of problems solved")
-# savefig(perprof3,plotsdir("AABBIS21_Ellipsoids_PerProf3.pdf"))
+# savefig(perprof3,plotsdir("Are21_Ellipsoids_PerProf3.pdf"))
 # perprof3
 
 
 
+##
 
 
 
