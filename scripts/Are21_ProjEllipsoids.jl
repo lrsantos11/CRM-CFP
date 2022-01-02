@@ -400,19 +400,19 @@ method = [:CRMprod, :fneCRMprod, :MAPprod, :CARMprod, :MAAPprod]
 bench_time = false
 dfResultsEllips, dfEllipFilenames  = createDataFrames(method,bench_time)
 for n in size_spaces, num_sets in num_ellipsoids
-    print(num_sets)
-    dfResults, dfFilesname = Benchmark_Ellipsoids(n=n, num_sets = num_sets, samples = samples, itmax = itmax, ε = ε, bench_time=bench_time, method = method)
-     append!(dfResultsEllips,dfResults)
-     append!(dfEllipFilenames,dfFilesname)
+    println("Running benchmark on $num_sets ellipsoids in R^$(n)")
+    dfResults, dfFilesname = Benchmark_Ellipsoids(n = n, num_sets = num_sets, samples = samples, itmax = itmax, ε = ε, bench_time = bench_time, method = method)
+    append!(dfResultsEllips, dfResults)
+    append!(dfEllipFilenames, dfFilesname)
 end
 
 ##
 # Write data. 
 CSV.write(datadir("sims","Are21_EllipsoidsTable.csv"),dfResultsEllips,
                     transform = (col, val) -> something(val, missing))
-@show df_describe = describe(dfResultsEllips)
-# CSV.write(datadir("sims","Are21_EllipsoidsTableSummary.csv"),
-#                     df_describe,transform = (col, val) -> something(val, missing))
+@show df_describe = describe(dfResultsEllips, :min, :median, :mean, :max, :std)
+CSV.write(datadir("sims","Are21_EllipsoidsTableSummary.csv"),
+                    df_describe,transform = (col, val) -> something(val, missing))
 
 # To consult the results.
 
