@@ -191,7 +191,7 @@ make_blocks()
 function make_blocks(num_sets::Int)
     max_size = 5
     min_size = 3
-    block_indexes = []
+    block_indexes = Vector[]
     flag = true
     indexes = collect(1:num_sets)
     sum_blocks = 0
@@ -209,6 +209,19 @@ function make_blocks(num_sets::Int)
 end
 
 
+function generate_fneProj(block_indexes, num_sets, Ellipsoids)
+    if isempty(block_indexes)
+        block_indexes = make_blocks(num_sets)
+    end
+    num_blocks = length(block_indexes)
+    Projections = Function[]
+    for block in block_indexes
+        push!(Projections, x -> mean([Proj_Ellipsoid(x, ell) for ell in Ellipsoids[block]]))
+    end
+    return Projections
+end
+
+
 ##################################################################
 ## Methods specialized for this set of experiments.
 ##################################################################
@@ -220,6 +233,7 @@ Uses CRMprod to find a point into intersection of a finite number of  EllipsoidB
 """
 function CRMprod(x₀::Vector,
     Ellipsoids::Vector{EllipsoidBBIS};
+    block_indexes::Vector{Vector} = Vector[],
     kwargs...)
     Projections = Function[]
     for ell in Ellipsoids
@@ -235,17 +249,33 @@ Uses fneCRMprod to find a point into intersection of a finite number of  Ellipso
 """
 function fneCRMprod(x₀::Vector,
     Ellipsoids::Vector{EllipsoidBBIS};
+    block_indexes::Vector{Vector} = Vector[],
     kwargs...)
     num_sets = length(Ellipsoids)
-    block_indexes = make_blocks(num_sets)
-    num_blocks = length(block_indexes)
-    Projections = Function[]
-    for block in block_indexes
-        push!(Projections, x -> mean([Proj_Ellipsoid(x, ell) for ell in Ellipsoids[block]]))
+    if isempty(block_indexes)
+        block_indexes = make_blocks(num_sets)
     end
+    Projections = generate_fneProj(block_indexes, num_sets, Ellipsoids)
     return CRMprod(x₀, Projections; kwargs...)
 end
 
+
+
+"""
+fneMAPprod(x₀, Ellipsoids)
+Uses fneMAPprod to find a point into intersection of a finite number of  EllipsoidBBIS 
+"""
+function fneCimmino(x₀::Vector,
+    Ellipsoids::Vector{EllipsoidBBIS};
+    block_indexes::Vector{Vector} = Vector[],
+    kwargs...)
+    num_sets = length(Ellipsoids)
+    if isempty(block_indexes)
+        block_indexes = make_blocks(num_sets)
+    end
+    Projections = generate_fneProj(block_indexes, num_sets, Ellipsoids)
+    return MAPprod(x₀, Projections; kwargs...)
+end
 
 """
 CARMprod(x₀, Ellipsoids)
@@ -253,21 +283,7 @@ Uses CARMprod to find a point into intersection of a finite number of  Ellipsoid
 """
 function CARMprod(x₀::Vector,
     Ellipsoids::Vector{EllipsoidBBIS};
-    kwargs...)
-    Projections = Function[]
-    for ell in Ellipsoids
-        push!(Projections, x -> ApproxProj_Ellipsoid(x, ell))
-    end
-    return CRMprod(x₀, Projections; kwargs...)
-end
-
-
-"""
-fneCARMprod(x₀, Ellipsoids)
-Uses fneCARMprod to find a point into intersection of a finite number of  EllipsoidBBIS 
-"""
-function fneCARMprod(x₀::Vector,
-    Ellipsoids::Vector{EllipsoidBBIS};
+    block_indexes::Vector{Vector} = Vector[],
     kwargs...)
     Projections = Function[]
     for ell in Ellipsoids
@@ -285,6 +301,7 @@ Uses MAP to find  a point into intersection of a finite number of  EllipsoidBBIS
 """
 function MAPprod(x₀::Vector,
     Ellipsoids::Vector{EllipsoidBBIS};
+    block_indexes::Vector{Vector} = Vector[],
     kwargs...)
     Projections = Function[]
     for ell in Ellipsoids
@@ -301,6 +318,7 @@ Uses MAAP to find  a point into intersection of a finite number of  EllipsoidBBI
 """
 function MAAPprod(x₀::Vector,
     Ellipsoids::Vector{EllipsoidBBIS};
+    block_indexes::Vector{Vector} = Vector[],
     kwargs...)
     Projections = Function[]
     for ell in Ellipsoids
@@ -341,7 +359,7 @@ function Benchmark_Ellipsoids(;
     itmax::Int = 1000,
     restarts::Int = 1,
     print_file::Bool = false,
-    method::Vector{Symbol} = [:CRMprod, :fneCRMprod],
+    method::Vector{Symbol} = [:CRMprod, :fneCRMprod, :fneCimmino],
     bench_time::Bool = false)
     # X = R^n
     # Defines DataFrame for Results
@@ -365,10 +383,11 @@ function Benchmark_Ellipsoids(;
                 func = eval(mtd)
                 filename = savename("Are21", (mtd = mtd, time = timenow), "csv", sort = false)
                 print_file ? filedir = datadir("sims", filename) : filedir = ""
-                results = func(x₀, Ellipsoids, itmax = itmax, EPSVAL = ε, gap_distance = true, filedir = filedir)
+                block_indexes = make_blocks(num_sets)
+                results = func(x₀, Ellipsoids, itmax = itmax, EPSVAL = ε, gap_distance = true, filedir = filedir, block_indexes = block_indexes)
                 push!(dfrow, results.iter_total)
                 if bench_time
-                    t = @benchmark $func($x₀, $Ellipsoids, itmax = $itmax, EPSVAL = $ε, gap_distance = true, filedir = $filedir)
+                    t = @benchmark $func($x₀, $Ellipsoids, itmax = $itmax, EPSVAL = $ε, gap_distance = true, filedir = $filedir, block_indexes = $block_indexes)
                     elapsed_time = (mean(t).time) * 1e-9
                     push!(dfrow, elapsed_time)
 
@@ -389,19 +408,19 @@ end
 
 # # To generate the results.
 
-size_spaces = [10, 100]
+size_spaces = [10, 30, 50, 100, 200]
 num_ellipsoids = [10, 30 , 50, 100, 200]
 samples = 10
 # restarts = 1
 ε = 1e-6
 itmax = 50000
-method = [:CRMprod, :fneCRMprod, :MAPprod, :CARMprod, :MAAPprod]
+methods = [:CRMprod, :fneCRMprod, :fneCimmino, :MAPprod, :CARMprod, :MAAPprod]
 # # Too much time. It took 3 days for the results to be finished.
-bench_time = false
-dfResultsEllips, dfEllipFilenames  = createDataFrames(method,bench_time)
+bench_time = true
+dfResultsEllips, dfEllipFilenames  = createDataFrames(methods,bench_time)
 for n in size_spaces, num_sets in num_ellipsoids
     println("Running benchmark on $num_sets ellipsoids in R^$(n)")
-    dfResults, dfFilesname = Benchmark_Ellipsoids(n = n, num_sets = num_sets, samples = samples, itmax = itmax, ε = ε, bench_time = bench_time, method = method)
+    dfResults, dfFilesname = Benchmark_Ellipsoids(n = n, num_sets = num_sets, samples = samples, itmax = itmax, ε = ε, bench_time = bench_time, method = methods)
     append!(dfResultsEllips, dfResults)
     append!(dfEllipFilenames, dfFilesname)
 end
