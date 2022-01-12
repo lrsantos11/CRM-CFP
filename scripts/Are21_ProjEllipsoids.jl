@@ -339,6 +339,8 @@ createDataFrames()
 function createDataFrames(method::Vector{Symbol}, bench_time::Bool)
     dfResults = DataFrame(Problem = String[])
     dfFilenames = copy(dfResults)
+    insertcols!(dfResults, :OpBlocks => Vector[])
+    insertcols!(dfResults, :Num_Operators => Int[])
     for mtd in method
         insertcols!(dfResults, join([mtd, "_it"]) => Int[])
         bench_time ? insertcols!(dfResults, join([mtd, "_elapsed"]) => Real[]) : nothing
@@ -379,11 +381,71 @@ function Benchmark_Ellipsoids(;
             dfrowFilename = []
             push!(dfrow, prob_name)
             push!(dfrowFilename, prob_name)
+            block_indexes = make_blocks(num_sets)
+            push!(dfrow, block_indexes)
+            num_op = length(block_indexes)
+            push!(dfrow, num_op)
             for mtd in method
                 func = eval(mtd)
                 filename = savename("Are21", (mtd = mtd, time = timenow), "csv", sort = false)
                 print_file ? filedir = datadir("sims", filename) : filedir = ""
-                block_indexes = make_blocks(num_sets)
+                results = func(x₀, Ellipsoids, itmax = itmax, EPSVAL = ε, gap_distance = true, filedir = filedir, block_indexes = block_indexes)
+                push!(dfrow, results.iter_total)
+                if bench_time
+                    t = @benchmark $func($x₀, $Ellipsoids, itmax = $itmax, EPSVAL = $ε, gap_distance = true, filedir = $filedir, block_indexes = $block_indexes)
+                    elapsed_time = (mean(t).time) * 1e-9
+                    push!(dfrow, elapsed_time)
+
+                end
+                push!(dfrowFilename, filedir)
+            end
+            push!(dfResults, dfrow)
+            push!(dfFilenames, dfrowFilename)
+        end
+    end
+    return dfResults, dfFilenames
+end
+
+"""
+Benchmark_Ellipsoids()
+
+"""
+function Benchmark_Ellipsoids_fne(;
+    n::Int = 100,
+    num_sets::Int = 10,
+    samples::Int = 1,
+    ε::Real = 1e-6,
+    itmax::Int = 10000,
+    restarts::Int = 5,
+    print_file::Bool = false,
+    method::Vector{Symbol} = [:fneCRMprod, :fneCimmino],
+    bench_time::Bool = false)
+    # X = R^n
+    # Defines DataFrame for Results
+    dfResults, dfFilenames = createDataFrames(method, bench_time)
+    # Fix Random
+    Random.seed!(1)
+    p = 2 * inv(n)
+    for j in 1:samples
+        block_indexes = make_blocks(num_sets)
+        num_op = length(block_indexes)
+        for i = 1:restarts
+            Ellipsoids = createEllipsoids(n, p, num_sets)
+            η = -2.0
+            # x₀ = StartingPoint(n)
+            x₀ = fill(η, n)
+            prob_name = savename((Block = j, Prob = i, n = n, nsets = num_sets))
+            timenow = Dates.now()
+            dfrow = []
+            dfrowFilename = []
+            push!(dfrow, prob_name)
+            push!(dfrowFilename, prob_name)
+            push!(dfrow, block_indexes)
+            push!(dfrow, num_op)
+            for mtd in method
+                func = eval(mtd)
+                filename = savename("Are21", (mtd = mtd, time = timenow), "csv", sort = false)
+                print_file ? filedir = datadir("sims", filename) : filedir = ""
                 results = func(x₀, Ellipsoids, itmax = itmax, EPSVAL = ε, gap_distance = true, filedir = filedir, block_indexes = block_indexes)
                 push!(dfrow, results.iter_total)
                 if bench_time
@@ -409,15 +471,15 @@ end
 # # To generate the results.
 
 size_spaces = [10, 30, 50, 100, 200]
-num_ellipsoids = [10, 30 , 50, 100, 200]
+num_ellipsoids = [10, 30, 50, 100, 200]
 samples = 10
 # restarts = 1
 ε = 1e-6
 itmax = 50000
 methods = [:CRMprod, :fneCRMprod, :fneCimmino, :MAPprod, :CARMprod, :MAAPprod]
-# # Too much time. It took 3 days for the results to be finished.
+# # Too much time. It took 1 day for the results to be finished.
 bench_time = true
-dfResultsEllips, dfEllipFilenames  = createDataFrames(methods,bench_time)
+dfResultsEllips, dfEllipFilenames = createDataFrames(methods, bench_time)
 for n in size_spaces, num_sets in num_ellipsoids
     println("Running benchmark on $num_sets ellipsoids in R^$(n)")
     dfResults, dfFilesname = Benchmark_Ellipsoids(n = n, num_sets = num_sets, samples = samples, itmax = itmax, ε = ε, bench_time = bench_time, method = methods)
@@ -427,11 +489,50 @@ end
 
 ##
 # Write data. 
-CSV.write(datadir("sims","Are21_EllipsoidsTable.csv"),dfResultsEllips,
-                    transform = (col, val) -> something(val, missing))
+timenow = Dates.now()
+CSV.write(datadir("sims", savename("Are21_EllipsoidsTable", (time = timenow,), "csv", sort = false)), dfResultsEllips, transform = (col, val) -> something(val, missing))
 @show df_describe = describe(dfResultsEllips, :min, :median, :mean, :max, :std)
-CSV.write(datadir("sims","Are21_EllipsoidsTableSummary.csv"),
-                    df_describe,transform = (col, val) -> something(val, missing))
+CSV.write(datadir("sims", savename("Are21_EllipsoidsTableSummary", (time = timenow,), "csv", sort = false)),
+    df_describe, transform = (col, val) -> something(val, missing))
+
+
+
+
+##################################################################
+## Benchmark #2 - fneCRMprod vs fneCimmino - number of 
+##################################################################
+
+
+# # To generate the results.
+
+size_spaces = [10, 30, 50, 100, 200]
+num_ellipsoids = [30, 50, 100, 200]
+samples_blocks = 3
+restarts = 10
+ε = 1e-6
+itmax = 50000
+methods = [:fneCRMprod, :fneCimmino]
+# # # Too much time. It took 3 days for the results to be finished.
+bench_time = true
+dfResultsEllips, dfEllipFilenames = createDataFrames(methods, bench_time)
+for n in size_spaces, num_sets in num_ellipsoids
+    println("Running benchmark on $num_sets ellipsoids in R^$(n)")
+    dfResults, dfFilesname = Benchmark_Ellipsoids_fne(n = n, num_sets = num_sets, samples = samples_blocks, itmax = itmax, ε = ε, bench_time = bench_time, method = methods, restarts = restarts)
+    append!(dfResultsEllips, dfResults)
+    append!(dfEllipFilenames, dfFilesname)
+end
+
+
+##
+# Write data. 
+timenow = Dates.now()
+CSV.write(datadir("sims", savename("Are21_Ellipsoids_fneTest", (time = timenow,), "csv", sort = false)), dfResultsEllips, transform = (col, val) -> something(val, missing))
+@show df_describe = describe(dfResultsEllips, :min, :median, :mean, :max, :std)
+CSV.write(datadir("sims", savename("Are21_Ellipsoids_fneTestTableSummary", (time = timenow,), "csv", sort = false)),
+    df_describe, transform = (col, val) -> something(val, missing))
+
+
+
 
 # To consult the results.
 
@@ -468,7 +569,5 @@ CSV.write(datadir("sims","Are21_EllipsoidsTableSummary.csv"),
 
 
 ##
-
-
 
 
