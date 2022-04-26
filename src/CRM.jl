@@ -33,7 +33,7 @@ function CRMiteration(xCRM::Vector,
     if (xCRM_RA ≈ xCRM)
         xCRM = FindCircumcentermSet([xCRM, xCRM_RBRA])
     elseif (xCRM_RBRA ≈ xCRM_RA)
-        xCRM =FindCircumcentermSet([xCRM,  xCRM_RA])
+        xCRM = FindCircumcentermSet([xCRM,  xCRM_RA])
     else
         xCRM = FindCircumcentermSet([xCRM, xCRM_RA, xCRM_RBRA])
     end
@@ -53,7 +53,7 @@ function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
              print_intermediate::Bool = false,
              gap_distance::Bool = false,
              isprod::Bool = false)
-    xCRM = ProjectA(x₀)
+    xCRM = ProjectB(x₀)
     ReflectA(x) = Reflection(x,ProjectA)
     ReflectB(x) = Reflection(x,ProjectB)
     ProjA = ProjectA(xCRM)

@@ -20,7 +20,7 @@ function TestAffineSOC(;n::Int64 = 200,samples::Int64 = 10, restarts::Int64 = 1,
         # Generate Subspace
         # affine = true
         # cmax = rand(1:ceil(Integer,n/10,))
-        # CC  = GenerateSamples(n,affine)
+        # CC  = GenerateTwoAffines(n,affine)
         # #  Read Files
         m = rand(1:n-1)
         A =  randn(m,n)

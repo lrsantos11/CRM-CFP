@@ -480,12 +480,12 @@ methods = [:CRMprod, :fneCRMprod, :fneCimmino, :MAPprod, :CARMprod, :MAAPprod]
 # # Too much time. It took 1 day for the results to be finished.
 bench_time = true
 dfResultsEllips, dfEllipFilenames = createDataFrames(methods, bench_time)
-for n in size_spaces, num_sets in num_ellipsoids
-    println("Running benchmark on $num_sets ellipsoids in R^$(n)")
-    dfResults, dfFilesname = Benchmark_Ellipsoids(n = n, num_sets = num_sets, samples = samples, itmax = itmax, ε = ε, bench_time = bench_time, method = methods)
-    append!(dfResultsEllips, dfResults)
-    append!(dfEllipFilenames, dfFilesname)
-end
+#for n in size_spaces, num_sets in num_ellipsoids
+ #   println("Running benchmark on $num_sets ellipsoids in R^$(n)")
+  #  dfResults, dfFilesname = Benchmark_Ellipsoids(n = n, num_sets = num_sets, samples = samples, itmax = itmax, ε = ε, bench_time = bench_time, method = methods)
+  #  append!(dfResultsEllips, dfResults)
+  #  append!(dfEllipFilenames, dfFilesname)
+#end
 
 ##
 # Write data. 
