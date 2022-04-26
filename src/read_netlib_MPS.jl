@@ -8,9 +8,11 @@ function fetch_netlib_presolved()
     ensure_artifact_installed("netliblp_presolved", artifact_toml)
     netliblp_presolved_hash = artifact_hash("netliblp_presolved", artifact_toml)
     @assert artifact_exists(netliblp_presolved_hash)
-   return joinpath(artifact_path(netliblp_presolved_hash), "MPSpre")
+    return joinpath(artifact_path(netliblp_presolved_hash), "MPSpre")
 end
 
+const NETLIB_PRE_DIR = fetch_netlib_presolved()
+const NETLIB_DIR = fetch_netlib()
 
 ##
 

@@ -2,8 +2,6 @@
 ## Basic Functions for Linear Feasibility Problems  tests
 ##################################################################
 ##
-include(scr/readMPS.jl)
-##
 """
 centralizedCRM(LPProblem)
 Uses cCRM to find a point into intersection of two Affines 
@@ -80,12 +78,13 @@ end
 
 
 
-mpsfile = NETLIB_DIR * "/WOODW.SIF"
+# mpsfile = NETLIB_PRE_DIR * "/afiro"
+mpsfile = NETLIB_DIR * "/AFIRO.sif"
 itmax = 400
 ε = 1e-6
 ##
-xCRM = CRM(mpsfile, gap_distance = true, EPSVAL = ε, itmax = itmax)
+xCRM = CRM(mpsfile, gap_distance=true, EPSVAL=ε, itmax=itmax)
 ##
-xcCRM = centralizedCRM(mpsfile, gap_distance = true, EPSVAL = ε, itmax = itmax)
+xcCRM = centralizedCRM(mpsfile, gap_distance=true, EPSVAL=ε, itmax=itmax)
 ##
-xMAP = MAP(mpsfile, gap_distance = true, EPSVAL = ε, itmax = itmax)
+xMAP = MAP(mpsfile, gap_distance=true, EPSVAL=ε, itmax=itmax)
