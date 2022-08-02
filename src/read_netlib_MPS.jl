@@ -94,7 +94,7 @@ end
 
 ##
 
-function LPDataFromMPS(mpsfile::String)
+function LPDataFromMPS(mpsfile::String; stdformat::Bool = true)
     lp_model = readqps(mpsfile)
     cc = lp_model.c
     A = sparse(lp_model.arows, lp_model.acols, lp_model.avals)
@@ -102,88 +102,11 @@ function LPDataFromMPS(mpsfile::String)
     u = lp_model.ucon
     xlb = lp_model.lvar
     xub = lp_model.uvar
-    return LPtoSTDFormat(cc, A, l, u, xlb, xub)
+    if stdformat
+        return LPtoSTDFormat(cc, A, l, u, xlb, xub)
+    else
+        nrow, ncol = size(A)
+        return nrow, ncol, cc, A, l, u, xlb, xub
+    end
 end
 
-##
-
-# function QPDataFromMPSToNLP(mpsfile::String) 
-#     lp_model = MathProgBase.LinearQuadraticModel(GLPKSolverLP())
-#     # Load the model from .MPS file
-#     MathProgBase.loadproblem!(lp_model, mpsfile)
-#     # Preprocess LP
-#     # npp = GLPK.PreProcWorkspace()
-#     # GLPK.npp_load_prob(npp, lp_model.inner, GLPK.MIP, GLPK.ON)
-#     # GLPK.npp_preprocess1(npp, GLPK.ON)
-#     # GLPK.npp_build_prob(npp, lp_model.inner)
-#     # GLPK.npp_free_wksp(npp)
-#     # Transform in vectors
-#     cc = MathProgBase.getobj(lp_model)
-#     A = MathProgBase.getconstrmatrix(lp_model)
-#     xlb = MathProgBase.getvarLB(lp_model)
-#     xub = MathProgBase.getvarUB(lp_model)
-#     l = MathProgBase.getconstrLB(lp_model)
-#     u = MathProgBase.getconstrUB(lp_model)
-#     # Transform LP into Standart Format
-#     nrow,ncol,cc,A,b,xlb,xub = LPtoSTDFormat(cc,A,l,u,xlb,xub)
-#     # rankA = rank(full(A))
-#     # if  rankA != nrow
-#     #     throw(error("Rank of A: $rankA Number of Rows: $nrow"))
-#     # end
-#     # q = Float64[]
-#     # push!(q,1)
-#     # for i = 2:ncol
-#         # push!(q,q[i-1]/sqrt(1.01))
-#     # end
-#     # Q = spdiagm(q)
-#     Q = sparse(1.0I, ncol, ncol)
-#     # Transform LP into NLPModels
-#     x0 = ones(ncol)
-#     f(x) = .5*dot(x,Q*x) + dot(cc,x)
-#     g(x) = Q*x + cc
-#     g!(x, gx) = begin gx[:] = g(x) end
-#     c(x) = A*x
-#     c!(x, cx) = begin cx[:] = c(x) end
-#     J(x) = A
-#     Jc(x) = A
-#     Jp(x, v) = J(x) * v
-#     Jp!(x, v, w) = begin w[:] = J(x) * v end
-#     Jtp(x, v) = J(x)' * v
-#     Jtp!(x, v, w) = begin w[:] = J(x)' * v end
-#     H(x;obj_weight=1.0,y=zeros(nrow)) = obj_weight*Q
-#     Wcoord(x; obj_weight=1.0,y=zeros(nrow)) = findnz(H(x; obj_weight=obj_weight))
-#     Wp(x, v; obj_weight=1.0, y=zeros(nrow)) = H(x;obj_weight=obj_weight)*v
-#     Wp!(x, v, Wv; obj_weight=1.0, y=zeros(nrow)) = begin Wv[:] = Wp(x, v; obj_weight=1.0) end
-#     nlp =  SimpleNLPModel(f, x0, g=g, g! =g!, c=c, c! =c!, J=J, Jcoord=Jc, Jp=Jp,
-#           Jp! =Jp!, Jtp=Jtp, Jtp! =Jtp!, lvar=xlb, uvar = xub, lcon=b, ucon=b,lin=collect(1:nrow),
-#           H=H, Hcoord=Wcoord, Hp=Wp, Hp! =Wp!, name = mpsfile  )
-#     # print(nlp.meta)
-#     return nlp
-# end
-
-# function checkRank(mpsfile::String) 
-#     lp_model = MathProgBase.LinearQuadraticModel(GLPKSolverLP())
-#     # Load the model from .MPS file
-#     MathProgBase.loadproblem!(lp_model, mpsfile)
-#     # Preprocess LP
-#     npp = GLPK.PreProcWorkspace()
-#     GLPK.npp_load_prob(npp, lp_model.inner, GLPK.MIP, GLPK.ON)
-#     GLPK.npp_preprocess1(npp, GLPK.ON)
-#     GLPK.npp_build_prob(npp, lp_model.inner)
-#     GLPK.npp_free_wksp(npp)
-#     # Transform in vectors
-#     cc = MathProgBase.getobj(lp_model) 
-#     A = MathProgBase.getconstrmatrix(lp_model)
-#     xlb = MathProgBase.getvarLB(lp_model)
-#     xub = MathProgBase.getvarUB(lp_model)
-#     l = MathProgBase.getconstrLB(lp_model)
-#     u = MathProgBase.getconstrUB(lp_model)
-#     # Transform LP into Standart Format
-#     nrow,ncol,cc,A,b,xlb,xub = LPtoSTDFormat(cc,A,l,u,xlb,xub)
-#     rankA = rank(A)
-#     if  rankA != nrow
-#         return false
-#     else
-#         return true
-#     end
-# end
