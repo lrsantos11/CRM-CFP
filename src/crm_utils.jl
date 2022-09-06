@@ -118,14 +118,14 @@ function ReflectIndicator(indicator, x)
     reflec = 2 * proj - x
 end
 ####################################
-function StartingPoint(n::Int64)
+function StartingPoint(n::Int64; max_value::Number = 15, min_value::Number = 5)
     ## Creates a random point in R^n
     x = zeros(n)
     while norm(x) < 2
         x = randn(n)
     end
-    # norm between 5 and 15
-    foonorm = (15 - 5) * rand() + 5
+    # norm between min_value and max_value
+    foonorm = (max_value - min_value) * rand() + min_value
     return foonorm * x / norm(x)
 
 end
@@ -196,8 +196,13 @@ function GenerateTwoIntersectingAffines(n::Int,
     # Space B
     B = [Cex; Bex]
 
-    a = zeros(ma)
-    b = zeros(mb)
+     if affine
+            a = randn(ma)
+            b = randn(mb)
+    else
+            a = zeros(ma)
+            b = zeros(mb)
+    end
 
     AffineA = IndAffine(A, a)
     AffineB = IndAffine(B, b)
@@ -240,7 +245,23 @@ function printOnFile(filename::String, k::Int, tolCRM::Number, xCRM::AbstractVec
         writedlm(file, printline)
     end
 end
-
+####################################
+    function FriedrichsAngleAB(A,B)
+        # Calculating the Friederich Angle
+        QA, RA = qr(A')
+        QB, RB = qr(B')
+        # S =  svd(QA'*QB)
+        # Angle in Degrees
+        angleAB = eigmax(QA'*QB)
+        return acos(angleAB)
+        # Angle in Radians
+        # angleAB = acos(maximum(S))
+        # println(S[2])
+        # ind = findfirst(x -> x<(1-1e-8),S[2])
+        # return maximum(S[2])
+        # return acos(S[2][ind])
+    end
+####################################
 ####################################
 """
 Reflection(x,fproj)

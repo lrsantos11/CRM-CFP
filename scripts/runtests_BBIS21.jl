@@ -9,9 +9,13 @@ include(scriptsdir("plots_util.jl"))
 
 """juliadocs
 
-[^BBIS21] R. Behling, J.-Y. Bello-Cruz, A. N. Iusem, e L.-R. Santos, On the centralization of the circumcentered-reflection method.
+[^Behling2022] R. Behling, J.-Y. Bello-Cruz, A. N. Iusem, e L.-R. Santos, On the centralization of the circumcentered-reflection method.
 """
 ##
 
-include(scriptsdir("BBIS21_Figs.jl"))
-include(scriptsdir("BBIS21_Ellipsoids.jl"))
+# include(scriptsdir("BBIS21_Figs.jl"))
+##
+# include(scriptsdir("BBIS21_Ellipsoids.jl"))
+
+
+include(scriptsdir("BBIS21_Sec4.2.jl"))

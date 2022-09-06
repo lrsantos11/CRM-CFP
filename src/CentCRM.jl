@@ -35,19 +35,19 @@ end
 Computes an iteration of the Cirumcentered-Reflection method
 """
 
-function parallelCRMiteration!(xCRM::Vector, 
+function parallelCRMiteration!(xpCRM::Vector, 
                                IsometryA::Function, 
                                IsometryB::Function)
-    xCRM_RA = IsometryA(xCRM)
-    xCRM_RB = IsometryB(xCRM)
-    if xCRM_RA ≈ xCRM
-        xCRM = FindCircumcentermSet([xCRM, xCRM_RB])
-    elseif xCRM_RB ≈ xCRM_RA
-        xCRM = FindCircumcentermSet([xCRM,  xCRM_RA])
+    xpCRM_RA = IsometryA(xpCRM)
+    xpCRM_RB = IsometryB(xpCRM)
+    if xpCRM_RA ≈ xpCRM
+        xpCRM = FindCircumcentermSet([xpCRM, xpCRM_RB])
+    elseif xpCRM_RB ≈ xpCRM_RA
+        xpCRM = FindCircumcentermSet([xpCRM,  xpCRM_RA])
     else
-        xCRM = FindCircumcentermSet([xCRM, xCRM_RA, xCRM_RB])
+        xpCRM = FindCircumcentermSet([xpCRM, xpCRM_RA, xpCRM_RB])
     end
-    return xCRM  
+    return xpCRM  
 end 
 
 """
@@ -61,30 +61,31 @@ function centralizedCRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
                         print_intermediate::Bool = false,
                         gap_distance::Bool = true, isprod :: Bool = false,
                         centralized_onlyfirst :: Bool = false)
-    xCRM = x₀
+    xcentCRM = x₀
     ReflectA(x) = Reflection(x,ProjectA)
     ReflectB(x) = Reflection(x,ProjectB)
-    ProjA = ProjectA(xCRM)
+    ProjA = ProjectA(xcentCRM)
     k = 0
     tolCRM = 1.
-    printOnFile(filedir, k, tolCRM, xCRM , deletefile=true, isprod=isprod)
+    printOnFile(filedir, k, tolCRM, xcentCRM , deletefile=true, isprod=isprod)
     while tolCRM > EPSVAL && k < itmax
         print_intermediate ?  printOnFile(filedir,0, 0., ProjA,isprod=isprod) : nothing
         if gap_distance
-            xCRM = centralization!(xCRM, ProjA, ProjectA, ProjectB)
-            xCRM = parallelCRMiteration!(xCRM, ReflectA, ReflectB)
-            ProjA = ProjectA(xCRM)
-            tolCRM = norm(ProjA-xCRM)
+            xcentCRM = centralization!(xcentCRM, ProjA, ProjectA, ProjectB)
+            xcentCRM = parallelCRMiteration!(xcentCRM, ReflectA, ReflectB)
+            ProjA = ProjectA(xcentCRM)                     
+            ProjB = ProjectB(xcentCRM)
+            tolCRM = max(norm(ProjA-xcentCRM),norm(ProjB-xcentCRM))
         else
-            xCRMOld = copy(xCRM)
-            xCRM = centralization!(xCRM, ProjA, ProjectA, ProjectB)
-            xCRM = parallelCRMiteration!(xCRM, ReflectA, ReflectB)
-            ProjA = ProjectA(xCRM)
-            tolCRM = Tolerance(xCRM,xCRMOld,xSol)
+            xcentCRMOld = copy(xcentCRM)
+            xcentCRM = centralization!(xcentCRM, ProjA, ProjectA, ProjectB)
+            xcentCRM = parallelCRMiteration!(xcentCRM, ReflectA, ReflectB)
+            ProjA = ProjectA(xcentCRM)
+            tolCRM = Tolerance(xcentCRM,xcentCRMOld,xSol)
         end
         k += 4
-        printOnFile(filedir,k, tolCRM, xCRM, isprod=isprod)
+        printOnFile(filedir,k, tolCRM, xcentCRM, isprod=isprod)
     end
     isprod ? method = :CRMprod : method = :centCRM
-    return Results(iter_total= k,final_tol=tolCRM,xApprox=xCRM,method=method)
+    return Results(iter_total= k,final_tol=tolCRM,xApprox=xcentCRM,method=method)
 end

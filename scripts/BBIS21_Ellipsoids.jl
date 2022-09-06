@@ -256,26 +256,32 @@ makeplots_Ellipsoids2D()
 Makes plots for Ellipsoids in 2D
 """
 function makeplots_TwoEllipsoids2D(λ::Real;
-    ε::Real = 1e-4,
-    itmax::Int = 10_000,
-    generate_results::Bool = false)
+    ε::Real=1e-4,
+    itmax::Int=10_000,
+    generate_results::Bool=false)
     ##
-    Random.seed!(123)
+    Random.seed!(11)
     n = 2
-    ℰ, xSol = createTwoEllipsoids(n, 2 / n, λ = λ)
+    ℰ, xSol = createTwoEllipsoids(n, 2 / n, λ=λ)
     x₀ = [0.5, 2.8]
     while x₀ ∈ ℰ[1] || x₀ ∈ ℰ[2]
         x₀ *= 1.2
     end
+    plt = plot(Ellipsoid.(ℰ),
+        framestyle=:none,
+        leg=:bottomright, fillcolor=[:turquoise4 :palegreen4],
+        aspect_ratio=:equal,
+        legendfontsize=14
+    )
     MAPfile = datadir("sims", savename("BBIS21_TwoEllip2DMAP", (@dict λ), "csv"))
     SPMfile = datadir("sims", savename("BBIS21_TwoEllip2DSPM", (@dict λ), "csv"))
     cCRMfile = datadir("sims", savename("BBIS21_TwoEllip2DcCRM", (@dict λ), "csv"))
     CRMprodfile = datadir("sims", savename("BBIS21_TwoEllip2DCRMprod", (@dict λ), "csv"))
     if generate_results
-        # resultsMAP = MAP(x₀, ℰ, filedir=MAPfile,itmax = itmax, EPSVAL=ε)
-        # resultsSPM = SPM(x₀, ℰ, filedir=SPMfile,itmax = itmax, EPSVAL=ε)
-        # resultscCRM = centralizedCRM(x₀, ℰ, filedir=cCRMfile,itmax = itmax, EPSVAL=ε)
-        resultsCRMprod = CRMprod(x₀, ℰ, filedir = CRMprodfile, itmax = itmax, EPSVAL = ε)
+        resultsMAP = MAP(x₀, ℰ, filedir=MAPfile, itmax=itmax, EPSVAL=ε)
+        resultsSPM = SPM(x₀, ℰ, filedir=SPMfile, itmax=itmax, EPSVAL=ε)
+        resultscCRM = centralizedCRM(x₀, ℰ, filedir=cCRMfile, itmax=itmax, EPSVAL=ε)
+        resultsCRMprod = CRMprod(x₀, ℰ, filedir=CRMprodfile, itmax=itmax, EPSVAL=ε)
     end
     ##
     xMAP = readdlm(MAPfile)
@@ -287,24 +293,18 @@ function makeplots_TwoEllipsoids2D(λ::Real;
     cCRM_iter_total = Int(xcCRM[end, 1])
     CRMprod_iter_total = Int(xCRMprod[end, 1])
 
-    plt = plot(Ellipsoid.(ℰ),
-        framestyle = :none,
-        leg = :bottomleft, fillcolor = [:turquoise4 :palegreen4],
-        aspect_ratio = :equal,
-        legendfontsize = 14
-    )
     ##
-    plot!([Singleton(v) for v in eachrow(xSPM[2:100, 3:4])], label = "SPM -- $(SPM_iter_total) projections", c = :dodgerblue2, alpha = 0.8, ms = 4, m = :utriangle)
-    plot!([Singleton(v) for v in eachrow(xCRMprod[1:end, 3:4])], label = "CRMprod -- $(CRMprod_iter_total) projections", c = :yellow, alpha = 0.8, ms = 3, m = :square)
-    plot!([Singleton(v) for v in eachrow(xMAP[3:2:50, 3:4])], label = "MAP -- $(MAP_iter_total) projections", c = :red, alpha = 0.8, ms = 3)
+    plot!([Singleton(v) for v in eachrow(xSPM[2:end, 3:4])], label="SPM -- $(SPM_iter_total) projections", c=:dodgerblue2, alpha=0.8, ms=4, m=:utriangle)
+    plot!([Singleton(v) for v in eachrow(xCRMprod[1:end, 3:4])], label="CRMprod -- $(CRMprod_iter_total) projections", c=:yellow, alpha=0.8, ms=3, m=:square)
+    plot!([Singleton(v) for v in eachrow(xMAP[3:2:end, 3:4])], label="MAP -- $(MAP_iter_total) projections", c=:red, alpha=0.8, ms=3)
     # plot!([Singleton(v) for v in eachrow(xMAP[2:2:100,3:4])],c = :tomato, alpha = 0.4, ms = 3)
-    plot!([Singleton(v) for v in eachrow(xcCRM[2:end, 3:4])], label = "cCRM -- $(cCRM_iter_total) projections", c = :green, alpha = 0.8, ms = 4, m = :diamond)
-    method_path!(plt, xMAP[1:2:9, 3:4], c = :red)
-    method_path!(plt, xSPM[1:8, 3:4], c = :dodgerblue2)
-    method_path!(plt, xcCRM[:, 3:4], c = :green)
-    # method_path!(plt, xCRMprod[1:4, 3:4], c = :yellow)
-    plot!(Singleton(x₀), c = :black, m = :square, alpha = 1)
-    label_points!(plt, [x₀], label_size = 14, xshift = 0.25, yshift = 0.01)
+    plot!([Singleton(v) for v in eachrow(xcCRM[2:end, 3:4])], label="cCRM -- $(cCRM_iter_total) projections", c=:green, alpha=0.8, ms=4, m=:diamond)
+    MethodPath!(plt, xMAP[1:2:9, 3:4], c=:red)
+    MethodPath!(plt, xSPM[1:8, 3:4], c=:dodgerblue2)
+    MethodPath!(plt, xcCRM[:, 3:4], c=:green)
+    MethodPath!(plt, xCRMprod[1:4, 3:4], c = :yellow)
+    plot!(Singleton(x₀), c=:black, m=:square, alpha=1)
+    label_points!(plt, [x₀], label_size=14, xshift=0.25, yshift=0.01)
     return plt
 end
 ##
@@ -318,7 +318,7 @@ plt1
 ##
 
 λ = 1.0
-plt2 = makeplots_TwoEllipsoids2D(λ, itmax = 100_000, generate_results = true)
+plt2 = makeplots_TwoEllipsoids2D(λ, itmax = 100_000, generate_results = false)
 figname = savename("BBIS21_Ellipsoids", (@dict λ), "pdf")
 savefig(plt2, plotsdir(figname))
 plt2
@@ -369,7 +369,7 @@ function tests_TwoEllipsoidsRn(; n::Int = 100,
                 @show mtd, results.iter_total, results.final_tol
                 elapsed_time = 0.0
                 if bench_time
-                    t = @benchmark $func($x₀, $ℰ, $itmax, EPSVAL = $ε, gap_distance = false, filedir = $filedir, xSol = $xSol)
+                    t = @benchmark $func($x₀, $ℰ, $itmax, EPSVAL = $ε, gap_distance = gap_distance, filedir = $filedir, xSol = $xSol)
                     elapsed_time = (mean(t).time) * 1e-9
                 end
                 push!(dfrow, results.iter_total)
@@ -418,7 +418,7 @@ df_Summary = describe(dfResults[:, [:centralizedCRM_it, :MAP_it]], :mean, :std, 
 Methods = [:centralizedCRM, :MAP]
 λ = 1.0
 samples = 15
-dfResults, dfFilesname = tests_TwoEllipsoidsRn(samples = samples, ε = 1e-6, Methods = Methods, λ = λ, itmax = 500_000)
+dfResults, dfFilesname = tests_TwoEllipsoidsRn(samples = samples, ε = 1e-6, Methods = Methods, λ = λ, itmax = 500_000, gap_distance = false)
 ## To write data. 
 timenow = Dates.now()
 CSV.write(datadir("sims", savename("BBIS21_TwoEllipsoidsTableNoSlaterPoint", (@dict timenow λ), "csv")), dfResults)

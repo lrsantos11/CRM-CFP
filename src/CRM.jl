@@ -64,8 +64,9 @@ function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
         print_intermediate ?  printOnFile(filedir,0, 0., ProjA,isprod=isprod) : nothing
         if gap_distance
             xCRM  = CRMiteration(xCRM, ProjA, ReflectB)
-            ProjA = ProjectA(xCRM)
-            tolCRM = norm(ProjA-xCRM)
+            ProjA = ProjectA(xCRM)                     
+            ProjB = ProjectB(xCRM)
+            tolCRM = max(norm(ProjA-xCRM),norm(ProjB-xCRM))       
         else
             xCRMOld = copy(xCRM)
             xCRM  = CRMiteration(xCRM, ProjA, ReflectB)

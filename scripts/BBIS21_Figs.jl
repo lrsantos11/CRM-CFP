@@ -4,7 +4,7 @@ struct EuclideanBall
     center::Vector{Float64}          # The center of the Ball
     radius::Float64                  # The radius of the ball
     ball::LazySets.Ball2  # LazySets.Ball2 contructor.
-    ball_ind::ProximableFunction      # BallL2 translated contructor.
+    ball_ind::Translate     # BallL2 translated contructor.
     EuclideanBall(center, radius) = new(center, radius, Ball2(center, radius),
         Translate(IndBallL2(radius), -center))
 end
@@ -16,7 +16,7 @@ function FigureTwoBalls(B1::EuclideanBall,
     z₀::Vector = [],
     framestyle = :none)
     # Initial Plot 
-    plt = plot(size = (400, 400), fg_colour_azis = :lightgray, framestyle = framestyle,
+    plt = plot(size = (400, 400), fg_colour_axis = :lightgray, framestyle = framestyle,
         aspect_ratio = :equal, draw_arrow = true, ticks = :none,
         grid = :none, legend = :topright)
     plot!(B1.ball, c = :dodgerblue)
@@ -38,20 +38,20 @@ function FigureTwoBalls(B1::EuclideanBall,
     @show zpCRM ∈ B1.ball
     scatter!(Singleton(zpCRM), marker = (3, :circle), c = :darkorange2)
     annotate!([(zpCRM[1], zpCRM[2] - 0.15, text(L"z_{\mathrm{pCRM}}", labelsize))])
-   method_path!(plt, [z₀'; zRB1'], arrow = :none, color = :black, lalpha = 0.2, ls = :dot)
-   method_path!(plt, [z₀'; zRB2'], arrow = :none, color = :black, lalpha = 0.2, ls = :dot)
-   method_path!(plt, [z₀'; zpCRM'], color = :black, lalpha = 0.5)
+    MethodPath!(plt, [z₀'; zRB1'], arrow = :none, color = :black, lalpha = 0.2, ls = :dot)
+    MethodPath!(plt, [z₀'; zRB2'], arrow = :none, color = :black, lalpha = 0.2, ls = :dot)
+    MethodPath!(plt, [z₀'; zpCRM'], color = :black, lalpha = 0.5)
     plot!(Ball2(zpCRM, norm(zpCRM - z₀)), alpha = 0.0, ls = :dot, lalpha = 0.2)
     zCent = centralization!(z₀, ProjectB1, ProjectB2)
     @show zCent ∈ B1.ball
     @show zCent ∈ B2.ball
     scatter!(Singleton(zCent), marker = (5, :diamond), c = :bisque4)
     annotate!([(zCent[1] + 0.2, zCent[2], text(L"z_{\mathrm{C}}", labelsize))])
-   method_path!(plt, [z₀'; zCent'], color = :black, lalpha = 0.5)
+    MethodPath!(plt, [z₀'; zCent'], color = :black, lalpha = 0.5)
     zC_CRM = parallelCRMiteration!(zCent, ReflectB1, ReflectB2)
     scatter!(Singleton(zC_CRM), marker = (3, :square), c = :red)
     annotate!([(zC_CRM[1] - 0.15, zC_CRM[2] - 0.15, text(L"z_{\mathrm{cCRM}}", :red, labelsize))])
-   method_path!(plt, [zCent'; zC_CRM'], color = :black, lalpha = 0.5)
+    MethodPath!(plt, [zCent'; zC_CRM'], color = :black, lalpha = 0.5)
     @show zC_CRM ∈ B1.ball
     @show zC_CRM ∈ B2.ball
     return plt, zpCRM, zCent, zC_CRM

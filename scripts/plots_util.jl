@@ -1,7 +1,7 @@
 """
 Creates plot with the path of method. 
 """
-function method_path!(plt::Plots.Plot,
+function MethodPath!(plt::Plots.Plot,
                     mat::Array; 
                     λ::Float64 = .97,  
                     kwargs...)
