@@ -7,7 +7,6 @@ This script builds the results and plots presented in Section 4.1 of [^Behling20
 ##################################################################
 ## Basic Functions for and Polyhedral and SOC tests
 ##################################################################
-using BenchmarkTools
 
 
 function TestPolyhedralSOC(;
@@ -20,14 +19,14 @@ function TestPolyhedralSOC(;
     # Fix Random
     Random.seed!(10)
     # Defines DataFrame for Results
-    dfResults = DataFrame(Problem=String[], CRMprodproj=Int[], cCRMproj=Int[], DRMproj=Int[], MAPproj=Int[])
+    dfResults = DataFrame(Problem=String[], CRMprod=Int[], cCRM=Int[], DRM=Int[], MAP=Int[])
     #md Defines Indicator Function of Second Order Cone from `ProximalOperators.jl`
     for j in 1:samples
         #########################
         w = StartingPoint(n - 1)
         xSol = [norm(w); w]
         vperp = [-norm(w); w]
-        num_rows = rand(div(n, 3):n)
+        @show num_rows = rand(div(n, 3):n)
         Apolar, bpolar = generate_polar(vperp, num_rows, xSol - t * vperp)
         Poly = IndPolyhedral(Apolar, bpolar)
         SOC = IndSOC()
@@ -36,19 +35,21 @@ function TestPolyhedralSOC(;
         # Restarts
         for i = 1:restarts
             xzero = StartingPoint(n)
-            xzero = ProjectB(xzero)
             # @show SOC(xzero)
             while SOC(xzero) != Inf
                 xzero = StartingPoint(n)
-                xzero = ProjectB(xzero)
             end
             prob_name = String("Problem$j" * "Restart$i")
-            # println(prob_name)
-            resultCRM = CRMprod(xzero, ProjectA, ProjectB, itmax=itmax, EPSVAL=EPSVAL, gap_distance=true)
+            println(prob_name)
+            println("CRMProd")
+            resultCRMprod = CRMprod(xzero, ProjectA, ProjectB, itmax=itmax, EPSVAL=EPSVAL, gap_distance=true)
+            println("cCRM")
             resultcCRM = centralizedCRM(xzero, ProjectA, ProjectB, itmax=itmax, EPSVAL=EPSVAL, gap_distance=true)
+            println("DRM")
             resultDRM = DRM(xzero, ProjectA, ProjectB, itmax=itmax, EPSVAL=EPSVAL, gap_distance=true)
+            println("MAP")
             resultMAP = MAP(xzero, ProjectA, ProjectB, itmax=itmax, EPSVAL=EPSVAL, gap_distance=true)
-            push!(dfResults, (prob_name, resultCRM.iter_total, resultcCRM.iter_total, resultDRM.iter_total, resultMAP.iter_total))
+            push!(dfResults, (prob_name, resultCRMprod.iter_total, resultcCRM.iter_total, resultDRM.iter_total, resultMAP.iter_total))
         end
     end
     return dfResults
@@ -85,36 +86,46 @@ function generate_polar(vec::AbstractArray, num_edges::Int, bound_point::Abstrac
     return Apolar, bpolar
 end
 
-# ##
+##
 n = 200
-samples = 20
-restarts = 5
+samples = 50
+restarts = 4
 EPSVAL = 1e-6
-itmax = 300
-dfResults = TestPolyhedralSOC(n=n, samples=samples, itmax=itmax, EPSVAL=EPSVAL, restarts=restarts)
-# perprof = performance_profile(hcat(dfResults.CRMit, dfResults.DRMit, dfResults.MAPit), ["CRM", "DRM", "MAP"],
-#     title=L"Performance Profile -- Gap error -- $\varepsilon = 10^{-6}$",
-#     legend=:bottomright, framestyle=:box, linestyles=[:solid, :dash, :dot])
-# ylabel!("Percentage of problems solved")
-# savefig(perprof, plotsdir("BBS20Fig3_PolyhedralSOC.pdf"))
-# @show describe(dfResults)
-# perprof
+itmax = 10_000
+# dfResults = TestPolyhedralSOC(n=n, samples=samples, itmax=itmax, EPSVAL=EPSVAL, restarts=restarts)
+# timenow = Dates.now()
+# CSV.write(datadir("sims", savename("BBIS21_PolyhedralSOC", (@dict timenow EPSVAL), "csv")), dfResults)
+##
+
+dfResults = CSV.read(datadir("sims", "BBIS21_PolyhedralSOC_EPSVAL=1e-6_timenow=2022-09-12T17:19:12.824.csv"), DataFrame)
+
+perprof = performance_profile(PlotsBackend(), float.(hcat(dfResults.cCRM, dfResults.MAP,dfResults.CRMprod)), ["cCRM", "MAP","CRMprod", ],
+    title=L"Performance Profile -- Gap error -- $\varepsilon = 10^{-6}$",
+    legend=:bottomright, framestyle=:box, linestyles=[:solid, :dash, :dot], logscale = false)
+ylabel!("Percentage of problems solved")
+savefig(perprof, plotsdir("BBIS21Fig3_PolyhedralSOC.pdf"))
+@show describe(dfResults)[[2,3,5],:]
+perprof
 
 ##
 
 
 # n = 200
-# w = randn(n - 1)
+# Random.seed!(10)
+# w = StartingPoint(n - 1)
 # xSol = [norm(w); w]
 # vperp = [-norm(w); w]
-# t = 1
-# Apolar, bpolar = generate_polar(vperp, 100, xSol - t*vperp,lbound = 0.1)
+# num_rows = rand(div(n, 3):n)
+# Apolar, bpolar = generate_polar(vperp, num_rows, xSol - t * vperp)
 # Poly = IndPolyhedral(Apolar, bpolar)
 # SOC = IndSOC()
 # ProjectA(x) = ProjectIndicator(SOC, x)
 # ProjectB(x) = ProjectIndicator(Poly, x)
 # xzero = StartingPoint(n)
+# while SOC(xzero) != Inf
+#     xzero = StartingPoint(n)
+# end
 # ##
-# resultcCRM = centralizedCRM(xzero, ProjectA, ProjectB, itmax=itmax, EPSVAL=EPSVAL, gap_distance = true)
-# ##
+# resultcCRM = centralizedCRM(xzero, ProjectA, ProjectB, itmax=itmax, EPSVAL=EPSVAL, gap_distance=true)
+# # ##
 # resultMAP = MAP(xzero, ProjectA, ProjectB, itmax=itmax, EPSVAL=1e-14, gap_distance = true)
