@@ -100,11 +100,12 @@ itmax = 10_000
 dfResults = CSV.read(datadir("sims", "BBIS21_PolyhedralSOC_EPSVAL=1e-6_timenow=2022-09-12T17:19:12.824.csv"), DataFrame)
 
 perprof = performance_profile(PlotsBackend(), float.(hcat(dfResults.cCRM, dfResults.MAP,dfResults.CRMprod)), ["cCRM", "MAP","CRMprod", ],
-    title=L"Performance Profile -- Gap error -- $\varepsilon = 10^{-6}$",
-    legend=:bottomright, framestyle=:box, linestyles=[:solid, :dash, :dot], logscale = false)
+    # title=L"Performance Profile -- Gap error -- $\varepsilon = 10^{-6}$",
+    legend=:bottomright, framestyle=:box, linestyles=[:solid, :dash, :dot])
 ylabel!("Percentage of problems solved")
+xticks!(perprof, 0:.5:2.5, [L"2^{0}", L"2^{0.5}", L"2^{1}", L"2^{1.5}", L"2^2", L"2^{2.5}"])
 savefig(perprof, plotsdir("BBIS21Fig3_PolyhedralSOC.pdf"))
-@show describe(dfResults)[[2,3,5],:]
+@show describe(dfResults,:mean,:std,:median,:min,:max)[[3,5,2],:]
 perprof
 
 ##

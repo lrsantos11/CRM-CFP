@@ -398,24 +398,26 @@ timenow = Dates.now()
 CSV.write(datadir("sims", savename("BBIS21_TwoEllipsoidsTableSlaterPoint", (@dict timenow λ), "csv")), dfResultsTotal)
 
 ## # To make Performance Profiles.
+ dfResultsTotal = CSV.read(datadir("sims","BBIS21_TwoEllipsoidsTableSlaterPoint_timenow=2021-11-09T10:15:08.589_λ=1.1.csv"), DataFrame)
+
 T = Float64[dfResultsTotal.centralizedCRM_it dfResultsTotal.MAP_it dfResultsTotal.CRMprod_it]
 T[findall(row -> row >= 10000, T)] .= Inf
 perprof1 = performance_profile(PlotsBackend(),
-    T,
+    T, 
+    # logscale = false,
     ["cCRM", "MAP", "CRMprod"],
-    legend = :bottomright, framestyle = :box,
-    linestyles = [:solid, :dash, :dot])
+    legend=:bottomright, framestyle=:box,
+    linestyles=[:solid, :dash, :dot])
 ylabel!("Percentage of problems solved")
+xticks!(perprof1,[0, 2, 4, 6], [L"2^0", L"2^2", L"2^4", L"2^6"])
 # title!(L"Performance Profile -- Total projections comparison -- tolerance $\varepsilon = 10^{-4}$")
 savefig(perprof1, plotsdir(savename("BBIS21_TwoEllipsoids_Perprof", (@dict λ), "pdf")))
 perprof1
 ##
-# Summary
-df_Summary = describe(dfResults[:, [:centralizedCRM_it, :MAP_it]], :mean, :std, :median, :min, :max)
+# Summa = describe(dfResults[:, [:centralizedCRM_it, :MAP_it]], :mean, :std, :median, :min, :max)
 
 
-## No Slater point in the intersection
-Methods = [:centralizedCRM, :MAP]
+## No Slater point in the intersectio = [:centralizedCRM, :MAP]
 λ = 1.0
 samples = 15
 dfResults, dfFilesname = tests_TwoEllipsoidsRn(samples = samples, ε = 1e-6, Methods = Methods, λ = λ, itmax = 500_000, gap_distance = false)

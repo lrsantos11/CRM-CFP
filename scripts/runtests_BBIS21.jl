@@ -4,7 +4,7 @@ using DrWatson
 include(srcdir("CRM-CFP.jl"))
 using CSV, DataFrames
 using BenchmarkProfiles, LaTeXStrings, Plots, LazySets
-# pgfplotsx()
+pgfplotsx()
 # include(scriptsdir("plots_util.jl"))
 
 """juliadocs
