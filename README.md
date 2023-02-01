@@ -5,10 +5,10 @@ This code base is using the Julia Language and [DrWatson](https://juliadynamics.
 to make a reproducible scientific project named
 > CRM-CFP
 
-CRM-CFP concerns numerical results presented in [[Behling2021]](#1),  [[Arefidamghani2021]](#2), [[Araujo2021]](#3) and [[Behling2021a]](#4) where the Circumcentered-Reflection Method (CRM) was used to solve the Convex Feasibility Problem (CFP) of finding a common point to the nonempty intersection of closed and convex sets.
+CRM-CFP concerns numerical results presented in [[Behling2021]](#1), [[Arefidamghani2021]](#2), [[Araujo2022]](#3), [[Behling2021a]](#4), [[Arefidamghani2021]](#5) where the Circumcentered-Reflection Method (CRM) was used to solve the Convex Feasibility Problem (CFP) of finding a common point to the nonempty intersection of closed and convex sets.
 
 
-It is authored by Luiz-Rafael Santos in co-authorship with Guilherme Araújo, Reza Arefidamghani, Roger Behling, Yunier Bello-Cruz and Alfredo N. Iusem. 
+It is authored by [Luiz-Rafael Santos](https://lrsantos11.github.io) in co-authorship with Guilherme Araújo, Reza Arefidamghani, Roger Behling, Yunier Bello-Cruz and Alfredo N. Iusem. 
 
 ## How to use CRM-CFP
 
@@ -23,7 +23,7 @@ To (locally) reproduce this project, do the following:
    julia> Pkg.instantiate()
    ```
    
-   The last line is mandatory so julia install all packages. It is recommended that you build the packages in order to get the files running. For that, use
+   The last line is mandatory so `julia` install all packages. It is recommended that you build the packages in order to get the files running. For that, use
 
    ```julia
    julia> Pkg.build()
@@ -35,7 +35,7 @@ To (locally) reproduce this project, do the following:
    Check folder `scripts` to run tests from individual papers.
 
 
-3. The codes for [[Arefidamghani2021]](#2) and [[Araujo2021]](#3) depend on the package `NLPModelsAlgencan.jl`, which is a wrapper for Julia of [ALGENCAN](https://www.ime.usp.br/~egbirgin/tango/codes.php) that uses `NLPModels` (and `JuMP`). Follow the instructions of [`NLPModelsAlgencan.jl`](https://github.com/pjssilva/NLPModelsAlgencan.jl/wiki/Compiling-HSL-Libraries-for-use-with-NLPModelsAlgencan.jl) to install it with HSL linear system solver support for faster results.
+3. The codes for [[Arefidamghani2021]](#2) and [[Araujo2022]](#3) depend on the package `NLPModelsAlgencan.jl`, which is a wrapper for Julia of [ALGENCAN](https://www.ime.usp.br/~egbirgin/tango/codes.php) that uses `NLPModels` (and `JuMP`). Follow the instructions of [`NLPModelsAlgencan.jl`](https://github.com/pjssilva/NLPModelsAlgencan.jl/wiki/Compiling-HSL-Libraries-for-use-with-NLPModelsAlgencan.jl) to install it with HSL linear system solver support for faster results.
 
 
 ## References
@@ -47,6 +47,9 @@ To (locally) reproduce this project, do the following:
 _“The circumcentered-reflection method achieves better rates than alternating projections”_, Comp Optim App, 79(2),  p. 507–530, 2021, 
 doi: [10.1007/s10589-021-00275-6](https://doi.org/10.1007/s10589-021-00275-6), [arXiv:2007.14466](https://arxiv.org/abs/2007.14466).
 
-<a id="3">[Araujo2021]</a>  G. Araújo, R. Arefidamghani, R. Behling, J.-Y. Bello-Cruz, A. N. Iusem, and L.-R. Santos,  _“Circumcentering approximate reflections for solving the convex feasibility problem”_, 2021. [arXiv:2105.00497](http://arxiv.org/abs/2105.00497) 
+
+<a id="3">[Araujo2022]</a>  G. Araújo, R. Arefidamghani, R. Behling, J.-Y. Bello-Cruz, A. N. Iusem, and L.-R. Santos,  _“Circumcentering approximate reflections for solving the convex feasibility problem”_, Fixed Point Theory and Algorithms for Sciences and Engineering, 1, 2023 doi: [10.1186/s13663-021-00711-6](https://doi.org/10.1186/s13663-021-00711-6) [arXiv:2105.00497](http://arxiv.org/abs/2105.00497) 
 
 <a id="4">[Behling2021a]</a>  R. Behling, J.-Y. Bello-Cruz, A. N. Iusem  and  L.-R. Santos, _“On the centralization of the circumcentered-reflection method”_, 2021. [arXiv:2111.07022](http://arxiv.org/abs/2111.07022).
+
+<a id="5">[Arefidamghani2023]</a>  R. Arefidamghani, R. Behling, J.-Y. Bello-Cruz, A. N. Iusem, and L.-R. Santos,  _“A circumcentered-reflection method for finding common fixed points of firmly nonexpansive operators”_, Journal of Applied and Numerical Optimization (to appear), 2023, [arXiv:2203.02410](https://arxiv.org/abs/2203.02410).
