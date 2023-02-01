@@ -15,7 +15,7 @@ function TestPolyhedralSOC(;
     restarts::Int64=1,
     EPSVAL::Float64=1e-6,
     itmax::Int64=2_000,
-    t::Float64=0.0)
+    τ::Float64=0.0)
     # Fix Random
     Random.seed!(10)
     # Defines DataFrame for Results
@@ -27,7 +27,7 @@ function TestPolyhedralSOC(;
         xSol = [norm(w); w]
         vperp = [-norm(w); w]
         @show num_rows = rand(div(n, 3):n)
-        Apolar, bpolar = generate_polar(vperp, num_rows, xSol - t * vperp)
+        Apolar, bpolar = generate_polar(vperp, num_rows, xSol - τ * vperp)
         Poly = IndPolyhedral(Apolar, bpolar)
         SOC = IndSOC()
         ProjectA(x) = ProjectIndicator(SOC, x)
@@ -92,24 +92,50 @@ samples = 50
 restarts = 4
 EPSVAL = 1e-6
 itmax = 10_000
+τ = 0
 # dfResults = TestPolyhedralSOC(n=n, samples=samples, itmax=itmax, EPSVAL=EPSVAL, restarts=restarts)
 # timenow = Dates.now()
-# CSV.write(datadir("sims", savename("BBIS21_PolyhedralSOC", (@dict timenow EPSVAL), "csv")), dfResults)
+# CSV.write(datadir("sims", savename("BBIS21_PolyhedralSOC", (@dict timenow EPSVAL τ), "csv")), dfResults)
 ##
 
 dfResults = CSV.read(datadir("sims", "BBIS21_PolyhedralSOC_EPSVAL=1e-6_timenow=2022-09-12T17:19:12.824.csv"), DataFrame)
 
-perprof = performance_profile(PlotsBackend(), float.(hcat(dfResults.cCRM, dfResults.MAP,dfResults.CRMprod)), ["cCRM", "MAP","CRMprod", ],
+perprof = performance_profile(PlotsBackend(), float.(hcat(dfResults.cCRM, dfResults.MAP, dfResults.CRMprod)), ["cCRM", "MAP", "CRMprod",],
     # title=L"Performance Profile -- Gap error -- $\varepsilon = 10^{-6}$",
     legend=:bottomright, framestyle=:box, linestyles=[:solid, :dash, :dot])
 ylabel!("Percentage of problems solved")
-xticks!(perprof, 0:.5:2.5, [L"2^{0}", L"2^{0.5}", L"2^{1}", L"2^{1.5}", L"2^2", L"2^{2.5}"])
-savefig(perprof, plotsdir("BBIS21Fig3_PolyhedralSOC.pdf"))
-@show describe(dfResults,:mean,:std,:median,:min,:max)[[3,5,2],:]
+xticks!(perprof, 0:0.5:2.5, [L"2^{0}", L"2^{0.5}", L"2^{1}", L"2^{1.5}", L"2^2", L"2^{2.5}"])
+savefig(perprof, plotsdir("BBIS21_PolyhedralSOC_Perprof_tau=$(τ).pdf.pdf"))
+@show describe(dfResults, :mean, :std, :median, :min, :max)[[3, 5, 2], :]
 perprof
 
 ##
+n = 200
+samples = 50
+restarts = 4
+EPSVAL = 1e-6
+itmax = 10_000
+τ = .25
+# dfResults = TestPolyhedralSOC(n=n, samples=samples, itmax=itmax, EPSVAL=EPSVAL, restarts=restarts, τ = τ)
+# timenow = Dates.now()
+# CSV.write(datadir("sims", savename("BBIS21_PolyhedralSOC", (@dict timenow EPSVAL τ), "csv")), dfResults)
+##
 
+dfResults2 = CSV.read(datadir("sims", "BBIS21_PolyhedralSOC_EPSVAL=1e-6_timenow=2022-09-15T23:00:13.669_τ=0.25.csv"), DataFrame)
+
+perprof2 = performance_profile(PlotsBackend(), float.(hcat(dfResults2.cCRM, dfResults2.MAP, dfResults2.CRMprod)), ["cCRM", "MAP", "CRMprod",],
+    # title=L"Performance Profile -- Gap error -- $\varepsilon = 10^{-6}$",
+    legend=:bottomright, framestyle=:box, linestyles=[:solid, :dash, :dot])
+ylabel!("Percentage of problems solved")
+xticks!(perprof2, 0:0.5:2.5, [L"2^{0}", L"2^{0.5}", L"2^{1}", L"2^{1.5}", L"2^2", L"2^{2.5}"])
+savefig(perprof2, plotsdir("BBIS21_PolyhedralSOC_Perprof_tau=$(τ).pdf"))
+@show describe(dfResults2, :mean, :std, :median, :min, :max)[[3, 5, 2], :]
+perprof2
+
+
+
+
+##
 
 # n = 200
 # Random.seed!(10)
