@@ -4,12 +4,12 @@ using DrWatson
 include(srcdir("CRM-CFP.jl"))
 using CSV, DataFrames
 using BenchmarkProfiles,  LazySets
-# pgfplotsx()
+pgfplotsx()
 # include(scriptsdir("plots_util.jl"))
 
 """juliadocs
 
-[^Behling2022] R. Behling, J.-Y. Bello-Cruz, A. N. Iusem, e L.-R. Santos, On the centralization of the circumcentered-reflection method.
+[^Behling2023] R. Behling, J.-Y. Bello-Cruz, A. N. Iusem, e L.-R. Santos, On the centralization of the circumcentered-reflection method.
 """
 ##
 
