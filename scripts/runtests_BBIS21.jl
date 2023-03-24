@@ -3,7 +3,7 @@ using DrWatson
 @quickactivate "CRM-CFP"
 include(srcdir("CRM-CFP.jl"))
 using CSV, DataFrames
-using BenchmarkProfiles, LaTeXStrings, Plots, LazySets
+using BenchmarkProfiles,  LazySets
 # pgfplotsx()
 # include(scriptsdir("plots_util.jl"))
 

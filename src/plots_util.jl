@@ -1,3 +1,5 @@
+using Plots, LaTeXStrings, LinearAlgebra
+
 """
 Creates plot with the path of method. 
 """
