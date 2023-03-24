@@ -391,11 +391,11 @@ samples = 30
 Methods = [:CRMprod]
 λ = 1.1
 itmax = 10_000
-dfResults, dfFilesname = tests_TwoEllipsoidsRn(samples = samples, ε = ε, Methods = Methods, λ = λ, itmax = itmax, gap_distance = true)
+# dfResul/ts, dfFilesname = tests_TwoEllipsoidsRn(samples = samples, ε = ε, Methods = Methods, λ = λ, itmax = itmax, gap_distance = true)
 ##
 ## To write data. 
-timenow = Dates.now()
-CSV.write(datadir("sims", savename("BBIS21_TwoEllipsoidsTableSlaterPoint", (@dict timenow λ), "csv")), dfResultsTotal)
+# timenow = Dates.now()
+# CSV.write(datadir("sims", savename("BBIS21_TwoEllipsoidsTableSlaterPoint", (@dict timenow λ), "csv")), dfResultsTotal)
 
 ## # To make Performance Profiles.
  dfResultsTotal = CSV.read(datadir("sims","BBIS21_TwoEllipsoidsTableSlaterPoint_timenow=2021-11-09T10:15:08.589_λ=1.1.csv"), DataFrame)
@@ -408,7 +408,7 @@ perprof1 = performance_profile(PlotsBackend(),
     ["cCRM", "MAP", "CRMprod"],
     legend=:bottomright, framestyle=:box,
     linestyles=[:solid, :dash, :dot])
-ylabel!("Percentage of problems solved")
+ylabel!("Fraction of problems solved")
 xticks!(perprof1,[0, 2, 4, 6], [L"2^0", L"2^2", L"2^4", L"2^6"])
 # title!(L"Performance Profile -- Total projections comparison -- tolerance $\varepsilon = 10^{-4}$")
 savefig(perprof1, plotsdir(savename("BBIS21_TwoEllipsoids_Perprof", (@dict λ), "pdf")))
