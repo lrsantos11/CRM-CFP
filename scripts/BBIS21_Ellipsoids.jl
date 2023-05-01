@@ -1,140 +1,13 @@
+
 ##################################################################
-## Basic Functions for Two Ellipsoids tests and plots
+## Creating Samples
 ##################################################################
-using BenchmarkTools
-import LazySets: Ellipsoid
-import Base: in
-"""
-Structure of an Ellipsoid satisfying dot(x,A*x) + 2*dot(b,x) ≤ α
-"""
-@kwdef struct EllipsoidBBIS
-    A::AbstractMatrix
-    b::AbstractVector
-    α::Number
-end
 
-function in(x₀::Vector, ell::EllipsoidBBIS)
-    A, b, α = ell.A, ell.b, ell.α
-    if dot(x₀, A * x₀) + 2 * dot(b, x₀) ≤ α
-        return true
-    else
-        return false
-    end
-end
-"""
-Transform Ellipsoid in format dot(x-c,Q⁻¹*(x-c)) ≤ 1 
-into format  dot(x,A*x) + 2*dot(b,x) ≤ α
-from shape matrix Q and center of ellipsoid c
-"""
-function EllipsoidBBIS(c::Vector, Q::AbstractMatrix)
-    A = inv(Matrix(Q))
-    b = -A * c
-    α = 1 + dot(c, b)
-    return EllipsoidBBIS(A, b, α)
-end
-
-
-"""
-EllipsoidBBIS(ell)
-
-Transform Ellipsoid in format dot(x-c,Q⁻¹*(x-c)) ≤ 1 from LazySets
-into format  dot(x,A*x) + 2*dot(b,x) ≤ α
-from shape matrix Q and center of ellipsoid c
-"""
-EllipsoidBBIS(ell::Ellipsoid) = EllipsoidBBIS(ell.center, ell.shape_matrix)
-
-
-"""
-Ellipsoid(ell)
-Transform Ellipsoid in format  dot(x,A*x) + 2*dot(b,x) ≤ α to format dot(x-c,Q⁻¹*(x-c)) ≤ 1 from LazySets
-from shape matrix Q and center of ellipsoid c
-"""
-function Ellipsoid(ell::EllipsoidBBIS)
-    c = -(ell.A \ ell.b)
-    β = ell.α - dot(c, ell.b)
-    Q = Symmetric(inv(Matrix(ell.A) / β))
-    return Ellipsoid(c, Q)
-end
-
-
-
-"""
-Proj_Ellipsoid(x₀, ell)
-Projects x₀ onto ell, and EllipsoidBBIS using an ADMM algorithm as reported by Jia, Cai and Han [Jia2007]
-
-[Jia2007] Z. Jia, X. Cai, e D. Han, “Comparison of several fast algorithms for projection onto an ellipsoid”, Journal of Computational and Applied Mathematics, vol. 319, p. 320–337, ago. 2017, doi: 10.1016/j.cam.2017.01.008.
-"""
-function Proj_Ellipsoid(x₀::Vector,
-    ell::EllipsoidBBIS;
-    itmax::Int = 10_000,
-    ε::Real = 1e-8)
-    x₀ ∉ ell ? nothing : return x₀
-    A, b, α = ell.A, ell.b, ell.α
-    ϑₖ = 10 / norm(A)
-    n = length(x₀)
-    B = sqrt(Matrix(A))
-    issymmetric(B) ? BT = B : BT = B'
-    b̄ = B \ (-b)
-    αplusb̄2 = α + norm(b̄)^2
-    r = sqrt(αplusb̄2)
-    yₖ = ones(n)
-    λₖ = ones(n)
-    xₖ = x₀
-    it = 0
-    tolADMM = 1.0
-    function ProjY(y)
-        normy = norm(y)
-        if αplusb̄2 - normy^2 ≥ 0.0
-            return y
-        else
-            return (r / normy) * y
-        end
-    end
-    Ā = (I + ϑₖ * A)
-    normRxₖ = 0.0
-    while tolADMM ≥ ε^2 && it ≤ itmax
-        uₖ = x₀ + BT * (λₖ + ϑₖ * (yₖ + b̄))
-        xₖ = Ā \ uₖ
-        wₖ = B * xₖ - λₖ ./ ϑₖ - b̄
-        normwₖ = norm(wₖ)
-        normwₖ ≤ r ? yₖ = wₖ : yₖ = (r / normwₖ) * wₖ
-        Rxₖ = xₖ - x₀ - BT * λₖ
-        Ryₖ = yₖ - ProjY(yₖ - λₖ)
-        Rλₖ = B * xₖ - yₖ - b̄
-        λₖ -= ϑₖ * Rλₖ
-        normRxₖ = norm(Rxₖ)
-        normRyₖ = norm(Ryₖ)
-        normRλₖ = norm(Rλₖ)
-        tolADMM = sum([normRxₖ^2, normRyₖ^2, normRλₖ^2])
-        it += 1
-        # if normRxₖ < normRλₖ*(0.1/n)
-        #     ϑₖ *= 2
-        # elseif normRxₖ > normRλₖ*(0.9/n)
-        #     ϑₖ *= 0.5
-        # end
-
-    end
-
-    # @show it, normRxₖ
-    return real.(xₖ)
-end
-
-function createDataframes(Methods::Vector{Symbol})
-    dfResults = DataFrame(Problem = String[])
-    dfFilenames = copy(dfResults)
-    for mtd in Methods
-        insertcols!(dfResults, join([mtd, "_it"]) => Int[])
-        insertcols!(dfResults, join([mtd, "_tol"]) => Real[])
-        insertcols!(dfResults, join([mtd, "_elapsed"]) => Real[])
-        insertcols!(dfFilenames, join([mtd, "filename"]) => String[])
-    end
-    return dfResults, dfFilenames
-end
 
 function createTwoEllipsoids(n::Int,
     p::Real;
     λ::Real = 1.0)
-    Ellipsoids = EllipsoidBBIS[]
+    Ellipsoids = EllipsoidCRM[]
     A = Matrix(sprandn(n, n, p))
     γ = 1.5
     A = (γ * I + A' * A)
@@ -143,13 +16,13 @@ function createTwoEllipsoids(n::Int,
     adotAa = dot(a, b)
     b .*= -1.0
     α = (1 + γ) * adotAa
-    push!(Ellipsoids, EllipsoidBBIS(A, b, α))
+    push!(Ellipsoids, EllipsoidCRM(A, b, α))
     TouchEll, TouchPoint = TouchingEllipsoid(Ellipsoids[1], n, λ = λ)
     push!(Ellipsoids, TouchEll)
     return Ellipsoids, TouchPoint
 end
 
-function TouchingEllipsoid(ell::EllipsoidBBIS,
+function TouchingEllipsoid(ell::EllipsoidCRM,
     n::Int;
     λ::Real = 1.0)
     c = randn(n)
@@ -162,12 +35,12 @@ function TouchingEllipsoid(ell::EllipsoidBBIS,
     Q, = qr(d)
     A2 = Λ * Q
     M2 = Symmetric(A2' * A2)
-    return EllipsoidBBIS(c, M2), x̂
+    return EllipsoidCRM(c, M2), x̂
 end
 
 
 function createEllipsoids(n::Int, p::Real, m::Int)
-    Ellipsoids = EllipsoidBBIS[]
+    Ellipsoids = EllipsoidCRM[]
     for index = 1:m
         A = sprandn(n, n, p)
         γ = 1.5
@@ -177,17 +50,21 @@ function createEllipsoids(n::Int, p::Real, m::Int)
         adotAa = dot(a, b)
         b .*= -1.0
         α = (1 + γ) * adotAa
-        push!(Ellipsoids, EllipsoidBBIS(A, b, α))
+        push!(Ellipsoids, EllipsoidCRM(A, b, α))
     end
     return Ellipsoids
 end
 
+##################################################################
+## Methods
+##################################################################
+
 """
 centralizedCRM(x₀, Ellipsoids)
-Uses cCRM to find a point into intersection of two EllipsoidBBIS 
+Uses cCRM to find a point into intersection of two EllipsoidCRM 
 """
 function centralizedCRM(x₀::Vector,
-    Ellipsoids::Vector{EllipsoidBBIS};
+    Ellipsoids::Vector{EllipsoidCRM};
     kwargs...)
     ProjectA(x) = Proj_Ellipsoid(x, Ellipsoids[1])
     ProjectB(x) = Proj_Ellipsoid(x, Ellipsoids[2])
@@ -197,10 +74,10 @@ end
 
 """
 CRMprod(x₀, Ellipsoids)
-Uses cCRM to find a point into intersection of two EllipsoidBBIS 
+Uses cCRM to find a point into intersection of two EllipsoidCRM 
 """
 function CRMprod(x₀::Vector,
-    Ellipsoids::Vector{EllipsoidBBIS};
+    Ellipsoids::Vector{EllipsoidCRM};
     kwargs...)
     ProjectA(x) = Proj_Ellipsoid(x, Ellipsoids[1])
     ProjectB(x) = Proj_Ellipsoid(x, Ellipsoids[2])
@@ -211,10 +88,10 @@ end
 
 """
 MAP(x₀, Ellipsoids)
-Uses MAP to find  a point into intersection of two EllipsoidBBIS 
+Uses MAP to find  a point into intersection of two EllipsoidCRM 
 """
 function MAP(x₀::Vector,
-    Ellipsoids::Vector{EllipsoidBBIS};
+    Ellipsoids::Vector{EllipsoidCRM};
     kwargs...)
     ProjectA(x) = Proj_Ellipsoid(x, Ellipsoids[1])
     ProjectB(x) = Proj_Ellipsoid(x, Ellipsoids[2])
@@ -224,10 +101,10 @@ end
 
 """
 SPM(x₀, Ellipsoids)
-Uses SPM to find  a point into intersection of two EllipsoidBBIS 
+Uses SPM to find  a point into intersection of two EllipsoidCRM 
 """
 function SPM(x₀::Vector,
-    Ellipsoids::Vector{EllipsoidBBIS};
+    Ellipsoids::Vector{EllipsoidCRM};
     kwargs...)
     ProjectA(x) = Proj_Ellipsoid(x, Ellipsoids[1])
     ProjectB(x) = Proj_Ellipsoid(x, Ellipsoids[2])
@@ -237,10 +114,10 @@ end
 
 """
 DRM(x₀, Ellipsoids)
-Uses DRM to find  a point into intersection of two EllipsoidBBIS 
+Uses DRM to find  a point into intersection of two EllipsoidCRM 
 """
 function DRM(x₀::Vector,
-    Ellipsoids::Vector{EllipsoidBBIS};
+    Ellipsoids::Vector{EllipsoidCRM};
     kwargs...)
     ProjectA(x) = Proj_Ellipsoid(x, Ellipsoids[1])
     ProjectB(x) = Proj_Ellipsoid(x, Ellipsoids[2])
