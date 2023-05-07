@@ -71,7 +71,8 @@ Projects x₀ onto ell, and EllipsoidCRM using an ADMM algorithm as reported by 
 function Proj_Ellipsoid(x₀::Vector,
     ell::EllipsoidCRM;
     itmax::Int=10_000,
-    ε::Real=1e-8)
+    ε::Real=1e-8,
+    verbose::Bool=false)
     x₀ ∉ ell ? nothing : return x₀
     A, b, α = ell.A, ell.b, ell.α
     ϑₖ = 10 / norm(A)
@@ -119,7 +120,32 @@ function Proj_Ellipsoid(x₀::Vector,
 
     end
 
-    # @show it, normRxₖ
+    verbose && @info it, normRxₖ
     return real.(xₖ)
 end
+
+
+
+"""
+Function value of ellipsoid
+"""
+function func_EllipsoidCRM(x::Vector, ell::EllipsoidCRM)
+    A, b, α = ell.A, ell.b, ell.α
+    return dot(x, A * x) + 2 * dot(b, x) - α
+end
+
+
+"""
+Ellipsoid initial point 
+"""
+function InitalPoint_EllipsoidCRM(Ellipsoids::Vector{EllipsoidCRM}, n::Int; ρ::Number=1.2)
+    x₀ = StartingPoint(n)
+    iter_starting_point = 1
+    while any(Ref(x₀) .∈ Ellipsoids) && iter_starting_point < 100
+        iter_starting_point += 1
+        x₀ .*= ρ
+    end
+    return x₀
+end
+
 
