@@ -218,7 +218,7 @@ end
 #################################################################
 ### Run tests of Paper
 ##################################################################
-samples = 30
+samples = 10
 dimensions = [
     (10, 3)
     (10, 10)
@@ -235,8 +235,12 @@ dimensions = [
 itmax = 3_000
 Methods = [:SucCentCRM_Cyclic, :SucCentCRM_AlmostViolatedDist, :SucCentCRM_AlmostViolatedFunc, :SePM, :CRMprod]
 dfResultsFinal, _ = createDataframes(Methods,projections=true)
-for (n, m) ∈ dimensions
-    dfResults, _ = TestEllipsoidsRn(n, m, Methods=Methods, bench_time=true, verbose=false, itmax=itmax, samples=samples, λ=λ)
+dfResultsFinal[!, :dim] = Int[]
+dfResultsFinal[!, :num_sets] = Int[]
+for (dim, num_sets) ∈ dimensions
+    dfResults, _ = TestEllipsoidsRn(dim, num_sets, Methods=Methods, bench_time=false, verbose=false, itmax=itmax, samples=samples, λ=λ)
+    dfResults[!, :dim] .= dim
+    dfResults[!, :num_sets] .= num_sets
     append!(dfResultsFinal, dfResults)
 end
 
@@ -255,4 +259,3 @@ CSV.write(datadir("sims",file_name), dfResultsFinal)
 ##################################################################
  dfResultsPerprof = CSV.read(datadir("sims",file_name), DataFrame)
 
- 
