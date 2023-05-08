@@ -13,6 +13,8 @@ function parallelCRMiteration!(xpCRM::Vector,
         xpCRM = FindCircumcentermSet([xpCRM, xpCRM_RB])
     elseif xpCRM_RB ≈ xpCRM
         xpCRM = FindCircumcentermSet([xpCRM, xpCRM_RA])
+    elseif xpCRM_RA ≈ xpCRM_RB
+        xpCRM = FindCircumcentermSet([xpCRM, xpCRM_RA])
     else
         xpCRM = FindCircumcentermSet([xpCRM, xpCRM_RA, xpCRM_RB])
     end
@@ -96,6 +98,7 @@ function SucCentCRM_AlmostViolatedDist(x₀::Vector,
        tired = k ≥ itmax
         printOnFile(filedir, k, tol, xSucCentCRMViolDist)
     end
+    m = length(Projections)
     return Results(iter_total=k, proj_total = k*(2m+4),final_tol=tol, xApprox=xSucCentCRMViolDist, method=:xSucCentCRMViolDist)
 end
 
@@ -132,7 +135,6 @@ function SucCentCRM_AlmostViolatedFunc(x₀::Vector,
         tired = k ≥ itmax
         printOnFile(filedir, k, tol, xSucCentCRMViolFunc)
     end
-    m = length(Projections)
     return Results(iter_total=k, proj_total = 5*k, final_tol=tol, xApprox=xSucCentCRMViolFunc, method=:xSucCentCRMViolFunc)
 end
 
