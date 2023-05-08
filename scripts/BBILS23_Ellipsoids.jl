@@ -218,7 +218,7 @@ end
 #################################################################
 ### Run tests of Paper
 ##################################################################
-samples = 10
+samples = 20
 dimensions = [
     (10, 3)
     (10, 10)
@@ -229,6 +229,9 @@ dimensions = [
     (50, 5)
     (50, 10)
     (50, 20)
+    (100,10)
+    (100,20)
+    (100,30)
 ]
 ε = 1e-6
 λ = 1.15
@@ -238,7 +241,7 @@ dfResultsFinal, _ = createDataframes(Methods,projections=true)
 dfResultsFinal[!, :dim] = Int[]
 dfResultsFinal[!, :num_sets] = Int[]
 for (dim, num_sets) ∈ dimensions
-    dfResults, _ = TestEllipsoidsRn(dim, num_sets, Methods=Methods, bench_time=false, verbose=false, itmax=itmax, samples=samples, λ=λ)
+    dfResults, _ = TestEllipsoidsRn(dim, num_sets, Methods=Methods, bench_time=true, verbose=false, itmax=itmax, samples=samples, λ=λ)
     dfResults[!, :dim] .= dim
     dfResults[!, :num_sets] .= num_sets
     append!(dfResultsFinal, dfResults)
