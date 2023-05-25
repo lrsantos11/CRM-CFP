@@ -52,7 +52,8 @@ function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
              xSol::Vector = [],
              print_intermediate::Bool = false,
              gap_distance::Bool = false,
-             isprod::Bool = false)
+             isprod::Bool = false, 
+             verbose::Bool = false)
     xCRM = ProjectB(x₀)
     ReflectA(x) = Reflection(x,ProjectA)
     ReflectB(x) = Reflection(x,ProjectB)
@@ -77,7 +78,7 @@ function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
         printOnFile(filedir,k, tolCRM, xCRM, isprod=isprod)
 end
     isprod ? method = :CRMprod : method = :CRM
-    return Results(iter_total= k,final_tol=tolCRM,xApprox=xCRM,method=method)
+    return Results(iter_total = k,final_tol=tolCRM,xApprox=xCRM,method=method)
 end
 
 """
@@ -85,21 +86,11 @@ end
 
 Cirumcentered-Reflection method on Pierra's product space reformulation
 """
-function CRMprod(x₀::Vector{Float64},Projections::Vector{Function}; 
-    EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [],
-    print_intermediate::Bool=false,gap_distance::Bool=false)
-    k = 0
-    tolCRMprod = 1.
-    num_sets = length(Projections)
-    xCRMprod = Vector[]
-    for i = 1:num_sets
-        push!(xCRMprod,x₀)
-    end
+function CRMprod(x₀::Vector{Float64},Projections::Vector{Function}; kwargs...)
+    xCRMprod = [x₀ for _ in Projections]
     ProjectAprod(x) = ProjectProdSpace(x,Projections)
     ProjectBprod(x) = ProjectProdDiagonal(x)
-    results = CRM(xCRMprod, ProjectAprod, ProjectBprod, isprod = true,
-    EPSVAL=EPSVAL,itmax=itmax,filedir=filedir, xSol=xSol,
-    print_intermediate=print_intermediate,gap_distance=gap_distance)
+    results = CRM(xCRMprod, ProjectAprod, ProjectBprod, isprod=true; kwargs...)
     return results
 end    
 

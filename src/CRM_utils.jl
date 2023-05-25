@@ -12,15 +12,16 @@ using SparseArrays
 
 import Base.@kwdef
 ####################################
-@kwdef struct Results
+@kwdef mutable struct Results
     iter_total::Int
+    proj_total::Int = 0
     final_tol::Number
     xApprox::AbstractVector
     method::Symbol
     date::DateTime = Dates.now()
 end
 
-Results() = Results(iter_total=0, final_tol=0.0, xApprox=[], method=:None)
+Results() = Results(iter_total=0, final_tol=0.0, xApprox=[], method = :None)
 ####################################
 """
 FindCircumcentermSet(X)
@@ -395,11 +396,12 @@ end
     createDataframes(Methods::Vector{Symbol})
     This function creates two dataframes, one for storing the results of the methods, and another for storing the filenames of the problems.
 """
-function createDataframes(Methods::Vector{Symbol})
+function createDataframes(Methods::Vector{Symbol}; projections::Bool=false)
     dfResults = DataFrame(Problem=String[])
     dfFilenames = copy(dfResults)
     for mtd in Methods
         insertcols!(dfResults, join([mtd, "_it"]) => Int[])
+        projections &&  insertcols!(dfResults, join([mtd, "_projs"]) => Int[])
         insertcols!(dfResults, join([mtd, "_tol"]) => Real[])
         insertcols!(dfResults, join([mtd, "_elapsed"]) => Real[])
         insertcols!(dfFilenames, join([mtd, "filename"]) => String[])
