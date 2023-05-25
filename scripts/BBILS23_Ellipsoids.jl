@@ -219,18 +219,15 @@ end
 ##################################################################
 samples = 20
 dimensions = [
-    (10, 3)
-    (10, 10)
-    (20, 3)
     (20, 5)
     (20, 10)
     (20, 20)
     (50, 5)
     (50, 10)
     (50, 20)
+    (100, 5)
     (100, 10)
     (100, 20)
-    (100, 30)
 ]
 ε = 1e-6
 λ = 1.15
@@ -261,12 +258,13 @@ CSV.write(datadir("sims", file_name), dfResultsFinal)
 #################################################################
 ### Make Performance Profiles.
 ##################################################################
-print_perprof = true
+print_perprof = false
 if print_perprof
-    file_name = "BBILS23_EllipsoidsCFP_timenow=2023-05-08T14:16:53.661.csv"
-    dfResultsPerprof = CSV.read(datadir("sims", file_name), DataFrame,skipto=62)
-
+    include(srcdir("Plots_util.jl"))
     pgfplotsx()
+    file_name = "BBILS23_EllipsoidsCFP_timenow=2023-05-10T07:03:09.048.csv"
+    dfResultsPerprof = CSV.read(datadir("sims", file_name), DataFrame)
+
     # Total  number of projections
     T_Projs = Matrix{Float64}(dfResultsPerprof[:, [:SucCentCRM_Cyclic_projs, :SucCentCRM_AlmostViolatedFunc_projs, :SePM_projs, :CRMprod_projs]])
     T_Projs[findall(row -> row >= itmax, T_Projs)] .= Inf
@@ -282,8 +280,9 @@ if print_perprof
     ylabel!("Fraction of problems solved")
     ticks = [0, 2, 4, 6, 8, 10, 12]
     xticks!(perprof1, ticks, [L"2^{%$(i)}" for i in ticks])
-    # title!(L"Performance Profile -- Total projections comparison -- tolerance $\varepsilon = 10^{-6}$")
-    savefig(perprof1, plotsdir("BBILS23_Ellipsoids_Perprof_TotalProjections.pdf"))
+    title!("Performance Profile -- Total projections comparison")
+    perprof1_file_name = "BBILS23_Ellipsoids_Perprof_TotalProjections.pdf"
+    savefig(perprof1, plotsdir(perprof1_file_name))
     perprof1
 
     ##
@@ -303,9 +302,14 @@ if print_perprof
     ylabel!("Fraction of problems solved")
     ticks = [0, 2, 4, 6, 8, 10, 12]
     xticks!(perprof2, ticks, [L"2^{%$(i)}" for i in ticks])
-    # title!(L"Performance Profile -- CPU time comparison -- tolerance $\varepsilon = 10^{-6}$")
-    savefig(perprof2, plotsdir("BBILS23_Ellipsoids_Perprof_CPUTime.pdf"))
+    title!("Performance Profile -- CPU time comparison")
+    perprof2_file_name = "BBILS23_Ellipsoids_Perprof_CPUTime.pdf"
+    savefig(perprof2, plotsdir(perprof2_file_name))
     perprof2
+    for file in [perprof1_file_name, perprof2_file_name]
+        cp(plotsdir(file),  "../../../Draft/New/Successive-cCRM/"*file, force=true)
+    end
+    
 
 end
 
@@ -315,12 +319,12 @@ end
 ### Make Tables
 ##################################################################
 
-print_tables = true
+print_tables = false
 
 if print_tables
 
-    file_name = "BBILS23_EllipsoidsCFP_timenow=2023-05-08T14:16:53.661.csv"
-    dfResultsTables = CSV.read(datadir("sims", file_name), DataFrame, skipto=62)
+    file_name = "BBILS23_EllipsoidsCFP_timenow=2023-05-10T07:03:09.048.csv"
+    dfResultsTables = CSV.read(datadir("sims", file_name), DataFrame)
     for tipo  in ["_projs","_elapsed"]
         @show describe(dfResultsTables[:,string.(Methods).*tipo], :mean, :std, :median, :min, :max)
         df_tabela = DataFrame(n=Int[],m=Int[], Alg1_mean=Float64[], Alg1_std=Float64[], Alg_2_mean = Float64[],  Alg_2_std = Float64[], Alg3_mean = Float64[], Alg3_std = Float64[], SePM_mean = Float64[],  SePM_std = Float64[], CRMprod_mean = Float64[],  CRMprod_std = Float64[])
