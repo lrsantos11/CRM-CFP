@@ -148,4 +148,50 @@ function InitalPoint_EllipsoidCRM(Ellipsoids::Vector{EllipsoidCRM}, n::Int; ρ::
     return x₀
 end
 
+"""
+    Approximate projection onto ellipsoid
+"""
+
+
+function ApproxProj_Ellipsoid(x::Vector,
+    Ellipsoid::EllipsoidCRM;
+    λ::Real=1.0)
+    A, b, α = Ellipsoid.A, Ellipsoid.b, Ellipsoid.α
+    Ax = A * x
+    gx = dot(x, Ax) + 2 * dot(b, x) - α
+    if gx ≤ 0
+        return x
+    else
+        ∂gx = 2 * (Ax + b)
+        return λ * (x .- (gx / dot(∂gx, ∂gx)) * ∂gx) .+ (1 - λ) * x
+    end
+end
+    
+    """
+        Approximate projection onto ellipsoid
+    """
+
+function  ApproxProj_Ellipsoid(x::Vector,Ellipsoid::Dict; λ::Real = 1.0)
+  @unpack A, b, α  = Ellipsoid
+  ell = EllipsoidCRM(A,b,α)
+    return ApproxProj_Ellipsoid(x,ell; kwargs...)
+end
+
+
+
+
+"""
+    Approximate projection onto ellipsoid using ProdSpace
+"""
+
+function ApproxProjectEllipsoids_ProdSpace(X::Vector,
+    Ellipsoids::Vector{EllipsoidCRM})
+    proj = similar(X)
+    for index in eachindex(proj)
+        proj[index] = ApproxProj_Ellipsoid(X[index], Ellipsoids[index])
+    end
+    return proj
+end
+
+
 

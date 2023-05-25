@@ -98,37 +98,6 @@ end
 # end
 
 
-function  ApproxProj_Ellipsoid(x::Vector,Ellipsoid::Dict; λ::Real = 1.0)
-  @unpack A, b, α  = Ellipsoid
-  Ax = A*x
-  gx = dot(x,Ax) + 2*dot(b,x) - α
-  if gx ≤ 0
-    return x
-  else
-    ∂gx = 2*(Ax + b)
-    return λ*( x .- (gx/dot(∂gx,∂gx))*∂gx ).+ (1-λ)*x
-  end
-end
-
-function Proj_Ellipsoid(x₀::Vector,Ellipsoid::Dict)
-  @unpack A, b, α  = Ellipsoid
-  if dot(x₀,A*x₀) + 2*dot(b,x₀) ≤ α
-    return x₀
-  else
-    n = length(b)
-    model = Model()
-    @variable(model, x[1:n])
-    # set_start_value(x,x₀)
-    @NLexpression(model, Func[i=1:n], x[i] - x₀[i])
-    @NLconstraint(model, c, sum(x[i]*sum(A[i,ℓ]*x[ℓ] for  ℓ=1:n) + 2*b[i]*x[i] for i = 1:n) ≤  α)
-    nlp =  MathOptNLSModel(model, Func)
-    algencan_specs_file = "algencan.dat"
-    writedlm(algencan_specs_file,["ITERATIONS-OUTPUT-DETAIL 00"])
-    stats = algencan(nlp,specfnm=algencan_specs_file)
-    proj = stats.solution
-    return proj
-  end
-end
 
 
 function createDaframes(method::Vector{Symbol},useapprox::Bool)
