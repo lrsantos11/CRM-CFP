@@ -149,22 +149,24 @@ function InitalPoint_EllipsoidCRM(Ellipsoids::Vector{EllipsoidCRM}, n::Int; ρ::
 end
 
 """
-    Approximate projection onto ellipsoid
+    Approximate projection onto ellipsoid using the (perturbed) Separating Hyperplane defined using subdiferential ``u``of function ``f``.
+    ```math
+    P_{S_i^k}(x^k) = x^k -\\frac{\\max\\{0,f_i(x^k)+1\\epsilon_k\\}} {\\|u \\|^2}u,
+    ```
 """
 
 
 function ApproxProj_Ellipsoid(x::Vector,
                               Ellipsoid::EllipsoidCRM;
-                              λ::Real=1.0)
+                              λ::Real = 1.0, # relaxation parameter
+                              ϵ::Real = 0.0 # perturbation
+                              )
     A, b = Ellipsoid.A, Ellipsoid.b
     Ax = A * x
-    gx = func_EllipsoidCRM(x, Ellipsoid)
-    if gx ≤ 0
-        return x
-    else
-        ∂gx = 2 * (Ax + b)
-        return λ * (x .- (gx / dot(∂gx, ∂gx)) * ∂gx) .+ (1 - λ) * x
-    end
+    fx = func_EllipsoidCRM(x, Ellipsoid)
+    ∂fx = 2 * (Ax + b)
+    
+    return λ * (x .- (max(0.0,fx + ϵ) / dot(∂fx, ∂fx)) * ∂fx) .+ (1 - λ) * x
 end
     
     """
