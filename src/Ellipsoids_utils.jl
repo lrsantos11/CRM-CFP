@@ -154,11 +154,11 @@ end
 
 
 function ApproxProj_Ellipsoid(x::Vector,
-    Ellipsoid::EllipsoidCRM;
-    λ::Real=1.0)
-    A, b, α = Ellipsoid.A, Ellipsoid.b, Ellipsoid.α
+                              Ellipsoid::EllipsoidCRM;
+                              λ::Real=1.0)
+    A, b = Ellipsoid.A, Ellipsoid.b
     Ax = A * x
-    gx = dot(x, Ax) + 2 * dot(b, x) - α
+    gx = func_EllipsoidCRM(x, Ellipsoid)
     if gx ≤ 0
         return x
     else
@@ -168,14 +168,15 @@ function ApproxProj_Ellipsoid(x::Vector,
 end
     
     """
-        Approximate projection onto ellipsoid
+        Approximate projection onto ellipsoid given as a dict 
     """
 
-function  ApproxProj_Ellipsoid(x::Vector,Ellipsoid::Dict; λ::Real = 1.0)
-  @unpack A, b, α  = Ellipsoid
-  ell = EllipsoidCRM(A,b,α)
+function  ApproxProj_Ellipsoid(x::Vector,Ellipsoid::Dict; kwargs...)
+    @unpack A, b, α  = Ellipsoid
+    ell = EllipsoidCRM(A,b,α)
     return ApproxProj_Ellipsoid(x,ell; kwargs...)
 end
+
 
 
 
