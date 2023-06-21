@@ -17,7 +17,6 @@ PGFPlotsX = "8314cec4-20b6-5062-9cdb-752b83310925"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PolynomialRoots = "3a141323-8675-5d76-9d11-e1df1406c778"
 ProximalOperators = "a725b495-10eb-56fe-b38b-717eba820537"
-QPSReader = "10f199a5-22af-520b-b891-7ce84a7b1bd0"
 
 [compat]
 julia = "1.8"
