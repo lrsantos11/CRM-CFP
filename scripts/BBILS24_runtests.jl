@@ -10,4 +10,4 @@ include(srcdir("CRM-CFP.jl"))
 """
 
 ##
-# include(scriptsdir("BBILS24_Ellipsoids.jl"))
+include(scriptsdir("BBILS24_Ellipsoids.jl"))

@@ -248,7 +248,7 @@ end
 ### Write results
 ##################################################################
 timenow = Dates.now()
-file_name = savename("BBILS23_EllipsoidsCFP", (@dict timenow), "csv")
+file_name = savename("BBILS24_EllipsoidsCFP", (@dict timenow), "csv")
 CSV.write(datadir("sims", file_name), dfResultsFinal)
 
 
@@ -256,88 +256,88 @@ CSV.write(datadir("sims", file_name), dfResultsFinal)
 #################################################################
 ### Make Performance Profiles.
 ##################################################################
-print_perprof = false
-if print_perprof
-    include(srcdir("Plots_util.jl"))
-    pgfplotsx()
-    file_name = "BBILS23_EllipsoidsCFP_timenow=2023-05-10T07:03:09.048.csv"
-    dfResultsPerprof = CSV.read(datadir("sims", file_name), DataFrame)
+# print_perprof = false
+# if print_perprof
+#     include(srcdir("Plots_util.jl"))
+#     pgfplotsx()
+#     file_name = "BBILS23_EllipsoidsCFP_timenow=2023-05-10T07:03:09.048.csv"
+#     dfResultsPerprof = CSV.read(datadir("sims", file_name), DataFrame)
 
-    # Total  number of projections
-    T_Projs = Matrix{Float64}(dfResultsPerprof[:, [:SucCentCRM_Cyclic_projs, :SucCentCRM_AlmostViolatedFunc_projs, :SePM_projs, :CRMprod_projs]])
-    T_Projs[findall(row -> row >= itmax, T_Projs)] .= Inf
-    T_Projs = T_Projs[61:end, :] #remove first 60 points
+#     # Total  number of projections
+#     T_Projs = Matrix{Float64}(dfResultsPerprof[:, [:SucCentCRM_Cyclic_projs, :SucCentCRM_AlmostViolatedFunc_projs, :SePM_projs, :CRMprod_projs]])
+#     T_Projs[findall(row -> row >= itmax, T_Projs)] .= Inf
+#     T_Projs = T_Projs[61:end, :] #remove first 60 points
 
-    perprof1 = performance_profile(PlotsBackend(),
-        T_Projs,
-        # logscale = false,
-        ["Alg1", "Alg3", "SePM", "CRMprod"],
-        legend=:bottomright, framestyle=:box,
-        linestyles=[:dash, :solid, :dot, :dashdot],
-    )
-    ylabel!("Fraction of problems solved")
-    ticks = [0, 2, 4, 6, 8, 10, 12]
-    xticks!(perprof1, ticks, [L"2^{%$(i)}" for i in ticks])
-    title!("Performance Profile -- Total projections comparison")
-    perprof1_file_name = "BBILS23_Ellipsoids_Perprof_TotalProjections.pdf"
-    savefig(perprof1, plotsdir(perprof1_file_name))
-    perprof1
+#     perprof1 = performance_profile(PlotsBackend(),
+#         T_Projs,
+#         # logscale = false,
+#         ["Alg1", "Alg3", "SePM", "CRMprod"],
+#         legend=:bottomright, framestyle=:box,
+#         linestyles=[:dash, :solid, :dot, :dashdot],
+#     )
+#     ylabel!("Fraction of problems solved")
+#     ticks = [0, 2, 4, 6, 8, 10, 12]
+#     xticks!(perprof1, ticks, [L"2^{%$(i)}" for i in ticks])
+#     title!("Performance Profile -- Total projections comparison")
+#     perprof1_file_name = "BBILS23_Ellipsoids_Perprof_TotalProjections.pdf"
+#     savefig(perprof1, plotsdir(perprof1_file_name))
+#     perprof1
 
-    ##
-    # Total CPU time
+#     ##
+#     # Total CPU time
 
-    T_CPU = Matrix{Float64}(dfResultsPerprof[:, [:SucCentCRM_Cyclic_elapsed, :SucCentCRM_AlmostViolatedFunc_elapsed, :SePM_elapsed, :CRMprod_elapsed]])
-    T_CPU[findall(row -> row >= itmax, T_CPU)] .= Inf
-    T_CPU = T_CPU[61:end, :] #remove first 60 points
+#     T_CPU = Matrix{Float64}(dfResultsPerprof[:, [:SucCentCRM_Cyclic_elapsed, :SucCentCRM_AlmostViolatedFunc_elapsed, :SePM_elapsed, :CRMprod_elapsed]])
+#     T_CPU[findall(row -> row >= itmax, T_CPU)] .= Inf
+#     T_CPU = T_CPU[61:end, :] #remove first 60 points
 
-    perprof2 = performance_profile(PlotsBackend(),
-        T_CPU,
-        # logscale = false,
-        ["Alg1", "Alg3", "SePM", "CRMprod"],
-        legend=:bottomright, framestyle=:box,
-        linestyles=[:dash, :solid, :dot, :dashdot],
-    )
-    ylabel!("Fraction of problems solved")
-    ticks = [0, 2, 4, 6, 8, 10, 12]
-    xticks!(perprof2, ticks, [L"2^{%$(i)}" for i in ticks])
-    title!("Performance Profile -- CPU time comparison")
-    perprof2_file_name = "BBILS23_Ellipsoids_Perprof_CPUTime.pdf"
-    savefig(perprof2, plotsdir(perprof2_file_name))
-    perprof2
-    for file in [perprof1_file_name, perprof2_file_name]
-        cp(plotsdir(file),  "../../../Draft/New/Successive-cCRM/"*file, force=true)
-    end
+#     perprof2 = performance_profile(PlotsBackend(),
+#         T_CPU,
+#         # logscale = false,
+#         ["Alg1", "Alg3", "SePM", "CRMprod"],
+#         legend=:bottomright, framestyle=:box,
+#         linestyles=[:dash, :solid, :dot, :dashdot],
+#     )
+#     ylabel!("Fraction of problems solved")
+#     ticks = [0, 2, 4, 6, 8, 10, 12]
+#     xticks!(perprof2, ticks, [L"2^{%$(i)}" for i in ticks])
+#     title!("Performance Profile -- CPU time comparison")
+#     perprof2_file_name = "BBILS23_Ellipsoids_Perprof_CPUTime.pdf"
+#     savefig(perprof2, plotsdir(perprof2_file_name))
+#     perprof2
+#     for file in [perprof1_file_name, perprof2_file_name]
+#         cp(plotsdir(file),  "../../../Draft/New/Successive-cCRM/"*file, force=true)
+#     end
     
 
-end
+# end
 
 
-##
-#################################################################
-### Make Tables
-##################################################################
+# ##
+# #################################################################
+# ### Make Tables
+# ##################################################################
 
-print_tables = false
+# print_tables = false
 
-if print_tables
+# if print_tables
 
-    file_name = "BBILS23_EllipsoidsCFP_timenow=2023-05-10T07:03:09.048.csv"
-    dfResultsTables = CSV.read(datadir("sims", file_name), DataFrame)
-    for tipo  in ["_projs","_elapsed"]
-        @show describe(dfResultsTables[:,string.(Methods).*tipo], :mean, :std, :median, :min, :max)
-        df_tabela = DataFrame(n=Int[],m=Int[], Alg1_mean=Float64[], Alg1_std=Float64[], Alg_2_mean = Float64[],  Alg_2_std = Float64[], Alg3_mean = Float64[], Alg3_std = Float64[], SePM_mean = Float64[],  SePM_std = Float64[], CRMprod_mean = Float64[],  CRMprod_std = Float64[])
+#     file_name = "BBILS23_EllipsoidsCFP_timenow=2023-05-10T07:03:09.048.csv"
+#     dfResultsTables = CSV.read(datadir("sims", file_name), DataFrame)
+#     for tipo  in ["_projs","_elapsed"]
+#         @show describe(dfResultsTables[:,string.(Methods).*tipo], :mean, :std, :median, :min, :max)
+#         df_tabela = DataFrame(n=Int[],m=Int[], Alg1_mean=Float64[], Alg1_std=Float64[], Alg_2_mean = Float64[],  Alg_2_std = Float64[], Alg3_mean = Float64[], Alg3_std = Float64[], SePM_mean = Float64[],  SePM_std = Float64[], CRMprod_mean = Float64[],  CRMprod_std = Float64[])
 
-        gdf = groupby(dfResultsTables, [:dim, :num_sets])
-        for k in keys(gdf)
-            df = describe(gdf[k][:,string.(Methods).*tipo], :mean, :std)    
-            df_row = [] 
-            push!(df_row, k[1], k[2])
-            for row in eachrow(df)
-                push!(df_row, row[2], row[3])
-            end 
-            push!(df_tabela,df_row)
-        end
-        println("Total number of $tipo")
-        @show df_tabela
-    end
-end
+#         gdf = groupby(dfResultsTables, [:dim, :num_sets])
+#         for k in keys(gdf)
+#             df = describe(gdf[k][:,string.(Methods).*tipo], :mean, :std)    
+#             df_row = [] 
+#             push!(df_row, k[1], k[2])
+#             for row in eachrow(df)
+#                 push!(df_row, row[2], row[3])
+#             end 
+#             push!(df_tabela,df_row)
+#         end
+#         println("Total number of $tipo")
+#         @show df_tabela
+#     end
+# end
