@@ -129,16 +129,26 @@ end
 """
 Function value of ellipsoid
 """
-function func_EllipsoidCRM(x::Vector, ell::EllipsoidCRM)
+function eval_EllipsoidCRM(x::Vector, ell::EllipsoidCRM)
     A, b, α = ell.A, ell.b, ell.α
     return dot(x, A * x) + 2 * dot(b, x) - α
 end
+
+"""
+Gradient of  ellipsoid function
+"""
+function gradient_EllipsoidCRM(x::Vector, ell::EllipsoidCRM)
+    A, b = ell.A, ell.b
+    return 2*(A * x  + b)
+end
+
+
 
 
 """
 Ellipsoid initial point 
 """
-function InitalPoint_EllipsoidCRM(Ellipsoids::Vector{EllipsoidCRM}, n::Int; ρ::Number=1.2)
+function InitialPoint_EllipsoidCRM(Ellipsoids::Vector{EllipsoidCRM}, n::Int; ρ::Number=1.2)
     x₀ = StartingPoint(n)
     iter_starting_point = 1
     while any(Ref(x₀) .∈ Ellipsoids) && iter_starting_point < 100
@@ -163,7 +173,7 @@ function ApproxProj_Ellipsoid(x::Vector,
                               )
     A, b = Ellipsoid.A, Ellipsoid.b
     Ax = A * x
-    fx = func_EllipsoidCRM(x, Ellipsoid)
+    fx = eval_EllipsoidCRM(x, Ellipsoid)
     ∂fx = 2 * (Ax + b)
     
     return λ * (x .- (max(0.0,fx + ϵ) / dot(∂fx, ∂fx)) * ∂fx) .+ (1 - λ) * x
@@ -205,15 +215,16 @@ SampleTwoEllipsoids(n, p; λ=1.1, γ=1.5)
 Creates two ellipsoids in ℝⁿ that intersect. The intersection is regulated by λ.
 
 """
-function SampleTwoEllipsoids(n::Int,  # dimension
+function SampleTwoEllipsoids(T,
+    n::Int,  # dimension
     p::Real; # sparsity of matrix A
     λ::Real=1.1, # parameter for touching ellipsoid
     γ::Real=1.5 # parameter for making A positive definite
 )
     Ellipsoids = EllipsoidCRM[]
-    A = Matrix(sprandn(n, n, p))
+    A = Matrix(sprandn(T, n, n, p))
     A = (γ * I + A' * A)
-    a = rand(n)
+    a = rand(T,n)
     b = A * a
     adotAa = dot(a, b)
     b .*= -1.0
@@ -224,7 +235,7 @@ function SampleTwoEllipsoids(n::Int,  # dimension
     return Ellipsoids, Center2, TouchPoint
 end
 
-
+SampleTwoEllipsoids(n, p; kargs...) = SampleTwoEllipsoids(Float64, n, p; kargs...)
 
 
 """

@@ -4,15 +4,151 @@
 
 
 """
+    CRMprod(x₀, Ellipsoids)
+
+Circumcentered-Reflection method for the product space for ellipsoids
+
+"""
+function CRMprod(x₀::Vector,
+              Ellipsoids::Vector{EllipsoidCRM}; kargs...)
+              
+    xCRMprod = [x₀ for _ in Ellipsoids]
+    ApproxProjections(X) = ApproxProjectEllipsoids_ProdSpace(X, Ellipsoids)
+    return CRMprod(xCRMprod, ApproxProjections; kargs...)
+end
+"""
+    DRMprod(x₀, Ellipsoids)
+
+Douglas-Rachford method for the product space for ellipsoids
+
+"""
+function DRMprod(x₀::Vector,
+    Ellipsoids::Vector{EllipsoidCRM}; kargs...)
+    xDRMprod = [x₀ for _ in Ellipsoids]
+    xDRMprod[end] = [0.0 for _ in x₀]
+    ApproxProjections(X) = ApproxProjectEllipsoids_ProdSpace(X, Ellipsoids)
+    return DRMprod(xDRMprod, ApproxProjections; kargs...)
+end
+
+ϵ1(k) = 1 / sqrt(k + 1)
+ϵ2(k) = 1 / (k + 1)
+
+
+"""
     PACA(x₀, Ellipsoids)
 
-Perturbed Approximate Circumcenter Algorithm
+Perturbed Approximate Circumcenter Algorithm for ellipsoids
+
 """
 function PACA(x₀::Vector,
-    Ellipsoids::Vector{EllipsoidCRM}; kargs...)
-    Projections = Function[x -> Proj_Ellipsoid(x, ell) for ell in Ellipsoids]
-    return PACA(x₀, Projections; kargs...)
+    Ellipsoids::Vector{EllipsoidCRM},
+    ϵ::Function; 
+    kargs...)
+    FuncEllipsoids = Function[x -> eval_EllipsoidCRM(x, ell) for ell in Ellipsoids]
+    ∂Ellipsoids = Function[x -> gradient_EllipsoidCRM(x, ell) for ell in Ellipsoids]
+    return PACA(x₀, FuncEllipsoids, ∂Ellipsoids, ϵ; kargs...)
 end
+
+PACA1(x₀::Vector,
+    Ellipsoids::Vector{EllipsoidCRM}; 
+    kargs...) = PACA(x₀, Ellipsoids, ϵ1 ; kargs...)
+
+
+PACA2(x₀::Vector,
+    Ellipsoids::Vector{EllipsoidCRM};
+    kargs...) = PACA(x₀, Ellipsoids, ϵ2; kargs...)
+
+
+"""
+    MCSPM(x₀, Ellipsoids)
+
+Modified Cyclic Subgradient Projection method for ellipsoids from [Pierro:1988]
+
+[Pierro:1986] A. R. De Pierro and A. N. Iusem, “A finitely convergent ‘row-action’ method for the convex feasibility problem,” Appl Math Optim, vol. 17, no. 1, Art. no. 1, Jan. 1988, doi: 10.1007/BF01448368.
+
+"""
+function MCSPM(x₀::Vector,
+    Ellipsoids::Vector{EllipsoidCRM},
+    ϵ::Function; 
+    kargs...)
+    FuncEllipsoids = Function[x -> eval_EllipsoidCRM(x, ell) for ell in Ellipsoids]
+    ∂Ellipsoids = Function[x -> gradient_EllipsoidCRM(x, ell) for ell in Ellipsoids]
+    return MCSPM(x₀, FuncEllipsoids, ∂Ellipsoids, ϵ; kargs...)
+end
+
+
+MCSPM1(x₀::Vector,
+    Ellipsoids::Vector{EllipsoidCRM};
+    kargs...) = MCSPM(x₀, Ellipsoids, ϵ1; kargs...)
+
+
+MCSPM2(x₀::Vector,
+    Ellipsoids::Vector{EllipsoidCRM};
+    kargs...) = MCSPM(x₀, Ellipsoids, ϵ2; kargs...)
+
+
+
+"""
+    MSSPM(x₀, Ellipsoids)
+
+Modified simultaneous Subgradient Projection method for ellipsoids from [Iusem:1986]
+
+[Iusem:1986] A. N. Iusem and L. Moledo, “A finitely convergent method of simultaneous subgradient projections for the convex feasibility problem,” Matemática Aplicada e Computacional, vol. 5, no. 2, pp. 169–184, 1986.
+
+"""
+function MSSPM(x₀::Vector,
+    Ellipsoids::Vector{EllipsoidCRM},
+    ϵ::Function;
+    kargs...)
+    FuncEllipsoids = Function[x -> eval_EllipsoidCRM(x, ell) for ell in Ellipsoids]
+    ∂Ellipsoids = Function[x -> gradient_EllipsoidCRM(x, ell) for ell in Ellipsoids]
+    return MSSPM(x₀, FuncEllipsoids, ∂Ellipsoids, ϵ; kargs...)
+end
+
+
+MSSPM1(x₀::Vector,
+    Ellipsoids::Vector{EllipsoidCRM};
+    kargs...) = MSSPM(x₀, Ellipsoids, ϵ1; kargs...)
+
+
+MSSPM2(x₀::Vector,
+    Ellipsoids::Vector{EllipsoidCRM};
+    kargs...) = MSSPM(x₀, Ellipsoids, ϵ2; kargs...)
+
+
+
+
+##
+# Prototype of the function TestEllipsoidsRn
+Random.seed!(1234)
+itmax = 2_000
+n = 100
+m = 50
+p = 2 * inv(n)
+λ = 1.15
+ε = 1e-12
+Ellipsoids, _ = SampleEllipsoids(n, m, p, λ = λ)
+x₀ = InitialPoint_EllipsoidCRM(Ellipsoids, n)
+ϵ(k) =  1/sqrt(k+1)
+resultsPACA1 = PACA1(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
+resultsMCSPM1 = MCSPM1(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
+resultsMSSPM1 = MSSPM1(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
+
+ϵ(k) = 1 / (k + 1)
+resultsPACA2 = PACA2(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
+resultsMCSPM2 = MCSPM2(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
+resultsMSSPM2 = MSSPM2(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
+resultsCRMprod = CRMprod(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
+resultsDRMprod = DRMprod(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
+
+@info "PACA 1/√(k+1)" resultsPACA1.iter_total 
+@info "PACA 1/(k+1)" resultsPACA2.iter_total
+@info "MCSPM 1/√(k+1)" resultsMCSPM1.iter_total
+@info "MCSPM 1/√(k+1)" resultsMCSPM2.iter_total
+@info "MSSPM 1/√(k+1)" resultsMSSPM1.iter_total
+@info "MSSPM 1/√(k+1)" resultsMSSPM2.iter_total
+@info "CRMprod" resultsCRMprod.iter_total
+@info "DRMprod" resultsDRMprod.iter_total
 
 
 ##
@@ -29,7 +165,7 @@ function TestEllipsoidsRn(
     itmax::Int=200_000,
     restarts::Int=1,
     print_file::Bool=false,
-    Methods::Vector{Symbol}=[:SucCentCRM_Cyclic, :SucCentCRM_AlmostViolatedDist, :SucCentCRM_AlmostViolatedFunc, :SePM, :CRMprod],
+    Methods::Vector{Symbol}=[:PACA1, :PACA2, :DRMprod, :CRMprod, :MCSPM1,  :MCSPM2, :MSSPM1, :MSSPM2],
     bench_time::Bool=false,
     gap_distance=false,
     verbose::Bool=false)
@@ -43,7 +179,7 @@ function TestEllipsoidsRn(
     for j = 1:samples
         ℰ, _ = SampleEllipsoids(n, m, p, λ=λ)
         for i = 1:restarts
-            x₀ = InitalPoint_EllipsoidCRM(ℰ, n)
+            x₀ = InitialPoint_EllipsoidCRM(ℰ, n)
             prob_name = savename((Prob=j, Rest=i, dim=n, numsets=m, lambda=λ); equals="", sort=false)
             @info prob_name
             timenow = Dates.now()
@@ -54,7 +190,7 @@ function TestEllipsoidsRn(
             for mtd in Methods
                 func = eval(mtd)
                 @info "method: $(string(func))"
-                filename = savename("BBILS23", (time=timenow, mtd=mtd, prob=prob_name,), "csv", sort=false)
+                filename = savename("BBILS24", (time=timenow, mtd=mtd, prob=prob_name,), "csv", sort=false)
                 print_file ? filedir = datadir("sims", filename) : filedir = ""
                 results = func(x₀, ℰ, EPSVAL=ε, filedir=filedir, itmax=itmax, verbose=verbose)
                 verbose && @info mtd, results.iter_total, results.proj_total, results.final_tol
@@ -95,7 +231,7 @@ dimensions = [
 λ = 1.15
 itmax = 300_000
 bench_time = true
-Methods = [:SucCentCRM_Cyclic, :SucCentCRM_AlmostViolatedDist, :SucCentCRM_AlmostViolatedFunc, :SePM, :CRMprod]
+Methods = Symbol[:PACA1, :PACA2, :DRMprod, :CRMprod, :MCSPM1, :MCSPM2, :MSSPM1, :MSSPM2]
 dfResultsFinal, _ = createDataframes(Methods, projections=true)
 dfResultsFinal[!, :dim] = Int[]
 dfResultsFinal[!, :num_sets] = Int[]

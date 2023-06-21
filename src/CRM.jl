@@ -62,7 +62,7 @@ function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
     tolCRM = 1.
     printOnFile(filedir,k, tolCRM, xCRM ,deletefile=true, isprod=isprod)
     while tolCRM > EPSVAL && k < itmax
-        print_intermediate ?  printOnFile(filedir,0, 0., ProjA,isprod=isprod) : nothing
+        print_intermediate ?  printOnFile(filedir,0, 0., ProjA, isprod=isprod) : nothing
         if gap_distance
             xCRM  = CRMiteration(xCRM, ProjA, ReflectB)
             ProjA = ProjectA(xCRM)                     
@@ -92,7 +92,18 @@ function CRMprod(x₀::Vector{Float64},Projections::Vector{Function}; kwargs...)
     ProjectBprod(x) = ProjectProdDiagonal(x)
     results = CRM(xCRMprod, ProjectAprod, ProjectBprod, isprod=true; kwargs...)
     return results
-end    
+end  
+
+"""
+    CRMprod(x₀, Projections)
+
+Cirumcentered-Reflection method on Pierra's product space reformulation
+"""
+function CRMprod(xCRMprod::Vector{Vector{Float64}}, ProjectAprod::Function; kwargs...)
+    ProjectBprod(x) = ProjectProdDiagonal(x)
+    results = CRM(xCRMprod, ProjectAprod, ProjectBprod, isprod=true; kwargs...)
+    return results
+end
 
 """
     CRMprod(x₀, ProjectA, ProjectB)

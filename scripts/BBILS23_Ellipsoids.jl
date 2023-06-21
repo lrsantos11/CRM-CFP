@@ -29,7 +29,7 @@ end
 function SucCentCRM_AlmostViolatedFunc(x₀::Vector,
     Ellipsoids::Vector{EllipsoidCRM}; kargs...)
     Projections = Function[x -> Proj_Ellipsoid(x, ell) for ell in Ellipsoids]
-    FunctionEval = Function[x -> func_EllipsoidCRM(x, ell) for ell in Ellipsoids]
+    FunctionEval = Function[x -> eval_EllipsoidCRM(x, ell) for ell in Ellipsoids]
     return SucCentCRM_AlmostViolatedFunc(x₀, Projections, FunctionEval; kargs...)
 end
 
@@ -86,7 +86,7 @@ function TestEllipsoidsRn(
     for j = 1:samples
         ℰ, _ = SampleEllipsoids(n, m, p, λ=λ)
         for i = 1:restarts
-            x₀ = InitalPoint_EllipsoidCRM(ℰ, n)
+            x₀ = InitialPoint_EllipsoidCRM(ℰ, n)
             prob_name = savename((Prob=j, Rest=i, dim=n, numsets=m, lambda=λ); equals="", sort=false)
             @info prob_name
             timenow = Dates.now()

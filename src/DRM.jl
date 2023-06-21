@@ -17,7 +17,7 @@ Douglas–Rachford method on Pierra's product space reformulation
 
 function DRM(x₀::Vector,ProjectA::Function, ProjectB::Function; 
     EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [],
-    print_intermediate::Bool=false,gap_distance::Bool=false)
+    print_intermediate::Bool=false,gap_distance::Bool=false, isprod::Bool = false, verbose::Bool = false)
     k = 0
     tolDRM = 1.
     xDRM = x₀
@@ -32,7 +32,8 @@ function DRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
         k += 2
         printOnFile(filedir,hcat(k, tolDRM, xDRM'))
     end
-    return Results(iter_total= k,final_tol=tolDRM,xApprox=xDRM,method=:DRM)
+    isprod ? method = :DRMprod : method = :DRM
+    return Results(iter_total=k, final_tol=tolDRM, xApprox=xDRM, method=method)
 end
 
 """
@@ -40,8 +41,8 @@ end
 
 Douglas–Rachford method on Pierra's product space reformulation
 """
-function DRMprod(x₀::Vector{Float64},Projections::Vector; 
-    EPSVAL::Float64=1e-5,itmax::Int = 100,filedir::String = "", xSol::Vector = [],
+function DRMprod(x₀::Vector{Float64},Projections::Vector{Function}; 
+    EPSVAL::Float64=1e-5, itmax::Int = 100,filedir::String = "", xSol::Vector = [],
     print_intermediate::Bool=false,gap_distance::Bool=false)
     k = 0
     tolDRMprod = 1.
@@ -67,8 +68,19 @@ function DRMprod(x₀::Vector{Float64},Projections::Vector;
                   final_tol=tolDRMprod,xApprox=xDRMprod[1],method=:DRMprod)
 end    
 
+"""
+    DRMprod(x₀, Projections)
+
+Douglas–Rachford method on Pierra's product space reformulation
+"""
+
+function DRMprod(xDRMprod::Vector{Vector{Float64}}, ProjectAprod::Function; kwargs...)
+    ProjectBprod(x) = ProjectProdDiagonal(x)
+    return DRM(xDRMprod, ProjectAprod, ProjectBprod; isprod=true, kwargs...)
+end
+
 
 """
     DRMprod(x₀, ProjectA, ProjectB)
 """
-DRMprod(x₀::Vector{Float64},ProjectA::Function, ProjectB::Function;kwargs...) = DRMprod(x₀,[ProjectA,ProjectB],kwargs...) 
+DRMprod(x₀::Vector{Float64},ProjectA::Function, ProjectB::Function; kwargs...) = DRMprod(x₀,[ProjectA,ProjectB]; kwargs...) 
