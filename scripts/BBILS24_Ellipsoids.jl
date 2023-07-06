@@ -9,8 +9,8 @@
 Circumcentered-Reflection method for the product space for ellipsoids
 
 """
-function CRMprod(x₀::Vector,
-              Ellipsoids::Vector{EllipsoidCRM}; kargs...)
+function CRMprod(x₀::AbstractVector,
+              Ellipsoids::AbstractVector{EllipsoidCRM}; kargs...)
               
     xCRMprod = [x₀ for _ in Ellipsoids]
     ApproxProjections(X) = ApproxProjectEllipsoids_ProdSpace(X, Ellipsoids)
@@ -22,8 +22,8 @@ end
 Douglas-Rachford method for the product space for ellipsoids
 
 """
-function DRMprod(x₀::Vector,
-    Ellipsoids::Vector{EllipsoidCRM}; kargs...)
+function DRMprod(x₀::AbstractVector,
+    Ellipsoids::AbstractVector{EllipsoidCRM}; kargs...)
     xDRMprod = [x₀ for _ in Ellipsoids]
     xDRMprod[end] = [0.0 for _ in x₀]
     ApproxProjections(X) = ApproxProjectEllipsoids_ProdSpace(X, Ellipsoids)
@@ -40,8 +40,8 @@ end
 Perturbed Approximate Circumcenter Algorithm for ellipsoids
 
 """
-function PACA(x₀::Vector,
-    Ellipsoids::Vector{EllipsoidCRM},
+function PACA(x₀::AbstractVector,
+    Ellipsoids::AbstractVector{EllipsoidCRM},
     ϵ::Function; 
     kargs...)
     FuncEllipsoids = Function[x -> eval_EllipsoidCRM(x, ell) for ell in Ellipsoids]
@@ -49,13 +49,13 @@ function PACA(x₀::Vector,
     return PACA(x₀, FuncEllipsoids, ∂Ellipsoids, ϵ; kargs...)
 end
 
-PACA1(x₀::Vector,
-    Ellipsoids::Vector{EllipsoidCRM}; 
+PACA1(x₀::AbstractVector,
+    Ellipsoids::AbstractVector{EllipsoidCRM}; 
     kargs...) = PACA(x₀, Ellipsoids, ϵ1 ; kargs...)
 
 
-PACA2(x₀::Vector,
-    Ellipsoids::Vector{EllipsoidCRM};
+PACA2(x₀::AbstractVector,
+    Ellipsoids::AbstractVector{EllipsoidCRM};
     kargs...) = PACA(x₀, Ellipsoids, ϵ2; kargs...)
 
 
@@ -64,11 +64,11 @@ PACA2(x₀::Vector,
 
 Modified Cyclic Subgradient Projection method for ellipsoids from [Pierro:1988]
 
-[Pierro:1986] A. R. De Pierro and A. N. Iusem, “A finitely convergent ‘row-action’ method for the convex feasibility problem,” Appl Math Optim, vol. 17, no. 1, Art. no. 1, Jan. 1988, doi: 10.1007/BF01448368.
+[Pierro:1988] A. R. De Pierro and A. N. Iusem, “A finitely convergent ‘row-action’ method for the convex feasibility problem,” Appl Math Optim, vol. 17, no. 1, Art. no. 1, Jan. 1988, doi: 10.1007/BF01448368.
 
 """
-function MCSPM(x₀::Vector,
-    Ellipsoids::Vector{EllipsoidCRM},
+function MCSPM(x₀::AbstractVector,
+    Ellipsoids::AbstractVector{EllipsoidCRM},
     ϵ::Function; 
     kargs...)
     FuncEllipsoids = Function[x -> eval_EllipsoidCRM(x, ell) for ell in Ellipsoids]
@@ -77,13 +77,13 @@ function MCSPM(x₀::Vector,
 end
 
 
-MCSPM1(x₀::Vector,
-    Ellipsoids::Vector{EllipsoidCRM};
+MCSPM1(x₀::AbstractVector,
+    Ellipsoids::AbstractVector{EllipsoidCRM};
     kargs...) = MCSPM(x₀, Ellipsoids, ϵ1; kargs...)
 
 
-MCSPM2(x₀::Vector,
-    Ellipsoids::Vector{EllipsoidCRM};
+MCSPM2(x₀::AbstractVector,
+    Ellipsoids::AbstractVector{EllipsoidCRM};
     kargs...) = MCSPM(x₀, Ellipsoids, ϵ2; kargs...)
 
 
@@ -96,8 +96,8 @@ Modified simultaneous Subgradient Projection method for ellipsoids from [Iusem:1
 [Iusem:1986] A. N. Iusem and L. Moledo, “A finitely convergent method of simultaneous subgradient projections for the convex feasibility problem,” Matemática Aplicada e Computacional, vol. 5, no. 2, pp. 169–184, 1986.
 
 """
-function MSSPM(x₀::Vector,
-    Ellipsoids::Vector{EllipsoidCRM},
+function MSSPM(x₀::AbstractVector,
+    Ellipsoids::AbstractVector{EllipsoidCRM},
     ϵ::Function;
     kargs...)
     FuncEllipsoids = Function[x -> eval_EllipsoidCRM(x, ell) for ell in Ellipsoids]
@@ -106,13 +106,13 @@ function MSSPM(x₀::Vector,
 end
 
 
-MSSPM1(x₀::Vector,
-    Ellipsoids::Vector{EllipsoidCRM};
+MSSPM1(x₀::AbstractVector,
+    Ellipsoids::AbstractVector{EllipsoidCRM};
     kargs...) = MSSPM(x₀, Ellipsoids, ϵ1; kargs...)
 
 
-MSSPM2(x₀::Vector,
-    Ellipsoids::Vector{EllipsoidCRM};
+MSSPM2(x₀::AbstractVector,
+    Ellipsoids::AbstractVector{EllipsoidCRM};
     kargs...) = MSSPM(x₀, Ellipsoids, ϵ2; kargs...)
 
 
@@ -141,12 +141,15 @@ resultsMSSPM2 = MSSPM2(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
 resultsCRMprod = CRMprod(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
 resultsDRMprod = DRMprod(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
 
-@info "PACA 1/√(k+1)" resultsPACA1.iter_total 
-@info "PACA 1/(k+1)" resultsPACA2.iter_total
-@info "MCSPM 1/√(k+1)" resultsMCSPM1.iter_total
-@info "MCSPM 1/√(k+1)" resultsMCSPM2.iter_total
-@info "MSSPM 1/√(k+1)" resultsMSSPM1.iter_total
-@info "MSSPM 1/√(k+1)" resultsMSSPM2.iter_total
+
+
+
+@info "PACA ε(k) = 1/√(k+1)" resultsPACA1.iter_total 
+@info "PACA ε(k) = 1/(k+1)" resultsPACA2.iter_total
+@info "MCSPM ε(k) = 1/√(k+1)" resultsMCSPM1.iter_total
+@info "MCSPM ε(k) = 1/√(k+1)" resultsMCSPM2.iter_total
+@info "MSSPM ε(k) = 1/√(k+1)" resultsMSSPM1.iter_total
+@info "MSSPM ε(k) = 1/√(k+1)" resultsMSSPM2.iter_total
 @info "CRMprod" resultsCRMprod.iter_total
 @info "DRMprod" resultsDRMprod.iter_total
 
@@ -165,7 +168,7 @@ function TestEllipsoidsRn(
     itmax::Int=200_000,
     restarts::Int=1,
     print_file::Bool=false,
-    Methods::Vector{Symbol}=[:PACA1, :PACA2, :DRMprod, :CRMprod, :MCSPM1,  :MCSPM2, :MSSPM1, :MSSPM2],
+    Methods::AbstractVector{Symbol}=[:PACA1, :PACA2, :DRMprod, :CRMprod, :MCSPM1,  :MCSPM2, :MSSPM1, :MSSPM2],
     bench_time::Bool=false,
     gap_distance=false,
     verbose::Bool=false)
@@ -215,52 +218,53 @@ end
 #################################################################
 ### Run tests of Paper
 ##################################################################
-samples = 20
-dimensions = [
-    (20, 5)
-    (20, 10)
-    (20, 20)
-    (50, 5)
-    (50, 10)
-    (50, 20)
-    (100, 5)
-    (100, 10)
-    (100, 20)
-]
-ε = 1e-6
-λ = 1.15
-itmax = 300_000
-bench_time = true
-Methods = Symbol[:PACA1, :PACA2, :DRMprod, :CRMprod, :MCSPM1, :MCSPM2, :MSSPM1, :MSSPM2]
-dfResultsFinal, _ = createDataframes(Methods, projections=true)
-dfResultsFinal[!, :dim] = Int[]
-dfResultsFinal[!, :num_sets] = Int[]
-##
-for (dim, num_sets) ∈ dimensions
-    dfResults, _ = TestEllipsoidsRn(dim, num_sets, Methods=Methods, bench_time=bench_time, verbose=false, itmax=itmax, samples=samples, λ=λ)
-    dfResults[!, :dim] .= dim
-    dfResults[!, :num_sets] .= num_sets
-    append!(dfResultsFinal, dfResults)
+Methods = Symbol[:PACA1, :PACA2, :CRMprod, :MCSPM1, :MCSPM2, :MSSPM1, :MSSPM2]
+
+function run_Tests(Methods; write_results::Bool=true, samples=20)
+    dimensions = [
+        (20, 5)
+        (20, 10)
+        (20, 20)
+        (50, 5)
+        (50, 10)
+        (50, 20)
+        (100, 5)
+        (100, 10)
+        (100, 20)
+    ]
+    ε = 1e-6
+    λ = 1.15
+    itmax = 300_000
+    bench_time = true
+    dfResultsFinal, _ = createDataframes(Methods, projections=true)
+    dfResultsFinal[!, :dim] = Int[]
+    dfResultsFinal[!, :num_sets] = Int[]
+    ##
+    for (dim, num_sets) ∈ dimensions
+        dfResults, _ = TestEllipsoidsRn(dim, num_sets, Methods=Methods, bench_time=bench_time, verbose=false, itmax=itmax, samples=samples, λ=λ)
+        dfResults[!, :dim] .= dim
+        dfResults[!, :num_sets] .= num_sets
+        append!(dfResultsFinal, dfResults)
+    end
+    ### Write results
+    if write_results    
+        timenow = Dates.now()
+        file_name = savename("BBILS24_EllipsoidsCFP", (@dict timenow), "csv")
+        CSV.write(datadir("sims", file_name), dfResultsFinal)
+    end
 end
-
+run_Tests(Methods)
 ##
-#################################################################
-### Write results
-##################################################################
-timenow = Dates.now()
-file_name = savename("BBILS24_EllipsoidsCFP", (@dict timenow), "csv")
-CSV.write(datadir("sims", file_name), dfResultsFinal)
-
 
 ##
 #################################################################
 ### Make Performance Profiles.
 ##################################################################
+# file_name = "BBILS24_EllipsoidsCFP_timenow=2023-06-22T01:00:21.252.csv"
 # print_perprof = false
 # if print_perprof
 #     include(srcdir("Plots_util.jl"))
 #     pgfplotsx()
-#     file_name = "BBILS23_EllipsoidsCFP_timenow=2023-05-10T07:03:09.048.csv"
 #     dfResultsPerprof = CSV.read(datadir("sims", file_name), DataFrame)
 
 #     # Total  number of projections
@@ -312,24 +316,28 @@ CSV.write(datadir("sims", file_name), dfResultsFinal)
 # end
 
 
-# ##
-# #################################################################
-# ### Make Tables
-# ##################################################################
+##
+#################################################################
+### Make Tables
+##################################################################
 
-# print_tables = false
+# print_tables = true
 
 # if print_tables
-
-#     file_name = "BBILS23_EllipsoidsCFP_timenow=2023-05-10T07:03:09.048.csv"
+#     Methods = [:PACA1, :PACA2, :CRMprod,  :MSSPM1, :MSSPM2]
 #     dfResultsTables = CSV.read(datadir("sims", file_name), DataFrame)
-#     for tipo  in ["_projs","_elapsed"]
-#         @show describe(dfResultsTables[:,string.(Methods).*tipo], :mean, :std, :median, :min, :max)
-#         df_tabela = DataFrame(n=Int[],m=Int[], Alg1_mean=Float64[], Alg1_std=Float64[], Alg_2_mean = Float64[],  Alg_2_std = Float64[], Alg3_mean = Float64[], Alg3_std = Float64[], SePM_mean = Float64[],  SePM_std = Float64[], CRMprod_mean = Float64[],  CRMprod_std = Float64[])
+#     for type  in ["_projs","_elapsed"]
+#         @info("Results for $(type[2:end])")
+#         @info describe(dfResultsTables[:, string.(Methods).*type], :mean, :std, :median, :min, :max)
+#         df_tabela = DataFrame(n=Int[], m=Int[])
+#         for method in Methods
+#             df_tabela[!, string(method)*"_mean"] = Float64[]
+#             df_tabela[!, string(method)*"_std"] = Float64[]
+#         end
 
 #         gdf = groupby(dfResultsTables, [:dim, :num_sets])
 #         for k in keys(gdf)
-#             df = describe(gdf[k][:,string.(Methods).*tipo], :mean, :std)    
+#             df = describe(gdf[k][:,string.(Methods).*type], :mean, :std)    
 #             df_row = [] 
 #             push!(df_row, k[1], k[2])
 #             for row in eachrow(df)
@@ -337,7 +345,32 @@ CSV.write(datadir("sims", file_name), dfResultsFinal)
 #             end 
 #             push!(df_tabela,df_row)
 #         end
-#         println("Total number of $tipo")
-#         @show df_tabela
+#         @info("Total $(type[2:end])")
+#         @info df_tabela
 #     end
 # end
+
+##
+
+# using BenchmarkTools
+# vₖ = [copy(x₀) for i in 1:m]
+# xPACA = copy(x₀)
+# Functions = FuncEllipsoids
+# Subgrads = ∂Ellipsoids 
+# ϵₖ = 1e-3
+# for i in 1:m
+#     copyto!(vₖ[i], computevₖⁱ(xPACA, Functions[i], Subgrads[i], ϵ = ϵₖ))
+# end  
+# invm = inv(m)
+# @btime for i in 1:m
+#     copyto!(vₖ[i], computevₖⁱ(xPACA, Functions[i], Subgrads[i], ϵ=ϵₖ))
+# end
+# @btime copyto!(vₖ, [computevₖⁱ(xPACA, Functions[i], Subgrads[i], ϵ=ϵₖ) for i in 1:m]);
+
+# @btime Threads.@threads for i in 1:m
+#     copyto!(vₖ[i], computevₖⁱ(xPACA, Functions[i], Subgrads[i], ϵ=ϵₖ))
+# end
+
+
+
+

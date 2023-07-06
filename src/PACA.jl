@@ -13,7 +13,10 @@ function PACA(x₀::Vector,
                 verbose::Bool=false,
 )
     xPACA = copy(x₀)
+    wₖ = similar(x₀)
     m = length(Functions)
+    invm = inv(m)
+    vₖ = [copy(x₀) for _ in 1:m]
     k = 0
     tol = 1.0
     printOnFile(filedir, k, tol, xPACA, deletefile=true)
@@ -21,10 +24,11 @@ function PACA(x₀::Vector,
     tired = false
     while !(solved || tired)
         ϵₖ = ϵ(k)
-        vₖ = [computevₖ(xPACA, Functions[i], Subgrads[i], ϵ = ϵₖ) for i in 1:m]
-        wₖ = sum(vₖ) ./ m
-        αₖ  = (sum(norm.(vₖ).^2)./m)/dot(wₖ, wₖ)
-        xPACA .-= αₖ * wₖ
+        computevₖ!(vₖ, xPACA, Functions, Subgrads, m, ϵ=ϵₖ)
+        copyto!(wₖ, mean(vₖ))
+        αₖ = (mapreduce(v -> dot(v, v), +, vₖ) * invm) / dot(wₖ, wₖ)
+        wₖ *= αₖ
+        xPACA .-= wₖ
         k += 1
         tol = maximum([f(xPACA) for f in Functions])
         verbose && @info "tol = $tol"
@@ -63,8 +67,8 @@ function MCSPM(x₀::Vector,
     tired = false
     while !(solved || tired)
         ϵₖ = ϵ(k)
-        @inbounds for i in 1:m
-            xMCSPM .-= computevₖ(xMCSPM, Functions[i], Subgrads[i], ϵ=ϵₖ)
+        for i in 1:m
+            @inbounds xMCSPM .-= computevₖⁱ(xMCSPM, Functions[i], Subgrads[i], ϵ=ϵₖ)
         end
         k += 1
         tol = maximum([f(xMCSPM) for f in Functions])
@@ -96,6 +100,7 @@ function MSSPM(x₀::Vector,
     xMSSPM = copy(x₀)
     m = length(Functions)
     @assert m == length(Subgrads)
+    vₖ = [copy(x₀) for _ in 1:m]
     k = 0
     tol = 1.0
     printOnFile(filedir, k, tol, xMSSPM, deletefile=true)
@@ -103,9 +108,8 @@ function MSSPM(x₀::Vector,
     tired = false
     while !(solved || tired)
         ϵₖ = ϵ(k)
-        vₖ = [computevₖ(xMSSPM, Functions[i], Subgrads[i], ϵ=ϵₖ) for i in 1:m]
-        wₖ = [xMSSPM - vₖⁱ for vₖⁱ in vₖ]
-        copyto!(xMSSPM, mean(wₖ))
+        computevₖ!(vₖ, xMSSPM, Functions, Subgrads, m, ϵ=ϵₖ)
+        xMSSPM .-= mean(vₖ)
         k += 1
         tol = maximum([f(xMSSPM) for f in Functions])
         verbose && @info "tol = $tol"
@@ -123,11 +127,22 @@ end
     computevₖ(x₀, func_f, ∂f)
 
 """
-function computevₖ(x::Vector, func_f::Function, ∂f::Function;  
+function computevₖⁱ(x::AbstractVector, func_f::Function, ∂f::Function;
                   ϵ::Real = 0.0 # perturbation
                   )
     fx = func_f(x)
     ∂fx = ∂f(x)
     return  (max(0.0, fx + ϵ) / dot(∂fx, ∂fx)) * ∂fx
 end
-        
+    
+    """
+        computevₖ!(vₖ, x₀, Functions, Subgrads)
+    
+    """
+function computevₖ!(vₖ, x, Functions, Subgrads, m;
+                  ϵ::Number = 0.0 # perturbation
+                  )
+    Threads.@threads for i in 1:m
+        copyto!(vₖ[i], computevₖⁱ(x, Functions[i], Subgrads[i], ϵ=ϵ))
+    end
+end
