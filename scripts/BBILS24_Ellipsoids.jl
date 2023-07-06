@@ -196,6 +196,7 @@ function TestEllipsoidsRn(
                 filename = savename("BBILS24", (time=timenow, mtd=mtd, prob=prob_name,), "csv", sort=false)
                 print_file ? filedir = datadir("sims", filename) : filedir = ""
                 results = func(x₀, ℰ, EPSVAL=ε, filedir=filedir, itmax=itmax, verbose=verbose)
+                iszero(results.proj_total) ? results.proj_total = div(results.iter_total,2)*m : nothing
                 verbose && @info mtd, results.iter_total, results.proj_total, results.final_tol
                 elapsed_time = 0.0
                 if bench_time
@@ -203,7 +204,7 @@ function TestEllipsoidsRn(
                     elapsed_time = (mean(t).time) * 1e-9
                 end
                 push!(dfrow, results.iter_total)
-                push!(dfrow, results.proj_total)
+                push!(dfrow, results.proj_total) 
                 push!(dfrow, results.final_tol)
                 push!(dfrow, elapsed_time)
                 push!(dfrowFilename, filedir)
@@ -241,6 +242,7 @@ function run_Tests(Methods; write_results::Bool=true, samples=20)
     dfResultsFinal[!, :num_sets] = Int[]
     ##
     for (dim, num_sets) ∈ dimensions
+        @info "dim: $dim, num_sets: $num_sets"
         dfResults, _ = TestEllipsoidsRn(dim, num_sets, Methods=Methods, bench_time=bench_time, verbose=false, itmax=itmax, samples=samples, λ=λ)
         dfResults[!, :dim] .= dim
         dfResults[!, :num_sets] .= num_sets
@@ -355,22 +357,21 @@ run_Tests(Methods)
 # using BenchmarkTools
 # vₖ = [copy(x₀) for i in 1:m]
 # xPACA = copy(x₀)
-# Functions = FuncEllipsoids
-# Subgrads = ∂Ellipsoids 
-# ϵₖ = 1e-3
-# for i in 1:m
-#     copyto!(vₖ[i], computevₖⁱ(xPACA, Functions[i], Subgrads[i], ϵ = ϵₖ))
-# end  
-# invm = inv(m)
+# Functions =     Function[x -> eval_EllipsoidCRM(x, ell) for ell in Ellipsoids]
+# Subgrads = Function[x -> gradient_EllipsoidCRM(x, ell) for ell in Ellipsoids]
+
+# ϵₖ = 1e-4
+ 
 # @btime for i in 1:m
-#     copyto!(vₖ[i], computevₖⁱ(xPACA, Functions[i], Subgrads[i], ϵ=ϵₖ))
+#     copyto!($vₖ[i], computevₖⁱ($xPACA, $Functions[i], $Subgrads[i], ϵ=ϵₖ))
 # end
-# @btime copyto!(vₖ, [computevₖⁱ(xPACA, Functions[i], Subgrads[i], ϵ=ϵₖ) for i in 1:m]);
+
+# @btime copyto!(vₖ, [computevₖⁱ(xPACA, Functions[i], Subgrads[i], ϵ=ϵₖ) for i in 1:m])
 
 # @btime Threads.@threads for i in 1:m
-#     copyto!(vₖ[i], computevₖⁱ(xPACA, Functions[i], Subgrads[i], ϵ=ϵₖ))
+#     copyto!($vₖ[i], computevₖⁱ($xPACA, $Functions[i], $Subgrads[i], ϵ=ϵₖ))
 # end
 
-
+# @btime computevₖ!($vₖ, $xPACA, $Functions, $Subgrads, m,ϵ=ϵₖ);
 
 
