@@ -17,7 +17,7 @@ Structure of an Ellipsoid satisfying dot(x,A*x) + 2*dot(b,x) ≤ α
     α::Number
 end
 
-function in(x₀::Vector, ell::EllipsoidCRM)
+function in(x₀::AbstractVector, ell::EllipsoidCRM)
     A, b, α = ell.A, ell.b, ell.α
     if dot(x₀, A * x₀) + 2 * dot(b, x₀) ≤ α
         return true
@@ -30,7 +30,7 @@ Transform Ellipsoid in format dot(x-c,Q⁻¹*(x-c)) ≤ 1
 into format  dot(x,A*x) + 2*dot(b,x) ≤ α
 from shape matrix Q and center of ellipsoid c
 """
-function EllipsoidCRM(c::Vector, Q::AbstractMatrix)
+function EllipsoidCRM(c::AbstractVector, Q::AbstractMatrix)
     A = inv(Matrix(Q))
     b = -A * c
     α = 1 + dot(c, b)
@@ -68,7 +68,7 @@ Projects x₀ onto ell, and EllipsoidCRM using an ADMM algorithm as reported by 
 
 [Jia2007] Z. Jia, X. Cai, e D. Han, “Comparison of several fast algorithms for projection onto an ellipsoid”, Journal of Computational and Applied Mathematics, vol. 319, p. 320–337, ago. 2017, doi: 10.1016/j.cam.2017.01.008.
 """
-function Proj_Ellipsoid(x₀::Vector,
+function Proj_Ellipsoid(x₀::AbstractVector,
     ell::EllipsoidCRM;
     itmax::Int=10_000,
     ε::Real=1e-8,
@@ -129,7 +129,7 @@ end
 """
 Function value of ellipsoid
 """
-function eval_EllipsoidCRM(x::Vector, ell::EllipsoidCRM)
+function eval_EllipsoidCRM(x::AbstractVector, ell::EllipsoidCRM)
     A, b, α = ell.A, ell.b, ell.α
     return dot(x, A * x) + 2 * dot(b, x) - α
 end
@@ -137,7 +137,7 @@ end
 """
 Gradient of  ellipsoid function
 """
-function gradient_EllipsoidCRM(x::Vector, ell::EllipsoidCRM)
+function gradient_EllipsoidCRM(x::AbstractVector, ell::EllipsoidCRM)
     A, b = ell.A, ell.b
     return 2*(A * x  + b)
 end
@@ -148,7 +148,7 @@ end
 """
 Ellipsoid initial point 
 """
-function InitialPoint_EllipsoidCRM(Ellipsoids::Vector{EllipsoidCRM}, n::Int; ρ::Number=1.2)
+function InitialPoint_EllipsoidCRM(Ellipsoids::AbstractVector{EllipsoidCRM}, n::Int; ρ::Number=1.2)
     x₀ = StartingPoint(n)
     iter_starting_point = 1
     while any(Ref(x₀) .∈ Ellipsoids) && iter_starting_point < 100
@@ -166,7 +166,7 @@ end
 """
 
 
-function ApproxProj_Ellipsoid(x::Vector,
+function ApproxProj_Ellipsoid(x::AbstractVector,
                               Ellipsoid::EllipsoidCRM;
                               λ::Real = 1.0, # relaxation parameter
                               ϵ::Real = 0.0 # perturbation
@@ -183,7 +183,7 @@ end
         Approximate projection onto ellipsoid given as a dict 
     """
 
-function  ApproxProj_Ellipsoid(x::Vector,Ellipsoid::Dict; kwargs...)
+function  ApproxProj_Ellipsoid(x::AbstractVector,Ellipsoid::Dict; kwargs...)
     @unpack A, b, α  = Ellipsoid
     ell = EllipsoidCRM(A,b,α)
     return ApproxProj_Ellipsoid(x,ell; kwargs...)
@@ -197,8 +197,8 @@ end
     Approximate projection onto ellipsoid using ProdSpace
 """
 
-function ApproxProjectEllipsoids_ProdSpace(X::Vector,
-    Ellipsoids::Vector{EllipsoidCRM})
+function ApproxProjectEllipsoids_ProdSpace(X::AbstractVector,
+    Ellipsoids::AbstractVector{EllipsoidCRM})
     proj = similar(X)
     for index in eachindex(proj)
         proj[index] = ApproxProj_Ellipsoid(X[index], Ellipsoids[index])
@@ -288,8 +288,8 @@ end
  Given center and larger semi_axis, generates an ellipsoid in ℝⁿ
 """
 
-function GenerateEllipsoid(center::Vector,
-    semi_axis::Vector)
+function GenerateEllipsoid(center::AbstractVector,
+    semi_axis::AbstractVector)
     n = length(center)
     semi_axis_norm = norm(semi_axis)
     Λ = Diagonal([semi_axis_norm; semi_axis_norm .+ 2 * rand(n - 1)])
