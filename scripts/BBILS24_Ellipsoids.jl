@@ -255,14 +255,16 @@ function run_Tests(Methods; write_results::Bool=true, samples=20)
         CSV.write(datadir("sims", file_name), dfResultsFinal)
     end
 end
-run_Tests(Methods)
+# run_Tests(Methods)
 ##
 
 ##
 #################################################################
 ### Make Performance Profiles.
 ##################################################################
-# file_name = "BBILS24_EllipsoidsCFP_timenow=2023-06-22T01:00:21.252.csv"
+# file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-07T06:23:24.484.csv"
+file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-07T02:26:22.737.csv" #Stanford cluster
+# file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-07T12:54:38.705.csv" #Stanford cluster + Threads
 # print_perprof = false
 # if print_perprof
 #     include(srcdir("Plots_util.jl"))
@@ -323,34 +325,34 @@ run_Tests(Methods)
 ### Make Tables
 ##################################################################
 
-# print_tables = true
+print_tables = true
 
-# if print_tables
-#     Methods = [:PACA1, :PACA2, :CRMprod,  :MSSPM1, :MSSPM2]
-#     dfResultsTables = CSV.read(datadir("sims", file_name), DataFrame)
-#     for type  in ["_projs","_elapsed"]
-#         @info("Results for $(type[2:end])")
-#         @info describe(dfResultsTables[:, string.(Methods).*type], :mean, :std, :median, :min, :max)
-#         df_tabela = DataFrame(n=Int[], m=Int[])
-#         for method in Methods
-#             df_tabela[!, string(method)*"_mean"] = Float64[]
-#             df_tabela[!, string(method)*"_std"] = Float64[]
-#         end
+if print_tables
+    Methods = [:PACA1, :PACA2, :CRMprod, :MSSPM1, :MSSPM2, :MCSPM1, :MCSPM2]
+    dfResultsTables = CSV.read(datadir("sims", file_name), DataFrame)
+    for type  in ["_projs","_elapsed"]
+        @info("Results for $(type[2:end])")
+        @info describe(dfResultsTables[:, string.(Methods).*type], :mean, :std, :median, :min, :max)
+        df_tabela = DataFrame(n=Int[], m=Int[])
+        for method in Methods
+            df_tabela[!, string(method)*"_mean"] = Float64[]
+            df_tabela[!, string(method)*"_std"] = Float64[]
+        end
 
-#         gdf = groupby(dfResultsTables, [:dim, :num_sets])
-#         for k in keys(gdf)
-#             df = describe(gdf[k][:,string.(Methods).*type], :mean, :std)    
-#             df_row = [] 
-#             push!(df_row, k[1], k[2])
-#             for row in eachrow(df)
-#                 push!(df_row, row[2], row[3])
-#             end 
-#             push!(df_tabela,df_row)
-#         end
-#         @info("Total $(type[2:end])")
-#         @info df_tabela
-#     end
-# end
+        gdf = groupby(dfResultsTables, [:dim, :num_sets])
+        for k in keys(gdf)
+            df = describe(gdf[k][:,string.(Methods).*type], :mean, :std)    
+            df_row = [] 
+            push!(df_row, k[1], k[2])
+            for row in eachrow(df)
+                push!(df_row, row[2], row[3])
+            end 
+            push!(df_tabela,df_row)
+        end
+        @info("Total $(type[2:end])")
+        @info df_tabela
+    end
+end
 
 ##
 
