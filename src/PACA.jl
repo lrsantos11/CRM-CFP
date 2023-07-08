@@ -142,7 +142,7 @@ end
 function computevₖ!(vₖ, x, Functions, Subgrads, m;
                   ϵ::Number = 0.0 # perturbation
                   )
-    for i in 1:m
-        copyto!(vₖ[i], computevₖⁱ(x, Functions[i], Subgrads[i], ϵ=ϵ))
+    Threads.@threads for i in 1:m
+        @inbounds copyto!(vₖ[i], computevₖⁱ(xPACA, Functions[i], Subgrads[i], ϵ=ϵₖ))
     end
 end
