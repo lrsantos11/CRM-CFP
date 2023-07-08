@@ -359,21 +359,36 @@ end
 # using BenchmarkTools
 # vₖ = [copy(x₀) for i in 1:m]
 # xPACA = copy(x₀)
+# ell = Ellipsoids[2]
 # Functions =     Function[x -> eval_EllipsoidCRM(x, ell) for ell in Ellipsoids]
 # Subgrads = Function[x -> gradient_EllipsoidCRM(x, ell) for ell in Ellipsoids]
 
 # ϵₖ = 1e-4
  
 # @btime for i in 1:m
-#     copyto!($vₖ[i], computevₖⁱ($xPACA, $Functions[i], $Subgrads[i], ϵ=ϵₖ))
+#     @inbounds copyto!($vₖ[i], computevₖⁱ($xPACA, $Functions[i], $Subgrads[i], ϵ=ϵₖ))
 # end
 
 # @btime copyto!(vₖ, [computevₖⁱ(xPACA, Functions[i], Subgrads[i], ϵ=ϵₖ) for i in 1:m])
 
 # @btime Threads.@threads for i in 1:m
-#     copyto!($vₖ[i], computevₖⁱ($xPACA, $Functions[i], $Subgrads[i], ϵ=ϵₖ))
+#    @inbounds copyto!($vₖ[i], computevₖⁱ($xPACA, $Functions[i], $Subgrads[i], ϵ=ϵₖ))
 # end
 
 # @btime computevₖ!($vₖ, $xPACA, $Functions, $Subgrads, m,ϵ=ϵₖ);
 
+## GPU
+# using CUDA
+# function ell_to_gpu(ell::EllipsoidCRM)
+#     EllipsoidCRM(CuArray(ell.A), CuArray(ell.b), ell.α)
+# end
 
+
+# vₖ_gpu = CuArray.(vₖ)
+# xPACA_gpu = CuArray(xPACA)
+# Ellipsoids_gpu = ell_to_gpu.(Ellipsoids)
+# ell_gpu = Ellipsoids_gpu[2]
+
+
+
+# computevₖ!(vₖ_gpu, xPACA_gpu, Functions_gpu, Subgrads_gpu, m, ϵ=ϵₖ);

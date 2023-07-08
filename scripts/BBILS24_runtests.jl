@@ -1,6 +1,9 @@
 __precompile__()
 using DrWatson
 @quickactivate "CRM-CFP"
+if occursin("Intel", Sys.cpu_info()[1].model)
+    using MKL
+end
 include(srcdir("CRM-CFP.jl"))
 
 
