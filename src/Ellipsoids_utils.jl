@@ -18,7 +18,7 @@ Structure of an Ellipsoid satisfying dot(x,A*x) + 2*dot(b,x) ≤ α
 end
 
 function in(x₀::AbstractVector, ell::EllipsoidCRM)
-    A, b, α = ell.A, ell.b, ell.α
+    @views A, b, α = ell.A, ell.b, ell.α
     if dot(x₀, A * x₀) + 2 * dot(b, x₀) ≤ α
         return true
     else
@@ -54,9 +54,10 @@ Transform Ellipsoid in format  dot(x,A*x) + 2*dot(b,x) ≤ α to format dot(x-c,
 from shape matrix Q and center of ellipsoid c
 """
 function Ellipsoid(ell::EllipsoidCRM)
-    c = -(ell.A \ ell.b)
-    β = ell.α - dot(c, ell.b)
-    Q = Symmetric(inv(Matrix(ell.A) / β))
+    @views A, b, α   = ell.A, ell.b, ell.α
+    c = - (A \ b)
+    β = α - dot(c, b)
+    Q = Symmetric(inv(Matrix(A) / β))
     return Ellipsoid(c, Q)
 end
 
@@ -74,7 +75,7 @@ function Proj_Ellipsoid(x₀::AbstractVector,
     ε::Real=1e-8,
     verbose::Bool=false)
     x₀ ∉ ell ? nothing : return x₀
-    A, b, α = ell.A, ell.b, ell.α
+    @views A, b, α = ell.A, ell.b, ell.α
     ϑₖ = 10 / norm(A)
     n = length(x₀)
     B = sqrt(Matrix(A))
@@ -130,7 +131,7 @@ end
 Function value of ellipsoid
 """
 function eval_EllipsoidCRM(x::AbstractVector, ell::EllipsoidCRM)
-    A, b, α = ell.A, ell.b, ell.α
+    @views A, b, α = ell.A, ell.b, ell.α
     return dot(x, A * x) + 2 * dot(b, x) - α
 end
 
@@ -138,8 +139,8 @@ end
 Gradient of  ellipsoid function
 """
 function gradient_EllipsoidCRM(x::AbstractVector, ell::EllipsoidCRM)
-    A, b = ell.A, ell.b
-    return 2*(A * x  + b)
+    @views A, b = ell.A, ell.b
+    return 2.0 * (A * x  + b)
 end
 
 
@@ -171,10 +172,9 @@ function ApproxProj_Ellipsoid(x::AbstractVector,
                               λ::Real = 1.0, # relaxation parameter
                               ϵ::Real = 0.0 # perturbation
                               )
-    A, b = Ellipsoid.A, Ellipsoid.b
-    Ax = A * x
+    @views A, b = Ellipsoid.A, Ellipsoid.b
     fx = eval_EllipsoidCRM(x, Ellipsoid)
-    ∂fx = 2 * (Ax + b)
+    ∂fx = gradient_EllipsoidCRM(x, Ellipsoid)
     
     return λ * (x .- (max(0.0,fx + ϵ) / dot(∂fx, ∂fx)) * ∂fx) .+ (1 - λ) * x
 end
