@@ -255,7 +255,7 @@ function run_Tests(Methods; write_results::Bool=true, samples=20)
         CSV.write(datadir("sims", file_name), dfResultsFinal)
     end
 end
-# run_Tests(Methods)
+run_Tests(Methods)
 ##
 
 ##
@@ -263,7 +263,7 @@ end
 ### Make Performance Profiles.
 ##################################################################
 # file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-07T06:23:24.484.csv"
-file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-07T02:26:22.737.csv" #Stanford cluster
+# file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-07T02:26:22.737.csv" #Stanford cluster
 # file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-07T12:54:38.705.csv" #Stanford cluster + Threads
 # print_perprof = false
 # if print_perprof
@@ -325,7 +325,7 @@ file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-07T02:26:22.737.csv" #Stanfor
 ### Make Tables
 ##################################################################
 
-print_tables = true
+print_tables = false
 
 if print_tables
     Methods = [:PACA1, :PACA2, :CRMprod, :MSSPM1, :MSSPM2, :MCSPM1, :MCSPM2]
