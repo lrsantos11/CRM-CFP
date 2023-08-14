@@ -130,17 +130,15 @@ end
 """
 Function value of ellipsoid
 """
-function eval_EllipsoidCRM(x::AbstractVector, ell::EllipsoidCRM)
-    @views A, b, α = ell.A, ell.b, ell.α
-    return dot(x, A * x) + 2 * dot(b, x) - α
+function eval_EllipsoidCRM(x::AbstractVector{T}, ell::EllipsoidCRM) where {T}
+    return dot(x, ell.A * x) + 2 * dot(ell.b, x) - ell.α*one(T)
 end
 
 """
 Gradient of  ellipsoid function
 """
-function gradient_EllipsoidCRM(x::AbstractVector, ell::EllipsoidCRM)
-    @views A, b = ell.A, ell.b
-    return 2.0 * (A * x  + b)
+function gradient_EllipsoidCRM(x::AbstractVector{T}, ell::EllipsoidCRM) where {T}
+    return 2 * (ell.A * x + ell.b)
 end
 
 

@@ -60,13 +60,20 @@ end
 labelsize = 12
 B1 = EuclideanBall([0, 1.0], 2.0)
 B2 = EuclideanBall([0, -5.0], 4.0)
-z₀ = [2.5, 2.2]
+z₀ = [2., 2.]
 framestyle = :none
 plt1, zpCRM, zCent, zC_CRM = FigureTwoBalls(B1, B2, z₀ = z₀, framestyle = framestyle)
 xlims!(plt1, -0.5, 4.5, aspect_ratio = :equal)
 ylims!(plt1, -2.5, 2.5, aspect_ratio = :equal)
 annotate!([(0.0, 1.5, text(L"X", labelsize))])
 annotate!([(0, -2, text(L"Y", labelsize))])
+
+# plot!(framestyle=:origin)
+
+# @info "||z - z̄|| = " norm(z₀ - [0,-1])
+# @info "||zₚ - z̄|| = " norm(zpCRM - [0, -1])
+# annotate!([(3.2, 1.6, text(L"\| z - z^*\| = 3.6055", labelsize))])
+# annotate!([(3.2, -.5, text(L"\| z_{\mathrm{pCRM}} - z^*\| = 3.7885", labelsize))])
 
 ##
 
