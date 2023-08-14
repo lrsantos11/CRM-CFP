@@ -1,4 +1,7 @@
-using Plots, LaTeXStrings, LinearAlgebra
+using LaTeXStrings
+using LinearAlgebra
+using Plots
+using PrettyTables
 
 """
 Creates plot with the path of method. 

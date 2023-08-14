@@ -65,9 +65,9 @@ PACA2(x₀::AbstractVector,
 """
     MCSPM(x₀, Ellipsoids)
 
-Modified Cyclic Subgradient Projection method for ellipsoids from [Pierro:1988]
+Modified Cyclic Subgradient Projection method for ellipsoids from [DePierro:1988]
 
-[Pierro:1988] A. R. De Pierro and A. N. Iusem, “A finitely convergent ‘row-action’ method for the convex feasibility problem,” Appl Math Optim, vol. 17, no. 1, Art. no. 1, Jan. 1988, doi: 10.1007/BF01448368.
+[DePierro:1988] A. R. De Pierro and A. N. Iusem, “A finitely convergent ‘row-action’ method for the convex feasibility problem,” Appl Math Optim, vol. 17, no. 1, Art. no. 1, Jan. 1988, doi: 10.1007/BF01448368.
 
 """
 function MCSPM(x₀::AbstractVector,
@@ -271,24 +271,29 @@ function run_Tests(Methods; write_results::Bool=true, samples=20)
         CSV.write(datadir("sims", file_name), dfResultsFinal)
     end
 end
-run_Tests(Methods)
+# run_Tests(Methods)
 ##
 
 ##
 #################################################################
 ### Make Performance Profiles.
 ##################################################################
-# file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-07T06:23:24.484.csv" # LABMAC
+file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-07T06:23:24.484.csv" # LABMAC
 # file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-08T08:16:35.941.csv" # LABMAC + MKL 
 # file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-07T02:26:22.737.csv" #Stanford cluster
 # file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-07T12:54:38.705.csv" #Stanford cluster + Threads
-print_perprof = false
+# Methods = Symbol[:PACA1, :PACA2, :MCSPM1, :MCSPM2, :CRMprod, :MSSPM1, :MSSPM2]
+# Methods_name = ["PACA1", "PACA2", "CSPM1", "CSPM2", "CARMprod", "SSPM1", "SSPM2"]
+
+Methods = Symbol[:PACA1, :PACA2, :CRMprod, :MSSPM1, :MSSPM2]
+Methods_name = ["PACA1", "PACA2", "CARMprod", "SSPM1", "SSPM2"]
+
+
+print_perprof = true
 if print_perprof
     include(srcdir("Plots_util.jl"))
     pgfplotsx()
-    dfResultsPerprof = CSV.read(datadir("sims", file_name), DataFrame)
-    Methods = Symbol[:PACA1, :PACA2, :MCSPM1, :MCSPM2, :CRMprod, :MSSPM1, :MSSPM2]
-    # Methods = Symbol[:PACA1, :PACA2, :CRMprod, :MSSPM1, :MSSPM2]
+    # dfResultsPerprof = CSV.read(datadir("sims", file_name), DataFrame)
 
     Methods_string = string.(Methods)
 
@@ -301,14 +306,16 @@ if print_perprof
     perprof2 = performance_profile(PlotsBackend(),
         T_CPU,
         # logscale = false,
-        Methods_string,
+        Methods_name,
         legend=:bottomright, framestyle=:box,
         linestyles=[:dash, :solid, :dot, :dashdot, :dashdotdot, :auto, :auto])
     ylabel!("Fraction of problems solved")
     ticks = 0:7
     xticks!(perprof2, ticks, [L"2^{%$(i)}" for i in ticks])
-    title!("Performance Profile on CFP -- CPU time comparison")
+    # title!("Performance Profile on CFP -- CPU time comparison")
     perprof2_file_name = "BBILS24_Ellipsoids_Perprof_CPUTime.pdf"
+    # perprof2_file_name = "BBILS24_Ellipsoids_Perprof_All_methods_CPUTime.pdf"
+
     savefig(perprof2, plotsdir(perprof2_file_name))
 #     perprof2
 #     for file in [perprof1_file_name, perprof2_file_name]
@@ -318,26 +325,28 @@ if print_perprof
 
 end
 
-# perprof2
+perprof2
 ##
 #################################################################
 ### Make Tables
 ##################################################################
 
-print_tables = false
-
+print_tables = true
+df_tabela = DataFrame()
 if print_tables
-    Methods = [:PACA1, :PACA2, :CRMprod, :MSSPM1, :MSSPM2, :MCSPM1, :MCSPM2]
+    Methods = [:PACA1, :PACA2, :MCSPM1, :MCSPM2, :CRMprod, :MSSPM1, :MSSPM2]
     dfResultsTables = CSV.read(datadir("sims", file_name), DataFrame)
     for type  in ["_projs","_elapsed"]
         @info("Results for $(type[2:end])")
-        @info describe(dfResultsTables[:, string.(Methods).*type], :mean, :std, :median, :min, :max)
+        descricao =  describe(dfResultsTables[:, string.(Methods).*type], :mean, :std, :median, :min, :max)
+        @info descricao
+        pretty_table(descricao, backend = Val(:latex))
         df_tabela = DataFrame(n=Int[], m=Int[])
         for method in Methods
             df_tabela[!, string(method)*"_mean"] = Float64[]
             # df_tabela[!, string(method)*"_std"] = Float64[]
         end
-
+        @info df_tabela
         gdf = groupby(dfResultsTables, [:dim, :num_sets])
         for k in keys(gdf)
             df = describe(gdf[k][:,string.(Methods).*type], :mean)    
@@ -349,9 +358,11 @@ if print_tables
             push!(df_tabela,df_row)
         end
         @info("Total $(type[2:end])")
-        @info df_tabela
+        pretty_table(df_tabela, backend = Val(:latex))
+        df_tabela
     end
 end
+df_tabela
 
 ##
 #################################################################
