@@ -68,7 +68,7 @@ function MCSPM(x₀::Vector,
     while !(solved || tired)
         ϵₖ = ϵ(k)
         for i in 1:m
-            @inbounds xMCSPM .-= computevₖⁱ(xMCSPM, Functions[i], Subgrads[i], ϵ=ϵₖ)
+            xMCSPM .-= computevₖⁱ(xMCSPM, Functions[i], Subgrads[i], ϵ=ϵₖ)
         end
         k += 1
         tol = maximum([f(xMCSPM) for f in Functions])
@@ -142,7 +142,8 @@ end
 function computevₖ!(vₖ, x, Functions, Subgrads, m;
                   ϵ::Number = 0.0 # perturbation
                   )
-    Threads.@threads for i in 1:m
-        @inbounds copyto!(vₖ[i], computevₖⁱ(x, Functions[i], Subgrads[i], ϵ=ϵ))
+    # numthreads = Threads.nthreads()
+    for i in 1:m
+      @views @inbounds copyto!(vₖ[i], computevₖⁱ(x, Functions[i], Subgrads[i], ϵ=ϵ))
     end
 end

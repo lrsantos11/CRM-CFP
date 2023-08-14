@@ -9,13 +9,17 @@
 Circumcentered-Reflection method for the product space for ellipsoids
 
 """
-function CRMprod(x₀::AbstractVector,
-              Ellipsoids::AbstractVector{EllipsoidCRM}; kargs...)
+# function CRMprod(x₀::AbstractVector,
+#               Ellipsoids::AbstractVector{EllipsoidCRM}; kargs...)
               
-    xCRMprod = [x₀ for _ in Ellipsoids]
-    ApproxProjections(X) = ApproxProjectEllipsoids_ProdSpace(X, Ellipsoids)
-    return CRMprod(xCRMprod, ApproxProjections; kargs...)
-end
+#     xCRMprod = [x₀ for _ in Ellipsoids]
+#     ApproxProjections(X) = ApproxProjectEllipsoids_ProdSpace(X, Ellipsoids)
+#     return CRMprod(xCRMprod, ApproxProjections; kargs...)
+# end
+CRMprod(x₀::AbstractVector,
+    Ellipsoids::AbstractVector{EllipsoidCRM};
+    kargs...)  = PACA(x₀, Ellipsoids, k -> 0.0  ; kargs...)
+
 """
     DRMprod(x₀, Ellipsoids)
 
@@ -29,9 +33,8 @@ function DRMprod(x₀::AbstractVector,
     ApproxProjections(X) = ApproxProjectEllipsoids_ProdSpace(X, Ellipsoids)
     return DRMprod(xDRMprod, ApproxProjections; kargs...)
 end
-
-ϵ1(k) = 1 / sqrt(k + 1)
-ϵ2(k) = 1 / (k + 1)
+ϵ1(k) = 1/(k + 1)
+ϵ2(k) = 1/(sqrt(k + 1))
 
 
 """
@@ -122,36 +125,48 @@ MSSPM2(x₀::AbstractVector,
 # Prototype of the function TestEllipsoidsRn
 Random.seed!(1234)
 itmax = 2_000
-n = 100
-m = 50
+n = 200
+m = 20
 p = 2 * inv(n)
 λ = 1.15
-ε = 1e-12
+ε = eps()
 Ellipsoids, _ = SampleEllipsoids(n, m, p, λ = λ)
 x₀ = InitialPoint_EllipsoidCRM(Ellipsoids, n)
-ϵ(k) =  1/sqrt(k+1)
-resultsPACA1 = PACA1(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
-resultsMCSPM1 = MCSPM1(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
-resultsMSSPM1 = MSSPM1(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
+@info "$m Ellipsoids in ℝ^$n"
 
-ϵ(k) = 1 / (k + 1)
-resultsPACA2 = PACA2(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
-resultsMCSPM2 = MCSPM2(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
-resultsMSSPM2 = MSSPM2(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
-resultsCRMprod = CRMprod(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
-resultsDRMprod = DRMprod(x₀, Ellipsoids, EPSVAL=ε, itmax=itmax)
+@info "PACA1 ε(k) = 1/(k+1)"
+@btime resultsPACA1 = PACA1($x₀, $Ellipsoids, EPSVAL=$ε, itmax=$itmax);
+# @info "PACA1 ε(k) = 1/(k+1)" resultsPACA1.iter_total
+
+@info "MCSPM1 ε(k) = 1/(k+1)"
+@btime resultsMCSPM1 = MCSPM1($x₀, $Ellipsoids, EPSVAL=$ε, itmax=$itmax);
+
+# @info "MCSPM1 ε(k) = 1/(k+1)" resultsMCSPM1.iter_total
+
+# @info "MSSPM1 ε(k) = 1/(k+1)"
+# @btime resultsMSSPM1 = MSSPM1($x₀, $Ellipsoids, EPSVAL=$ε, itmax=$itmax);
+# @info "MSSPM1 ε(k) = 1/(k+1)" resultsMSSPM1.iter_total
+
+# @info "PACA2 ε(k) = 1/√(k+1)"
+# @btime resultsPACA2 = PACA2($x₀, $Ellipsoids, EPSVAL=$ε, itmax=$itmax);
+# @info "PACA2 ε(k) = 1/√(k+1)" resultsPACA2.iter_total
+
+# @info "MCSPM2 ε(k) = 1/√(k+1)"
+# @btime resultsMCSPM2 = MCSPM2($x₀, $Ellipsoids, EPSVAL=$ε, itmax=$itmax);
+# @info "MCSPM2 ε(k) = 1/√(k+1)" resultsMCSPM2.iter_total
+
+# @info "MSSPM2 ε(k) = 1/√(k+1)"
+# @btime resultsMSSPM2 = MSSPM2($x₀, $Ellipsoids, EPSVAL=$ε, itmax=$itmax);
+# @info "MSSPM2 ε(k) = 1/√(k+1)" resultsMSSPM2.iter_total
+
+# @info "CRMprod ε(k) = 0 "
+# @btime resultsCRMprod = CRMprod($x₀, $Ellipsoids, EPSVAL=$ε, itmax=$itmax);
+# @info "CRMprod ε(k) = 0 " resultsCRMprod.iter_total
 
 
 
 
-@info "PACA ε(k) = 1/√(k+1)" resultsPACA1.iter_total 
-@info "PACA ε(k) = 1/(k+1)" resultsPACA2.iter_total
-@info "MCSPM ε(k) = 1/√(k+1)" resultsMCSPM1.iter_total
-@info "MCSPM ε(k) = 1/√(k+1)" resultsMCSPM2.iter_total
-@info "MSSPM ε(k) = 1/√(k+1)" resultsMSSPM1.iter_total
-@info "MSSPM ε(k) = 1/√(k+1)" resultsMSSPM2.iter_total
-@info "CRMprod" resultsCRMprod.iter_total
-@info "DRMprod" resultsDRMprod.iter_total
+
 
 
 ##
@@ -216,22 +231,23 @@ function TestEllipsoidsRn(
     return dfResults, dfFilenames
 end
 ##
-#################################################################
+################################################################
 ### Run tests of Paper
 ##################################################################
 Methods = Symbol[:PACA1, :PACA2, :CRMprod, :MCSPM1, :MCSPM2, :MSSPM1, :MSSPM2]
 
 function run_Tests(Methods; write_results::Bool=true, samples=20)
     dimensions = [
-        (20, 5)
-        (20, 10)
-        (20, 20)
-        (50, 5)
         (50, 10)
         (50, 20)
-        (100, 5)
+        (50, 30)
         (100, 10)
         (100, 20)
+        (100, 30)
+        (200, 10)
+        (200, 20)
+        (200, 30)
+
     ]
     ε = 1e-6
     λ = 1.15
@@ -255,59 +271,42 @@ function run_Tests(Methods; write_results::Bool=true, samples=20)
         CSV.write(datadir("sims", file_name), dfResultsFinal)
     end
 end
-run_Tests(Methods)
+# run_Tests(Methods)
 ##
 
 ##
 #################################################################
 ### Make Performance Profiles.
 ##################################################################
-# file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-07T06:23:24.484.csv"
+# file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-07T06:23:24.484.csv" # LABMAC
+# file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-08T08:16:35.941.csv" # LABMAC + MKL 
 # file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-07T02:26:22.737.csv" #Stanford cluster
 # file_name = "BBILS24_EllipsoidsCFP_timenow=2023-07-07T12:54:38.705.csv" #Stanford cluster + Threads
-# print_perprof = false
-# if print_perprof
-#     include(srcdir("Plots_util.jl"))
-#     pgfplotsx()
-#     dfResultsPerprof = CSV.read(datadir("sims", file_name), DataFrame)
+print_perprof = false
+if print_perprof
+    include(srcdir("Plots_util.jl"))
+    pgfplotsx()
+    dfResultsPerprof = CSV.read(datadir("sims", file_name), DataFrame)
+    # Methods = Symbol[:PACA1, :PACA2, :CRMprod, :MCSPM1, :MCSPM2, :MSSPM1, :MSSPM2]
+    Methods = Symbol[:PACA1, :PACA2, :CRMprod, :MSSPM1, :MSSPM2]
 
-#     # Total  number of projections
-#     T_Projs = Matrix{Float64}(dfResultsPerprof[:, [:SucCentCRM_Cyclic_projs, :SucCentCRM_AlmostViolatedFunc_projs, :SePM_projs, :CRMprod_projs]])
-#     T_Projs[findall(row -> row >= itmax, T_Projs)] .= Inf
-#     T_Projs = T_Projs[61:end, :] #remove first 60 points
-
-#     perprof1 = performance_profile(PlotsBackend(),
-#         T_Projs,
-#         # logscale = false,
-#         ["Alg1", "Alg3", "SePM", "CRMprod"],
-#         legend=:bottomright, framestyle=:box,
-#         linestyles=[:dash, :solid, :dot, :dashdot],
-#     )
-#     ylabel!("Fraction of problems solved")
-#     ticks = [0, 2, 4, 6, 8, 10, 12]
-#     xticks!(perprof1, ticks, [L"2^{%$(i)}" for i in ticks])
-#     title!("Performance Profile -- Total projections comparison")
-#     perprof1_file_name = "BBILS23_Ellipsoids_Perprof_TotalProjections.pdf"
-#     savefig(perprof1, plotsdir(perprof1_file_name))
-#     perprof1
+    Methods_string = string.(Methods)
 
 #     ##
 #     # Total CPU time
 
-#     T_CPU = Matrix{Float64}(dfResultsPerprof[:, [:SucCentCRM_Cyclic_elapsed, :SucCentCRM_AlmostViolatedFunc_elapsed, :SePM_elapsed, :CRMprod_elapsed]])
-#     T_CPU[findall(row -> row >= itmax, T_CPU)] .= Inf
-#     T_CPU = T_CPU[61:end, :] #remove first 60 points
+    T_CPU = Matrix{Float64}(dfResultsPerprof[:, Symbol.(Methods_string .* "_elapsed")])
 
-#     perprof2 = performance_profile(PlotsBackend(),
-#         T_CPU,
-#         # logscale = false,
-#         ["Alg1", "Alg3", "SePM", "CRMprod"],
-#         legend=:bottomright, framestyle=:box,
-#         linestyles=[:dash, :solid, :dot, :dashdot],
-#     )
-#     ylabel!("Fraction of problems solved")
-#     ticks = [0, 2, 4, 6, 8, 10, 12]
-#     xticks!(perprof2, ticks, [L"2^{%$(i)}" for i in ticks])
+
+    perprof2 = performance_profile(PlotsBackend(),
+        T_CPU,
+        # logscale = false,
+        Methods_string,
+        legend=:bottomright, framestyle=:box,
+        linestyles=[:dash, :solid, :dot, :dashdot, :dashdotdot, :auto, :auto])
+    ylabel!("Fraction of problems solved")
+    ticks = 0:7
+    xticks!(perprof2, ticks, [L"2^{%$(i)}" for i in ticks])
 #     title!("Performance Profile -- CPU time comparison")
 #     perprof2_file_name = "BBILS23_Ellipsoids_Perprof_CPUTime.pdf"
 #     savefig(perprof2, plotsdir(perprof2_file_name))
@@ -317,7 +316,7 @@ run_Tests(Methods)
 #     end
     
 
-# end
+end
 
 
 ##
@@ -336,16 +335,16 @@ if print_tables
         df_tabela = DataFrame(n=Int[], m=Int[])
         for method in Methods
             df_tabela[!, string(method)*"_mean"] = Float64[]
-            df_tabela[!, string(method)*"_std"] = Float64[]
+            # df_tabela[!, string(method)*"_std"] = Float64[]
         end
 
         gdf = groupby(dfResultsTables, [:dim, :num_sets])
         for k in keys(gdf)
-            df = describe(gdf[k][:,string.(Methods).*type], :mean, :std)    
+            df = describe(gdf[k][:,string.(Methods).*type], :mean)    
             df_row = [] 
             push!(df_row, k[1], k[2])
             for row in eachrow(df)
-                push!(df_row, row[2], row[3])
+                push!(df_row, row[2])
             end 
             push!(df_tabela,df_row)
         end
@@ -355,10 +354,9 @@ if print_tables
 end
 
 ##
-
+#################################################################
 # using BenchmarkTools
-# vₖ = [copy(x₀) for i in 1:m]
-# xPACA = copy(x₀)
+
 # ell = Ellipsoids[2]
 # Functions =     Function[x -> eval_EllipsoidCRM(x, ell) for ell in Ellipsoids]
 # Subgrads = Function[x -> gradient_EllipsoidCRM(x, ell) for ell in Ellipsoids]
@@ -379,16 +377,40 @@ end
 
 ## GPU
 # using CUDA
+# vₖ = [copy(x₀) for i in 1:m]
+# xPACA = copy(x₀)
+# ϵₖ = 1 / 4
+
+# Functions = Function[x -> eval_EllipsoidCRM(x, ell) for ell in Ellipsoids]
+# Subgrads = Function[x -> gradient_EllipsoidCRM(x, ell) for ell in Ellipsoids]
+
+
+# @btime computevₖ!($vₖ, $xPACA, $Functions, $Subgrads, m,ϵ=ϵₖ);
+
+# ##
 # function ell_to_gpu(ell::EllipsoidCRM)
-#     EllipsoidCRM(CuArray(ell.A), CuArray(ell.b), ell.α)
+#     EllipsoidCRM(cu(ell.A), cu(ell.b), convert(Float32,ell.α))
 # end
 
 
-# vₖ_gpu = CuArray.(vₖ)
-# xPACA_gpu = CuArray(xPACA)
+# vₖ_gpu = cu(hcat(vₖ...))
+# xPACA_gpu = cu(xPACA)
+# i = 1
+# ell = Ellipsoids[i]
 # Ellipsoids_gpu = ell_to_gpu.(Ellipsoids)
-# ell_gpu = Ellipsoids_gpu[2]
+#  ell_gpu = Ellipsoids_gpu[i]
+
+##
+# function computevₖ_test!(vₖ_gpu, xPACA_gpu, Ellipsoids_gpu, m, ϵₖ)
+#     CUDA.@sync begin
+#         @cuda  computevₖ_gpu!(vₖ_gpu, xPACA_gpu, Ellipsoids_gpu, m, ϵₖ)
+#     end
+#     return
+# end
 
 
+# @btime vₖ[i] .= computevₖⁱ(xPACA, Functions[i], Subgrads[i], ϵ=ϵₖ)
 
-# computevₖ!(vₖ_gpu, xPACA_gpu, Functions_gpu, Subgrads_gpu, m, ϵ=ϵₖ);
+# computevₖ_test!(vₖ_gpu, xPACA_gpu, Ellipsoids_gpu, m, ϵₖ)
+
+# @btime computevₖ_test!($vₖ_gpu, $xPACA_gpu, $Functions_gpu, $Subgrads_gpu, $m, $ϵₖ);
