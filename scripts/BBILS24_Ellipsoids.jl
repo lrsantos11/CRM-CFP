@@ -271,7 +271,7 @@ function run_Tests(Methods; write_results::Bool=true, samples=20)
         CSV.write(datadir("sims", file_name), dfResultsFinal)
     end
 end
-# run_Tests(Methods)
+run_Tests(Methods)
 ##
 
 ##
@@ -287,8 +287,8 @@ if print_perprof
     include(srcdir("Plots_util.jl"))
     pgfplotsx()
     dfResultsPerprof = CSV.read(datadir("sims", file_name), DataFrame)
-    # Methods = Symbol[:PACA1, :PACA2, :CRMprod, :MCSPM1, :MCSPM2, :MSSPM1, :MSSPM2]
-    Methods = Symbol[:PACA1, :PACA2, :CRMprod, :MSSPM1, :MSSPM2]
+    Methods = Symbol[:PACA1, :PACA2, :MCSPM1, :MCSPM2, :CRMprod, :MSSPM1, :MSSPM2]
+    # Methods = Symbol[:PACA1, :PACA2, :CRMprod, :MSSPM1, :MSSPM2]
 
     Methods_string = string.(Methods)
 
@@ -307,9 +307,9 @@ if print_perprof
     ylabel!("Fraction of problems solved")
     ticks = 0:7
     xticks!(perprof2, ticks, [L"2^{%$(i)}" for i in ticks])
-#     title!("Performance Profile -- CPU time comparison")
-#     perprof2_file_name = "BBILS23_Ellipsoids_Perprof_CPUTime.pdf"
-#     savefig(perprof2, plotsdir(perprof2_file_name))
+    title!("Performance Profile on CFP -- CPU time comparison")
+    perprof2_file_name = "BBILS24_Ellipsoids_Perprof_CPUTime.pdf"
+    savefig(perprof2, plotsdir(perprof2_file_name))
 #     perprof2
 #     for file in [perprof1_file_name, perprof2_file_name]
 #         cp(plotsdir(file),  "../../../Draft/New/Successive-cCRM/"*file, force=true)
@@ -318,7 +318,7 @@ if print_perprof
 
 end
 
-
+# perprof2
 ##
 #################################################################
 ### Make Tables
