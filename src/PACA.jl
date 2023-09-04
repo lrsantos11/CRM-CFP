@@ -4,7 +4,7 @@
 Perturbed Approximate Circumcenter Algorithm
 """
 function PACA(x₀::Vector,
-              Functions::Vector{Function},
+              Functions::Array,
               Subgrads::Vector{Function},
               ϵ::Function;
                 EPSVAL::Float64=1e-12, 
@@ -127,12 +127,12 @@ end
     computevₖ(x₀, func_f, ∂f)
 
 """
-function computevₖⁱ(x::AbstractVector, func_f::Function, ∂f::Function;
+function computevₖⁱ(x::AbstractVector, func_f, ∂f;
                   ϵ::Real = 0.0 # perturbation
                   )
     fx = func_f(x)
     ∂fx = ∂f(x)
-    return  (max(0.0, fx + ϵ) / dot(∂fx, ∂fx)) * ∂fx
+    return  (max(0.0, fx + ϵ) / dot(∂fx, ∂fx)) .* ∂fx
 end
     
     """
