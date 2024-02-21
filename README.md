@@ -6,7 +6,7 @@ This code base is using the Julia Language and [DrWatson](https://juliadynamics.
 to make a reproducible scientific project named
 > CRM-CFP
 
-CRM-CFP concerns numerical results presented in [[Behling2021]](#1), [[Arefidamghani2021]](#2), [[Araujo2022]](#3), [[Arefidamghani2023]](#5) and [[Behling2023]](#4),  where the Circumcentered-Reflection Method (CRM) was used to solve the Convex Feasibility Problem (CFP) of finding a common point to the nonempty intersection of closed and convex sets.
+CRM-CFP concerns numerical results presented in [[Behling2021]](#1), [[Arefidamghani2021]](#2), [[Araujo2022]](#3), [[Arefidamghani2023]](#5), [[Behling2023a]](#4) [[Behling2023b]](#6), and [[Behling2023c]](#7),  where the Circumcentered-Reflection Method (CRM) was used to solve the Convex Feasibility Problem (CFP) of finding a common point to the nonempty intersection of closed and convex sets.
 
 It is authored by [Luiz-Rafael Santos](https://lrsantos11.github.io) in co-authorship with Guilherme Araújo, Reza Arefidamghani, Roger Behling, Yunier Bello-Cruz and Alfredo N. Iusem.
 
@@ -42,7 +42,16 @@ To (locally) reproduce this project, do the following:
 
 ## References
 
-<a id="4">[Behling2023]</a>  R. Behling, J.-Y. Bello-Cruz, A. N. Iusem  and  L.-R. Santos, “On the centralization of the circumcentered-reflection method”,  2023. [arXiv:2111.07022](http://arxiv.org/abs/2111.07022).
+
+
+<a id="7">[Behling2023c]</a>  Behling, R., Bello-Cruz, Y., Iusem, A., Liu, D., and Santos, L.-R. “A finitely convergent circumcenter method for the Convex Feasibility Problem”, 2023. [arXiv:2308.09849](http://arxiv.org/abs/2308.09849)
+
+<a id="6">[Behling2023b]</a>  Behling, R., Bello-Cruz, Y., Iusem, A., Liu, D., and Santos, L.-R. “A successive centralized circumcenter reflection method for the convex feasibility problem”, 2023. doi: [10.1007/s10589-023-00516-w](https://doi.org/10.1007/s10589-023-00516-w)
+
+
+<a id="4">[Behling2023a]</a>  R. Behling, J.-Y. Bello-Cruz, A. N. Iusem  and  L.-R. Santos, “On the centralization of the circumcentered-reflection method”, Matehmatical Programming, 2023. doi: [10.1007/s10107-023-01978-w](https://doi.org/10.1007/s10107-023-01978-w). [arXiv:2111.07022](http://arxiv.org/abs/2111.07022). 
+
+
 
 <a id="5">[Arefidamghani2023]</a>  R. Arefidamghani, R. Behling, J.-Y. Bello-Cruz, A. N. Iusem, and L.-R. Santos,  “A circumcentered-reflection method for finding common fixed points of firmly nonexpansive operators”, _Journal of Applied and Numerical Optimization (to appear)_, 2023, [arXiv:2203.02410](https://arxiv.org/abs/2203.02410).
 
