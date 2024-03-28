@@ -16,7 +16,7 @@ import Base.@kwdef
     iter_total::Int
     proj_total::Int = 0
     final_tol::Number
-    xApprox::AbstractVector
+    xApprox::AbstractArray
     method::Symbol
     date::DateTime = Dates.now()
 end
@@ -36,7 +36,7 @@ Circumcentering the Douglas–Rachford method. Numer. Algorithms. 78(3), 759–7
 On the linear convergence of the circumcentered-reflection method. Oper. Res. Lett. 46(2), 159-162 (2018).
 [doi:10.1016/j.orl.2017.11.018](https://doi.org/10.1016/j.orl.2017.11.018)
 """
-function FindCircumcentermSet(X)
+function FindCircumcentermSet(X::Vector{AbstractArray})
     # Finds the Circumcenter of  linearly independent points  X = [X1, X2, X3, ... Xn]
     # println(typeof(X))
     lengthX = length(X)
@@ -230,7 +230,7 @@ function printOnFile(filename::String, printline::AbstractArray; deletefile::Boo
 end
 
 ####################################
-function printOnFile(filename::String, k::Int, tolCRM::Number, xCRM::AbstractVector; deletefile::Bool=false, isprod::Bool=false)
+function printOnFile(filename::String, k::Int, tolCRM::Number, xCRM::AbstractArray; deletefile::Bool=false, isprod::Bool=false)
     if isempty(filename)
         return
     end
@@ -310,7 +310,7 @@ Returns the orthogonal projection of `x` onto the L2-Ball  centered in `v` with 
 Uses the `ProximalOperators.jl` toolbox
 
 """
-function ProjectBall(x::AbstractVector, v::AbstractVector, r::Number)
+function ProjectBall(x::AbstractArray, v::AbstractArray, r::Number)
     Ball = IndBallL2(r)
     proj, fproj = prox(Translate(Ball, -v), x)
     return proj
@@ -321,7 +321,7 @@ ProjectProdDiagonal(X,num_sets)
 
 
 """
-function ProjectProdDiagonal(X::AbstractVector)
+function ProjectProdDiagonal(X::AbstractArray)
     inner_proj = mean(X)
     proj = similar(X)
     for index in eachindex(proj)
@@ -337,7 +337,7 @@ ProjectProdSets(X,Projections)
 
 
 """
-function ProjectProdSets(X::AbstractVector, SetsProjections::AbstractVector{Function})
+function ProjectProdSets(X::AbstractArray, SetsProjections::AbstractArray{Function})
     proj = similar(X)
     for index in eachindex(proj)
         proj[index] = SetsProjections[index](X[index])
@@ -350,7 +350,7 @@ end
 ProjectSetsIndicators(X,SetsIndicators)
 Projection on the Product Space of Half Spaces
 """
-function ProjectSetsIndicators(X::AbstractVector, SetsIndicators::AbstractVector{T}) where {T<:Union{IndAffine,IndSOC}}
+function ProjectSetsIndicators(X::AbstractArray, SetsIndicators::AbstractArray{T}) where {T<:Union{IndAffine,IndSOC}}
     proj = similar(X)
     for index in eachindex(SetsIndicators)
         proj[index] = ProjectIndicator(SetsIndicators[index], X[index])
@@ -360,15 +360,15 @@ end
 
 ####################################
 
-ProjectProdSpace(X::AbstractVector, Projections::AbstractVector{Function}) = ProjectProdSets(X, Projections)
-ProjectProdSpace(X::AbstractVector, Projections::AbstractVector{T}) where {T<:Union{IndAffine,IndSOC}} = ProjectSetsIndicators(X, Projections)
+ProjectProdSpace(X::AbstractArray, Projections::AbstractArray{Function}) = ProjectProdSets(X, Projections)
+ProjectProdSpace(X::AbstractArray, Projections::AbstractArray{T}) where {T<:Union{IndAffine,IndSOC}} = ProjectSetsIndicators(X, Projections)
 
 ####################################
 
 """
         Tolerance(x,xold;xsol,normytpe)
 """
-function Tolerance(x::AbstractVector, xold::AbstractVector, xsol::AbstractVector;
+function Tolerance(x::AbstractArray, xold::AbstractArray, xsol::AbstractArray;
     norm_p::Number=2)
     if isempty(xsol)
         return norm(x - xold, norm_p)
@@ -382,7 +382,7 @@ end
     ApproxProject(x,g,∂g)
 
 """
-function ApproxProject(x::AbstractVector, g::Function, ∂g::Function; λ::Number=1.0)
+function ApproxProject(x::AbstractArray, g::Function, ∂g::Function; λ::Number=1.0)
     gx = g(x)
     if gx ≤ 0
         return x

@@ -4,7 +4,7 @@
 Computes an iteration of the Cirumcentered-Reflection method
 """
 
-function CRMiteration(xCRM::Vector, 
+function CRMiteration(xCRM::AbstractArray, 
                       ReflectA::Function, 
                       ReflectB::Function)
     xCRM_RA = ReflectA(xCRM)
@@ -25,8 +25,8 @@ end
 Computes an iteration of the Cirumcentered-Reflection method
 """
 
-function CRMiteration(xCRM::Vector, 
-                      ProjA::Vector, 
+function CRMiteration(xCRM::AbstractArray, 
+                      ProjA::AbstractArray, 
                       ReflectB::Function)
     xCRM_RA = 2*ProjA - xCRM
     xCRM_RBRA = ReflectB(xCRM_RA)
@@ -45,11 +45,11 @@ end
 
 Cirumcentered-Reflection method
 """
-function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function; 
+function CRM(x₀::AbstractArray,ProjectA::Function, ProjectB::Function; 
              EPSVAL::Float64 = 1e-5,
              itmax::Int = 100,
              filedir::String = "", 
-             xSol::Vector = [],
+             xSol::AbstractArray = [],
              print_intermediate::Bool = false,
              gap_distance::Bool = false,
              isprod::Bool = false, 
@@ -76,7 +76,7 @@ function CRM(x₀::Vector,ProjectA::Function, ProjectB::Function;
         end
         k += 2
         printOnFile(filedir,k, tolCRM, xCRM, isprod=isprod)
-end
+    end
     isprod ? method = :CRMprod : method = :CRM
     return Results(iter_total = k,final_tol=tolCRM,xApprox=xCRM,method=method)
 end
@@ -86,7 +86,7 @@ end
 
 Cirumcentered-Reflection method on Pierra's product space reformulation
 """
-function CRMprod(x₀::Vector{Float64},Projections::Vector{Function}; kwargs...)
+function CRMprod(x₀::AbstractArray{Float64},Projections::AbstractArray{Function}; kwargs...)
     xCRMprod = [x₀ for _ in Projections]
     ProjectAprod(x) = ProjectProdSpace(x,Projections)
     ProjectBprod(x) = ProjectProdDiagonal(x)
@@ -99,7 +99,7 @@ end
 
 Cirumcentered-Reflection method on Pierra's product space reformulation
 """
-function CRMprod(xCRMprod::Vector{Vector{Float64}}, ProjectAprod::Function; kwargs...)
+function CRMprod(xCRMprod::AbstractArray{AbstractArray{Float64}}, ProjectAprod::Function; kwargs...)
     ProjectBprod(x) = ProjectProdDiagonal(x)
     results = CRM(xCRMprod, ProjectAprod, ProjectBprod, isprod=true; kwargs...)
     return results
@@ -108,4 +108,4 @@ end
 """
     CRMprod(x₀, ProjectA, ProjectB)
 """
-CRMprod(x₀::Vector{Float64},ProjectA::Function, ProjectB::Function;kwargs...) = CRMprod(x₀,[ProjectA,ProjectB];kwargs...) 
+CRMprod(x₀::AbstractArray{Float64},ProjectA::Function, ProjectB::Function;kwargs...) = CRMprod(x₀,[ProjectA,ProjectB];kwargs...) 
