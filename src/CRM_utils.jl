@@ -36,7 +36,7 @@ Circumcentering the Douglas–Rachford method. Numer. Algorithms. 78(3), 759–7
 On the linear convergence of the circumcentered-reflection method. Oper. Res. Lett. 46(2), 159-162 (2018).
 [doi:10.1016/j.orl.2017.11.018](https://doi.org/10.1016/j.orl.2017.11.018)
 """
-function FindCircumcentermSet(X::Vector{AbstractArray})
+function FindCircumcentermSet(X::Union{Vector{Matrix{T}},Vector{Vector{T}}}) where {T<:Real}
     # Finds the Circumcenter of  linearly independent points  X = [X1, X2, X3, ... Xn]
     # println(typeof(X))
     lengthX = length(X)
