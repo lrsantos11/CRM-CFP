@@ -24,9 +24,9 @@ end
 Results() = Results(iter_total=0, final_tol=0.0, xApprox=[], method = :None)
 ####################################
 """
-FindCircumcentermSet(X)
+find_circumcenter!(CC, X)
 
-Finds the Circumcenter of linearly independent vectors ``x_0,x_1,…,x_m``, columns of matrix ``X``,
+Finds the Circumcenter of linearly independent vectors ``x_0,x_1,…,x_m``, belonging to ``X``,
 as described in [^Behling2018a] and [^Behling2018b].
 
 [^Behling2018a]: Behling, R., Bello Cruz, J.Y., Santos, L.-R.:
@@ -36,9 +36,10 @@ Circumcentering the Douglas–Rachford method. Numer. Algorithms. 78(3), 759–7
 On the linear convergence of the circumcentered-reflection method. Oper. Res. Lett. 46(2), 159-162 (2018).
 [doi:10.1016/j.orl.2017.11.018](https://doi.org/10.1016/j.orl.2017.11.018)
 """
-function FindCircumcentermSet(X)
+function find_circumcenter!(CC, X)
     # Finds the Circumcenter of  linearly independent points  X = [X1, X2, X3, ... Xn]
     # println(typeof(X))
+    T = eltype(CC)
     lengthX = length(X)
     if lengthX == 1
         return X[1]
@@ -46,7 +47,7 @@ function FindCircumcentermSet(X)
         return 0.5 * (X[1] + X[2])
     end
     V = []
-    b = Float64[]
+    b = T[]
     # Forms V = [X[2] - X[1] ... X[n]-X[1]]
     # and b = [dot(V[1],V[1]) ... dot(V[n-1],V[n-1])]
     for ind in 2:lengthX
@@ -72,14 +73,17 @@ function FindCircumcentermSet(X)
         @warn "Circumcenter matrix is not positive definite. Circumcenter is not unique"
         y = G \ b
     end
-    CC = X[1]
+    copyto!(CC, X[1])
     for ind in 1:dimG
         CC += 0.5 * y[ind] * V[ind]
     end
     return CC
 end
+
+FindCircumcentermSet(X) = find_circumcenter!(similar(X[1]), X)
+
 ####################################
-function FindCircumcentermSet(X::Vector{Vector{BigFloat}})
+function find_circumcenter(X::Vector{Vector{BigFloat}})
     lengthX = length(X)
     lengthX > 3 && error("Only computes BigFloat Circumcenter up to three")
     if lengthX == 1
