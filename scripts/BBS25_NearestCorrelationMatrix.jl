@@ -41,32 +41,35 @@ end
 
 
 """
-    bestcirc(A::Matrix{T}, ProjS, ProjU) where {T<:Real}
+    bestcirc_MAP(A::Matrix{T}, ProjS, ProjU) where {T<:Real}
     Using the Best Approximation circumcentered-reflection method to find the nearest correlation matrix to A
 """
 
 
-function bestcirc(X₀::Matrix{T},
+function bestcirc_MAP(X₀,
                   ProjS,
                   ProjU;
                   max_iter::Int64=1000, tol::Float64=1e-7) where {T<:Real}
     
-    X₀ = ProjU(X₀)
+    X̂₀ = ProjU(X₀)
     ReflectU = x -> Reflection(x, ProjU)
-    Xₖ = CRMiteration(X₀, ProjS(X₀), ReflectU)
+    Xₖ = CRMiteration(X̂₀, ProjS(X̂₀), ReflectU)
     ProjS_Xₖ = ProjS(Xₖ)
 
-    solved = false
+
     tired = false
-    iter = 0
+    iter = 1
+    tolbestcirc = norm(Xₖ - ProjS_Xₖ)
+    solved = tolbestcirc < tol
+    @info "iter = $iter, tolbestcirc = $tolbestcirc"
     while !(solved || tired)
         Xₖ_ProjS_Xₖ = Xₖ - ProjS_Xₖ
-        X₀_Xₖ = X₀ - Xₖ
+        X̂₀_Xₖ = X̂₀ - Xₖ
 
-        # Update Xₖ as the Projection of X₀ onto  Wₖ ∩ Hₖ ∩ U
+        # Update Xₖ as the Projection of X̂₀ onto  Wₖ ∩ Hₖ ∩ U
         ProjectHₖ = x -> ProjHyperplane(Xₖ_ProjS_Xₖ, dot(Xₖ_ProjS_Xₖ, ProjS_Xₖ), x)
-        ProjectWₖ = x -> ProjHyperplane(X₀_Xₖ, dot(X₀_Xₖ, Xₖ), x)
-        Xₖ = Project_W_H_U(X₀, ProjU, ProjectWₖ, ProjectHₖ) 
+        ProjectWₖ = x -> ProjHyperplane(X̂₀_Xₖ, dot(X̂₀_Xₖ, Xₖ), x)
+        Xₖ = Project_W_H_U(X̂₀, ProjU, ProjectWₖ, ProjectHₖ) 
 
         ProjS_Xₖ = ProjS(Xₖ)
         iter += 1
@@ -81,38 +84,36 @@ end
 
 
 """
-    bestcirc(A::Matrix{T}, ProjS, ProjU) where {T<:Real}
+    bestcirc_CRM(A::Matrix{T}, ProjS, ProjU) where {T<:Real}
     Using the Best Approximation circumcentered-reflection method to find the nearest correlation matrix to A
 """
 
 
-function bestcirc_CRM(X₀::Matrix{T},
+function bestcirc_CRM2(X₀,
     ProjS,
     ProjU;
-    max_iter::Int64=1000, tol::Float64=1e-8) where {T<:Real}
-
-    X₀ = ProjU(X₀)
+    max_iter::Int64=1000, tol::Float64=1e-12) where {T<:Real}
+    X̂₀ = ProjU(X₀)
     ReflectU = x -> Reflection(x, ProjU)
-    Xₖ = CRMiteration(X₀, ProjS(X₀), ReflectU)
+    Xₖ = CRMiteration(X̂₀, ProjS(X̂₀), ReflectU)
     ProjS_Xₖ = ProjS(Xₖ)
 
-    solved = false
+
     tired = false
-    iter = 0
+    iter = 1
+    tolbestcirc = norm(Xₖ - ProjS_Xₖ)
+    solved = tolbestcirc < tol
+    @info "iter = $iter, tolbestcirc = $tolbestcirc"
     while !(solved || tired)
         Wₖ = CRMiteration(Xₖ, ProjS_Xₖ, ReflectU)
-        if iter == 0
-            Xₖ = Wₖ
-        else
-            Xₖ_ProjS_Xₖ = Xₖ - ProjS_Xₖ
-            X₀_Wₖ = X₀ - Wₖ
+        X̂₀_Wₖ = X̂₀ - Wₖ
+        ProjectWₖ = x -> ProjHyperplane(X̂₀_Wₖ, dot(X̂₀_Wₖ, Wₖ), x)
+        ProjS_Wₖ = ProjS(Wₖ)
+        Wₖ_ProjS_Wₖ = Wₖ - ProjS_Wₖ
+        ProjectHₖ = x -> ProjHyperplane(Wₖ_ProjS_Wₖ, dot(Wₖ_ProjS_Wₖ, ProjS_Wₖ), x)
+        Xₖ = Project_W_H_U(X̂₀, ProjU, ProjectWₖ, ProjectHₖ)
 
-            # Update Xₖ as the Projection of X₀ onto  Wₖ ∩ Hₖ ∩ U
-            ProjectHₖ = x -> ProjHyperplane(Xₖ_ProjS_Xₖ, dot(Xₖ_ProjS_Xₖ, ProjS_Xₖ), x)
-            ProjectWₖ = x -> ProjHyperplane(X₀_Wₖ, dot(X₀_Wₖ, Wₖ), x)
-            Xₖ = Project_W_H_U(X₀, ProjU, ProjectWₖ, ProjectHₖ)
-
-        end
+        # end
         ProjS_Xₖ = ProjS(Xₖ)
         iter += 1
         tired = iter > max_iter
@@ -214,17 +215,17 @@ norm(X_CRM - X_BD)
 
 
 # Solving with bestcirc
-X_BC, iter = bestcirc(A, ProjS, ProjU)
+X_BC_MAP, iter = bestcirc_MAP(A, ProjS, ProjU)
 
-norm(X_BC  - A)
-X_BC * q
+norm(X_BC_MAP  - A)
+X_BC_MAP * q
 
 
 # Solving with bestcirc_Old
-X_BC_old, iter = bestcirc_Old_equiv_CRM(A, ProjS, ProjU)
+X_BC_CRM, iter = bestcirc_CRM1(A, ProjS, ProjU)
 
-norm(X_BC_old - A)
-X_BC * q
+norm(X_BC_CRM - A)
+
 
 
 
@@ -232,18 +233,21 @@ X_BC * q
 # Example 1 from Higham (2002)
 
 A = diagm(0 => [2, 2, 2, 2.0], -1 => [-1, -1, -1.0], 1 => [-1, -1, -1.0])
-X_BD, iter = dykstra_NCM(ProjU(A), ProjS, ProjU)
+X_BD, iter = dykstra_NCM(ProjU(A), ProjS, ProjU, tol = 1e-12)
 
 X_BD
 norm(A - X_BD)
 
-ResutlsCRM = CRM(A, ProjS, ProjU)
+ResutlsCRM = CRM(A, ProjS, ProjU, EPSVAL = 1e-12)
 X_CRM = ResutlsCRM.xApprox
 norm(X_CRM - A) 
 
 
 
-X_BC, iter = bestcirc(A, ProjS, ProjU)
+X_BC_MAP, iter = bestcirc_MAP(A, ProjS, ProjU, tol = 1e-7)
 
-norm(X_BC  - A)
+norm(X_BC_MAP  - A)
 
+X_BC_CRM, iter = bestcirc_CRM2(A, ProjS, ProjU)
+
+norm(X_BC_CRM - A)
