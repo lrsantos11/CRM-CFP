@@ -3,7 +3,7 @@
 ##################################################################
 
 """
-        Boyle_Dykstra_NCM(A::Matrix{T}, ProjS, ProjU) where {T<:Real}
+        dykstra_NCM(A::Matrix{T}, ProjS, ProjU) where {T<:Real}
 
     Boyle-Dykstra's algorithm for finding the Nearest Correlation matrix to a given matrix A
     A is a matrix
@@ -15,7 +15,7 @@
     Reference: Higham, Nicholas J. "Computing the nearest correlation matrix—a problem from finance." IMA Journal of Numerical Analysis 22.3 (2002): 329-343.
 
 """
-function Boyle_Dykstra_NCM(A::Matrix{T},
+function dykstra_NCM(A::Matrix{T},
                         ProjS,
                         ProjU;
                         max_iter::Int64=1000, tol::Float64=1e-8) where {T<:Real}
@@ -41,12 +41,12 @@ end
 
 
 """
-    BestCirc(A::Matrix{T}, ProjS, ProjU) where {T<:Real}
+    bestcirc(A::Matrix{T}, ProjS, ProjU) where {T<:Real}
     Using the Best Approximation circumcentered-reflection method to find the nearest correlation matrix to A
 """
 
 
-function BestCirc_V1(X₀::Matrix{T},
+function bestcirc(X₀::Matrix{T},
                   ProjS,
                   ProjU;
                   max_iter::Int64=1000, tol::Float64=1e-7) where {T<:Real}
@@ -71,9 +71,9 @@ function BestCirc_V1(X₀::Matrix{T},
         ProjS_Xₖ = ProjS(Xₖ)
         iter += 1
         tired = iter > max_iter
-        tolBestCirc = norm(Xₖ - ProjS_Xₖ)
-        solved = tolBestCirc < tol 
-        @info "iter = $iter, tolBestCirc = $tolBestCirc"
+        tolbestcirc = norm(Xₖ - ProjS_Xₖ)
+        solved = tolbestcirc < tol 
+        @info "iter = $iter, tolbestcirc = $tolbestcirc"
     end
     return Xₖ, iter
 end
@@ -81,24 +81,24 @@ end
 
 
 """
-    BestCirc(A::Matrix{T}, ProjS, ProjU) where {T<:Real}
+    bestcirc(A::Matrix{T}, ProjS, ProjU) where {T<:Real}
     Using the Best Approximation circumcentered-reflection method to find the nearest correlation matrix to A
 """
 
 
-function BestCirc_Old_equiv_CRM(X₀::Matrix{T},
+function bestcirc_CRM(X₀::Matrix{T},
     ProjS,
     ProjU;
     max_iter::Int64=1000, tol::Float64=1e-8) where {T<:Real}
 
     X₀ = ProjU(X₀)
-    Xₖ = copy(X₀)
+    ReflectU = x -> Reflection(x, ProjU)
+    Xₖ = CRMiteration(X₀, ProjS(X₀), ReflectU)
+    ProjS_Xₖ = ProjS(Xₖ)
 
     solved = false
     tired = false
     iter = 0
-    ReflectU = x -> Reflection(x, ProjU)
-    ProjS_Xₖ = ProjS(Xₖ)
     while !(solved || tired)
         Wₖ = CRMiteration(Xₖ, ProjS_Xₖ, ReflectU)
         if iter == 0
@@ -116,9 +116,9 @@ function BestCirc_Old_equiv_CRM(X₀::Matrix{T},
         ProjS_Xₖ = ProjS(Xₖ)
         iter += 1
         tired = iter > max_iter
-        tolBestCirc = norm(Xₖ - ProjS_Xₖ)
-        solved = tolBestCirc < tol
-        @info "iter = $iter, tolBestCirc = $tolBestCirc"
+        tolbestcirc = norm(Xₖ - ProjS_Xₖ)
+        solved = tolbestcirc < tol
+        @info "iter = $iter, tolbestcirc = $tolbestcirc"
     end
     return Xₖ, iter
 end
@@ -198,7 +198,7 @@ A = Float64[1 1 0
             0 1 1]
 # Solving with Boyle-Dykstra's algorithm
 
-X_BD, iter = Boyle_Dykstra_NCM(A, ProjS, ProjU, max_iter=1000, tol=1e-8)
+X_BD, iter = dykstra_NCM(A, ProjS, ProjU, max_iter=1000, tol=1e-8)
 
 norm(X_BD - A)
 
@@ -213,15 +213,15 @@ norm(X_CRM - A)
 norm(X_CRM - X_BD)
 
 
-# Solving with BestCirc
-X_BC, iter = BestCirc_V1(A, ProjS, ProjU)
+# Solving with bestcirc
+X_BC, iter = bestcirc(A, ProjS, ProjU)
 
 norm(X_BC  - A)
 X_BC * q
 
 
-# Solving with BestCirc_Old
-X_BC_old, iter = BestCirc_Old_equiv_CRM(A, ProjS, ProjU)
+# Solving with bestcirc_Old
+X_BC_old, iter = bestcirc_Old_equiv_CRM(A, ProjS, ProjU)
 
 norm(X_BC_old - A)
 X_BC * q
@@ -232,7 +232,7 @@ X_BC * q
 # Example 1 from Higham (2002)
 
 A = diagm(0 => [2, 2, 2, 2.0], -1 => [-1, -1, -1.0], 1 => [-1, -1, -1.0])
-X_BD, iter = Boyle_Dykstra_NCM(ProjU(A), ProjS, ProjU)
+X_BD, iter = dykstra_NCM(ProjU(A), ProjS, ProjU)
 
 X_BD
 norm(A - X_BD)
@@ -243,7 +243,7 @@ norm(X_CRM - A)
 
 
 
-X_BC, iter = BestCirc_V1(A, ProjS, ProjU)
+X_BC, iter = bestcirc(A, ProjS, ProjU)
 
 norm(X_BC  - A)
 
