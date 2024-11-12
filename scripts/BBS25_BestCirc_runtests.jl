@@ -1,8 +1,16 @@
 __precompile__()
 using DrWatson
 @quickactivate "CRM-CFP"
-if occursin("Intel", Sys.cpu_info()[1].model)
-    using MKL
+cpu_model = Sys.cpu_info()[1].model
+@info cpu_model
+if occursin("Intel", cpu_model) || occursin("AMD", cpu_model)
+    global islinux = true
+    using MKLSparse
+    @info "Using MKL and MKLSparse"
+else
+    global islinux = false
+    using AppleAccelerate
+    using ThreadedSparseArrays
 end
 include(srcdir("CRM-CFP.jl"))
 
