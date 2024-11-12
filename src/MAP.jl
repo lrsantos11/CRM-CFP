@@ -46,7 +46,7 @@ end
 
     Method of Alternating Projections
 """
-function MAP(x₀::Vector, ProjectA::Function, ProjectB::Function; 
+function MAP(x₀::AbstractArray, ProjectA::Function, ProjectB::Function; 
         EPSVAL::Float64 = 1e-5,
         itmax::Int = 100,
         filedir::String = "",
