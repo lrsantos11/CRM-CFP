@@ -109,3 +109,52 @@ end
     CRMprod(x₀, ProjectA, ProjectB)
 """
 CRMprod(x₀::Vector{Float64},ProjectA::Function, ProjectB::Function;kwargs...) = CRMprod(x₀,[ProjectA,ProjectB];kwargs...) 
+
+
+
+"""
+    CRM_iteration!(xCRM, Projections)
+
+Computes a SPM iteration
+"""
+function CRM_iteration!(xCRM::Vector,
+    Projections)
+    Xaffine = [xCRM]
+    for (index,proj) in enumerate(Projections)
+        push!(Xaffine, 2 * proj(Xaffine[index]) - Xaffine[index])
+    end
+    return find_circumcenter!(xCRM, Xaffine)
+end
+
+
+function CRM(x₀::AbstractVector,
+    Projections,
+    num_sets::Int;
+    EPSVAL::Float64=1e-5,
+    itmax::Int=100,
+    filedir::String="",
+    xSol::Vector=[],
+    print_intermediate::Bool=false,
+    gap_distance::Bool=false,
+    isprod::Bool=false,
+    kwargs...)
+    k = 0
+    tolCRM = 1.0
+    xCRM = copy(x₀)
+    printOnFile(filedir, k, tolCRM, xCRM, deletefile=true, isprod=isprod)
+    while tolCRM > EPSVAL && k < itmax
+        print_intermediate ? printOnFile(filedir, 0, 0.0, ProjA, isprod=isprod) : nothing
+        if gap_distance
+            @error "Not implemented yet"
+        else
+            xCRMOld = copy(xCRM)
+            xCRM = CRM_iteration!(xCRM, Projections)
+            tolCRM = Tolerance(xCRM, xCRMOld, xSol)
+        end
+        k += num_sets
+        printOnFile(filedir, k, tolCRM, xCRM, isprod=isprod)
+    end
+    isprod ? method = :SPMprod : method = :SPM
+    return Results(iter_total=k, final_tol=tolCRM, xApprox=xCRM, method=method)
+
+end

@@ -4,6 +4,7 @@ using DelimitedFiles
 using Dates
 using Distributions
 using LinearAlgebra
+using GenericLinearAlgebra
 using PolynomialRoots
 using Printf
 using ProximalOperators
@@ -411,4 +412,45 @@ function createDataframes(Methods::Vector{Symbol}; projections::Bool=false)
         insertcols!(dfFilenames, join([mtd, "filename"]) => String[])
     end
     return dfResults, dfFilenames
+end
+
+
+"""
+   Simultaneous Projections onto Affine Spaces
+"""
+
+
+function simultaneousproj_IndAffine(A::Matrix, b::Vector, num_blocks::Int)
+    Indicators = []
+    block_size = div(size(A, 1), num_blocks)
+    for i = 1:num_blocks-1
+        Ablock = A[(i-1)*block_size+1:i*block_size, :]
+        bblock = b[(i-1)*block_size+1:i*block_size]
+        IndAblock = IndAffine(Ablock, bblock)
+        push!(Indicators, IndAblock)
+    end
+    Ablock = A[(num_blocks-1)*block_size+1:end, :]
+    bblock = b[(num_blocks-1)*block_size+1:end]
+    push!(Indicators, IndAffine(Ablock, bblock))
+    function proj(x)
+        map(Ind -> prox(Ind, x)[1], Indicators)
+        return [prox(Ind, x)[1] for Ind in Indicators]
+    end
+    return proj
+end
+
+
+function successiveproj_IndAffine(A::Matrix, b::Vector, num_blocks::Int)
+    Indicators = []
+    block_size = div(size(A, 1), num_blocks)
+    for i = 1:num_blocks-1
+        Ablock = A[(i-1)*block_size+1:i*block_size, :]
+        bblock = b[(i-1)*block_size+1:i*block_size]
+        IndAblock = IndAffine(Ablock, bblock)
+        push!(Indicators, IndAblock)
+    end
+    Ablock = A[(num_blocks-1)*block_size+1:end, :]
+    bblock = b[(num_blocks-1)*block_size+1:end]
+    push!(Indicators, IndAffine(Ablock, bblock))
+    return [x -> prox(Ind, x)[1] for Ind in Indicators]
 end
