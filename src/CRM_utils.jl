@@ -440,17 +440,90 @@ function simultaneousproj_IndAffine(A::Matrix, b::Vector, num_blocks::Int)
 end
 
 
-function successiveproj_IndAffine(A::Matrix, b::Vector, num_blocks::Int)
+function successiveproj_IndAffine(A::AbstractMatrix, b::AbstractVector, num_blocks::Int)
     Indicators = []
     block_size = div(size(A, 1), num_blocks)
     for i = 1:num_blocks-1
         Ablock = A[(i-1)*block_size+1:i*block_size, :]
         bblock = b[(i-1)*block_size+1:i*block_size]
-        IndAblock = IndAffine(Ablock, bblock)
+        IndAblock = IndAffine(Ablock, bblock, iterative = true)
         push!(Indicators, IndAblock)
     end
     Ablock = A[(num_blocks-1)*block_size+1:end, :]
     bblock = b[(num_blocks-1)*block_size+1:end]
-    push!(Indicators, IndAffine(Ablock, bblock))
+    push!(Indicators, IndAffine(Ablock, bblock, iterative=true))
     return [x -> prox(Ind, x)[1] for Ind in Indicators]
 end
+
+
+####################################
+using QRMumps
+
+"""
+    projection_QR(A, b, SF, xstar)
+"""
+
+function proj_factory_QR(Ablock::AbstractMatrix,
+                         bblock::AbstractVector;
+                         verbose::Bool=false)
+    # Sparse Projection using QRMumps
+    # A^T(AA^T)^{-1} = QR^{-T}
+    T = eltype(Ablock)
+    _, num_cols = size(Ablock)
+    z_num_rows = similar(bblock)
+    z_num_cols = zeros(T, num_cols)
+    # Initialize QRMumps
+    qrm_init()
+
+    # Initialize data structures
+    spmat = qrm_spmat_init(Ablock)
+    spfct = qrm_spfct_init(spmat)
+
+    # Specify that we want the Q-less QR factorization
+    qrm_set(spfct, "qrm_keeph", 0)
+
+    # Perform symbolic analysis of Aᵀ and factorize Aᵀ = QR
+    qrm_analyse!(spmat, spfct; transp='t')
+    qrm_factorize!(spmat, spfct, transp='t')
+
+    function proj(xstar)
+        verbose && @info "mul!"
+        mul!(z_num_rows, Ablock, xstar) # z_num_rows = A*xstar
+        verbose && @info "axpy!"
+        !iszero(bblock) && axpy!(-one(T), bblock, z_num_rows) # z_num_rows = A*xstar - b
+        verbose && @info "QR"
+        qrm_solve!(spfct, z_num_rows, z_num_cols, transp='t')
+        qrm_solve!(spfct, z_num_cols, z_num_rows, transp='n')
+        mul!(z_num_cols, Ablock', z_num_rows)
+        return (xstar - z_num_cols)
+    end
+    return proj
+end
+
+####################################
+
+using Krylov
+using LinearOperators
+function proj_factory_Krylov(Ablock::AbstractMatrix,
+                       bblock::AbstractVector)
+    # Sparse Projection proj_factory_Krylov
+    issparse(Ablock) || error("Matrix A must be sparse")
+    T = eltype(Ablock)
+    opA = LinearOperator(Ablock)
+    cgne_solver = CgneSolver(opA, bblock)
+    rhs = similar(bblock)
+   
+   
+   function projA(xstar)
+        @info "mul!"
+        mul!(rhs, opA, xstar) # rhs = A*xstar
+        @info "axpy!"
+        !iszero(b) && axpy!(-one(T), bblock, rhs) # rhs = A*xstar - b
+        @info "cgne!"
+        cgne!(cgne_solver, opA, rhs, rtol=1e-10) # cgne_solver.x = Aᵀ(AAᵀ)⁻¹(A*xstar - b)
+        return (xstar - cgne_solver.x)
+    end
+    return projA
+end
+
+
