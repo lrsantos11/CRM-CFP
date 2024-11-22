@@ -68,10 +68,10 @@ end
 
 Computes a SPM iteration
 """
-function SPM_iteration!(xSPM::Vector,
+function SPM_iteration!(xSPM::AbstractVector,
                         Projections,
-                        weigth::Vector)
-    xSPM .= reduce(+, Projections(xSPM) .* weigth)
+                        weigh::AbstractVector)
+    xSPM .= reduce(+, [proj(xSPM) for proj in Projections] .* weigh)
     return xSPM
 end
 

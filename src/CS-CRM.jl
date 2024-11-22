@@ -11,7 +11,7 @@ Computes a SPM iteration
 """
 function CSRM_iteration!(xCSRM::Vector,
                         Projections)
-    Xaffine = map(x -> 2 * x - xCSRM, Projections(xCSRM))
+    Xaffine = map(x -> 2 * x - xCSRM, [proj(xCSRM) for proj in Projections])
     push!(Xaffine, xCSRM)
     return find_circumcenter!(xCSRM, Xaffine)
 end

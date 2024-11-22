@@ -117,7 +117,7 @@ CRMprod(x₀::Vector{Float64},ProjectA::Function, ProjectB::Function;kwargs...) 
 
 Computes a SPM iteration
 """
-function CRM_iteration!(xCRM::Vector,
+function CRM_iteration!(xCRM::AbstractVector,
     Projections)
     Xaffine = [xCRM]
     for (index,proj) in enumerate(Projections)

@@ -416,22 +416,33 @@ end
 
 
 """
-   Simultaneous Projections onto Affine Spaces
+
 """
-
-
-function simultaneousproj_IndAffine(A::Matrix, b::Vector, num_blocks::Int)
-    Indicators = []
+function form_Affine_blocks(A, b, num_blocks, FuncProj)
+    Recipient = []
     block_size = div(size(A, 1), num_blocks)
     for i = 1:num_blocks-1
         Ablock = A[(i-1)*block_size+1:i*block_size, :]
         bblock = b[(i-1)*block_size+1:i*block_size]
-        IndAblock = IndAffine(Ablock, bblock)
-        push!(Indicators, IndAblock)
+        IndAblock = FuncProj(Ablock, bblock)
+        push!(Recipient, IndAblock)
     end
     Ablock = A[(num_blocks-1)*block_size+1:end, :]
     bblock = b[(num_blocks-1)*block_size+1:end]
-    push!(Indicators, IndAffine(Ablock, bblock))
+    push!(Recipient, FuncProj(Ablock, bblock))
+    return Recipient
+end
+
+
+
+
+"""
+   Simultaneous Projections onto Affine Spaces
+"""
+
+
+function simultaneousproj_IndAffine(A::AbstractMatrix, b::AbstractVector, num_blocks::Int)
+    Indicators = form_Affine_blocks(A, b, num_blocks, IndAffine)
     function proj(x)
         map(Ind -> prox(Ind, x)[1], Indicators)
         return [prox(Ind, x)[1] for Ind in Indicators]
@@ -440,18 +451,13 @@ function simultaneousproj_IndAffine(A::Matrix, b::Vector, num_blocks::Int)
 end
 
 
+
+
+"""
+   successive Projections onto Affine Spaces
+"""
 function successiveproj_IndAffine(A::AbstractMatrix, b::AbstractVector, num_blocks::Int)
-    Indicators = []
-    block_size = div(size(A, 1), num_blocks)
-    for i = 1:num_blocks-1
-        Ablock = A[(i-1)*block_size+1:i*block_size, :]
-        bblock = b[(i-1)*block_size+1:i*block_size]
-        IndAblock = IndAffine(Ablock, bblock, iterative = true)
-        push!(Indicators, IndAblock)
-    end
-    Ablock = A[(num_blocks-1)*block_size+1:end, :]
-    bblock = b[(num_blocks-1)*block_size+1:end]
-    push!(Indicators, IndAffine(Ablock, bblock, iterative=true))
+    Indicators = form_Affine_blocks(A, b, num_blocks, IndAffine)
     return [x -> prox(Ind, x)[1] for Ind in Indicators]
 end
 
@@ -460,10 +466,10 @@ end
 using QRMumps
 
 """
-    projection_QR(A, b, SF, xstar)
+    projection_QR(A, b)
 """
 
-function proj_factory_QR(Ablock::AbstractMatrix,
+function proj_factory_QRMumps(Ablock::AbstractMatrix,
                          bblock::AbstractVector;
                          verbose::Bool=false)
     # Sparse Projection using QRMumps
@@ -479,8 +485,8 @@ function proj_factory_QR(Ablock::AbstractMatrix,
     spmat = qrm_spmat_init(Ablock)
     spfct = qrm_spfct_init(spmat)
 
-    # Specify that we want the Q-less QR factorization
-    qrm_set(spfct, "qrm_keeph", 0)
+    # # Specify that we want the Q-less QR factorization
+    # qrm_set(spfct, "qrm_keeph", 0)
 
     # Perform symbolic analysis of Aᵀ and factorize Aᵀ = QR
     qrm_analyse!(spmat, spfct; transp='t')
@@ -488,17 +494,26 @@ function proj_factory_QR(Ablock::AbstractMatrix,
 
     function proj(xstar)
         verbose && @info "mul!"
-        mul!(z_num_rows, Ablock, xstar) # z_num_rows = A*xstar
+        mul!(rhs, Ablock, xstar) # z_num_rows = A*xstar
         verbose && @info "axpy!"
-        !iszero(bblock) && axpy!(-one(T), bblock, z_num_rows) # z_num_rows = A*xstar - b
+        !iszero(bblock) && axpy!(-one(T), bblock, rhs) # z_num_rows = A*xstar - b
         verbose && @info "QR"
-        qrm_solve!(spfct, z_num_rows, z_num_cols, transp='t')
-        qrm_solve!(spfct, z_num_cols, z_num_rows, transp='n')
-        mul!(z_num_cols, Ablock', z_num_rows)
-        return (xstar - z_num_cols)
+        qrm_solve!(spfct, rhs, z_num_cols, transp='t')
+        # qrm_solve!(spfct, z_num_cols, z_num_rows, transp='n')
+        # mul!(z_num_cols, Ablock', z_num_rows)
+        return (xstar - qrm_apply(spfct, z_num_cols))
     end
     return proj
 end
+
+
+
+"""
+    projection_block_QR(A, b, num_blocks)
+"""
+
+projection_block_QRMumps(A::AbstractMatrix, b::AbstractVector, num_blocks::Int) =  form_Affine_blocks(A, b, num_blocks, proj_factory_QRMumps)
+
 
 ####################################
 
@@ -527,3 +542,35 @@ function proj_factory_Krylov(Ablock::AbstractMatrix,
 end
 
 
+
+
+
+function proj_factory_QR(Ablock::AbstractMatrix,
+    bblock::AbstractVector;
+    verbose::Bool=false)
+    # Sparse Projection using QRMumps
+    # A^T(AA^T)^{-1} = QR^{-T}
+    T = eltype(Ablock)
+    rhs = similar(bblock)
+    if issparse(Ablock) 
+        SF = qr(Ablock)
+    else
+        SF = qr(Ablock, ColumnNorm())
+    end
+
+    function proj(xstar)
+        verbose && @info "mul!"
+        mul!(rhs, Ablock, xstar) # z_num_rows = A*xstar
+        verbose && @info "axpy!"
+        !iszero(bblock) && axpy!(-one(T), bblock, rhs) # z_num_rows = A*xstar - b
+        verbose && @info "QR"
+        return (xstar - (SF\rhs))
+    end
+    return proj
+end
+
+"""
+    projection_block_QR(A, b, num_blocks)
+"""
+
+projection_block_QR(A::AbstractMatrix, b::AbstractVector, num_blocks::Int) = form_Affine_blocks(A, b, num_blocks, proj_factory_QR)
