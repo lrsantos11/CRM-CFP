@@ -48,9 +48,12 @@ end
 
 Computes a parallel CRM iteration
 """
+
+using ThreadsX
+
 function paralellCRMiteration!(xPCRM::Vector,
                         Projections)
-    Xaffine = map(x -> 2 * x - xPCRM, [proj(xPCRM) for proj in Projections])
+    Xaffine = ThreadsX.map((proj) -> 2 * proj(xPCRM) - xPCRM, Projections)
     push!(Xaffine, xPCRM)
     return find_circumcenter!(xPCRM, Xaffine)
 end

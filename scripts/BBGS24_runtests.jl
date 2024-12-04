@@ -23,7 +23,7 @@ end
     normalize!(xSol)
     b = A * xSol
     x₀ = zeros(T, num_cols)
-    num_blocks_vec = 15:20
+    num_blocks_vec = 14:18
     @info "Solving system with size $(size(A)) and using Julia's QR"
     println("="^80)
     println("="^80)
@@ -141,8 +141,17 @@ ProjectionsKrylov = projection_block_Krylov(M, b, num_blocks)
 ProjectionsQR = projection_block_QR(M, b, num_blocks)
 ProjectionsQRMumps = projection_block_QRMumps(M, b, num_blocks)
 
-@benchmark ThreadsX.mapreduce((proj) -> proj($x₀), +, $ProjectionsKrylov)
-@benchmark mapreduce((proj) -> proj($x₀), +, $ProjectionsQR)
-@benchmark mapreduce((proj) -> proj($x₀), +, $ProjectionsQRMumps)``
-@benchmark ThreadsX.mapreduce((proj) -> proj($x₀), +, $ProjectionsQRMumps)
-@benchmark _test1([$x₀], $ProjectionsQRMumps)
+using ThreadsX
+
+@benchmark ThreadsX.map((proj) -> proj($x₀),  $ProjectionsKrylov)
+@benchmark ThreadsX.map((proj) -> proj($x₀), $ProjectionsQR)
+@benchmark ThreadsX.map((proj) -> proj($x₀), $ProjectionsQRMumps)
+
+@benchmark ThreadsX.map((proj) -> 2 * proj($x₀) - $x₀, $ProjectionsQR)
+@benchmark ThreadsX.map((proj) -> 2 * proj($x₀) - $x₀, $ProjectionsQRMumps)
+@benchmark ThreadsX.map((proj) -> 2 * proj($x₀) - $x₀, $ProjectionsKrylov)
+
+
+@benchmark paralellCRMiteration!($x₀, $ProjectionsQR)
+
+@benchmark CRM_iteration!($x₀, $ProjectionsQR)
