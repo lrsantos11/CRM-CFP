@@ -27,7 +27,7 @@ end
     @info "Solving system with size $(size(A)) and using Julia's QR"
     println("="^80)
     println("="^80)
-    for  num_blocks in num_blocks_vec, method in [:CSRM, :CRM] 
+    for  num_blocks in num_blocks_vec, method in [:pCRM, :CRM] 
         @info "Running $(method) with $num_blocks blocks"
         Projections = projection_block_QR(A, b, num_blocks)
         func = eval(method)
