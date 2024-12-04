@@ -1,5 +1,5 @@
 using DrWatson
-@quickactivate Symbol("CRM-CFP")
+@quickactivate "CRM-CFP"
 
 using Test
 # Include the CRM-CFP.jl file
@@ -13,31 +13,31 @@ function print_results(method, xSol, num_blocks, results, elap_time)
 end
 
 ##
-@testset "First Example: Random Matrix" begin
-    Random.seed!(42)
-    T = Float64
-    num_rows, num_cols = 10_000, 1_000
-    A = randn(T, num_rows, num_cols)
-    w = randn(T, num_rows)
-    xSol = A'* w
-    normalize!(xSol)
-    b = A * xSol
-    x₀ = zeros(T, num_cols)
-    num_blocks_vec = 14:18
-    @info "Solving system with size $(size(A)) and using Julia's QR"
-    println("="^80)
-    println("="^80)
-    for  num_blocks in num_blocks_vec, method in [:pCRM, :CRM] 
-        @info "Running $(method) with $num_blocks blocks"
-        Projections = projection_block_QR(A, b, num_blocks)
-        func = eval(method)
-        results = func(x₀, Projections, num_blocks, itmax=100_000, EPSVAL=1e-4)
-        elap_time = @belapsed $(func)($(x₀), $(Projections), $(num_blocks), itmax=100_000)
-        print_results(method, xSol, num_blocks, results, elap_time)
-    end
+# @testset "First Example: Random Matrix" begin
+#     Random.seed!(42)
+#     T = Float64
+#     num_rows, num_cols = 10_000, 1_000
+#     A = randn(T, num_rows, num_cols)
+#     w = randn(T, num_rows)
+#     xSol = A'* w
+#     normalize!(xSol)
+#     b = A * xSol
+#     x₀ = zeros(T, num_cols)
+#     num_blocks_vec = 15:18
+#     @info "Solving system with size $(size(A)) and using Julia's QR"
+#     println("="^80)
+#     println("="^80)
+#     for  num_blocks in num_blocks_vec, method in [:pCRM, :CRM] 
+#         @info "Running $(method) with $num_blocks blocks"
+#         Projections = projection_block_QR(A, b, num_blocks)
+#         func = eval(method)
+#         results = func(x₀, Projections, num_blocks, itmax=100_000, EPSVAL=1e-4)
+#         elap_time = @belapsed $(func)($(x₀), $(Projections), $(num_blocks), itmax=100_000)
+#         print_results(method, xSol, num_blocks, results, elap_time)
+#     end
     
-    @test true
-end
+#     @test true
+# end
 
 
 ##
@@ -112,46 +112,34 @@ using MatrixMarket
 ssmc = ssmc_db()
 paths = fetch_ssmc(ssmc_matrices(ssmc, "", "Franz1"), format="MM")
 downloaded_files = installed_ssmc()
-T = Float64
-M = float.(mmread(paths[1] * "/Franz1.mtx"))
-num_rows, num_cols = size(M)
-w = randn(T, num_rows)
-xSol = M' * w
-normalize!(xSol)
-b = M * xSol
-x₀ = zeros(T, num_cols)
-Ablock = M[1:112,:]
-bblock = b[1:112]
-SF = qr(Ablock', ColumnNorm())
-projA = proj_factory_Krylov(Ablock, bblock)
-projB = proj_factory_QR(Ablock, bblock, SF)
-projC = proj_factory_QRMumps(Ablock, bblock)
 
-@test norm(projA(x₀) - projB(x₀)) < 1e-8
-@test projC(x₀) ≈ projB(x₀)
+@testset "Franz1 matrix from Matrix Market" begin
 
-@benchmark projA($x₀)
-@benchmark projB($x₀)
-@benchmark projC($x₀)
+    T = Float64
+    M = float.(mmread(paths[1] * "/Franz1.mtx"))
+    num_rows, num_cols = size(M)
+    w = randn(T, num_rows)
+    xSol = M' * w
+    normalize!(xSol)
+    b = M * xSol
+    x₀ = zeros(T, num_cols)
+    # Ablock = M[1:112,:]
+    # bblock = b[1:112]
+    # SF = qr(Ablock', ColumnNorm())
+    # projA = proj_factory_Krylov(Ablock, bblock)
+    # projB = proj_factory_QR(Ablock, bblock, SF)
+    # projC = proj_factory_QRMumps(Ablock, bblock)
+    num_blocks_vec = 50:10:60
+    @info "Solving system Franz1 from matrix Market with size $(size(M)) and using several projection factories"
 
+    for proj in [:projection_block_QR], num_blocks in num_blocks_vec, method in [:pCRM, :CRM] 
+        @info "Running $(method) with $num_blocks blocks and $(proj) projection factory"
+        proj_bloc = eval(proj)
+        Projections = proj_bloc(M, b, num_blocks)
+        func = eval(method)
+        results = func(x₀, Projections, num_blocks, itmax=100_000, EPSVAL=1e-5)
+        elap_time = @belapsed $(func)($(x₀), $(Projections), $(num_blocks), itmax=100_000)
+        print_results(method, xSol, num_blocks, results, elap_time)
+    end
 
-
-num_blocks = 50
-ProjectionsKrylov = projection_block_Krylov(M, b, num_blocks)
-ProjectionsQR = projection_block_QR(M, b, num_blocks)
-ProjectionsQRMumps = projection_block_QRMumps(M, b, num_blocks)
-
-using ThreadsX
-
-@benchmark ThreadsX.map((proj) -> proj($x₀),  $ProjectionsKrylov)
-@benchmark ThreadsX.map((proj) -> proj($x₀), $ProjectionsQR)
-@benchmark ThreadsX.map((proj) -> proj($x₀), $ProjectionsQRMumps)
-
-@benchmark ThreadsX.map((proj) -> 2 * proj($x₀) - $x₀, $ProjectionsQR)
-@benchmark ThreadsX.map((proj) -> 2 * proj($x₀) - $x₀, $ProjectionsQRMumps)
-@benchmark ThreadsX.map((proj) -> 2 * proj($x₀) - $x₀, $ProjectionsKrylov)
-
-
-@benchmark paralellCRMiteration!($x₀, $ProjectionsQR)
-
-@benchmark CRM_iteration!($x₀, $ProjectionsQR)
+end

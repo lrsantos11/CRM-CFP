@@ -587,7 +587,6 @@ proj_factory_QR(Ablock::AbstractMatrix, bblock::AbstractVector; kwargs...) = pro
 
 
 
-using CUDA 
 
 
 
@@ -597,8 +596,8 @@ function _compute_ldivSF!(SF::Union{QR,LinearAlgebra.QRCompactWY}, rhs, cache_nu
     return nothing
 end
 
-
-proj_factory_QR(Ablock::CuMatrix, bblock::CuVector; kwargs...) = proj_factory_QR(Ablock, bblock, qr(transpose(Ablock)); kwargs...)
+# using CUDA
+# proj_factory_QR(Ablock::CuMatrix, bblock::CuVector; kwargs...) = proj_factory_QR(Ablock, bblock, qr(transpose(Ablock)); kwargs...)
 
 using SparseArrays
 
