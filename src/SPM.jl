@@ -86,7 +86,7 @@ end
 
 function SPM(x₀::AbstractVector, 
                 Projections, 
-                num_sets::Int;
+                num_blocks::Int;
                 EPSVAL::Float64 = 1e-5,
                 itmax::Int = 100,
                 filedir::String = "",
@@ -96,7 +96,7 @@ function SPM(x₀::AbstractVector,
                 isprod::Bool = false,
                 weight::Vector = [],
                 kwargs...)
-    isempty(weight) && (weight = 1/num_sets * ones(num_sets))
+    isempty(weight) && (weight = 1/num_blocks * ones(num_blocks))
     k = 0
     tolSPM = 1.
     xSPM = copy(x₀)
@@ -110,7 +110,7 @@ function SPM(x₀::AbstractVector,
             xSPM = SPM_iteration!(xSPM, Projections, weight)
             tolSPM = Tolerance(xSPM, xSPMOld, xSol)
         end
-        k += num_sets
+        k += num_blocks
         printOnFile(filedir,k, tolSPM, xSPM , isprod=isprod)
     end
     isprod ? method = :SPMprod : method = :SPM

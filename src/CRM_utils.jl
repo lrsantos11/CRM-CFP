@@ -475,33 +475,38 @@ function proj_factory_QRMumps(Ablock::AbstractMatrix,
     # Sparse Projection using QRMumps
     # A^T(AA^T)^{-1} = QR^{-T}
     T = eltype(Ablock)
-    _, num_cols = size(Ablock)
-    z_num_rows = similar(bblock)
-    z_num_cols = zeros(T, num_cols)
+    num_rows, num_cols = size(Ablock)
+    rhs = similar(bblock)
+    cache_num_cols = similar(bblock, num_cols)
+    cache_num_rows = similar(bblock, num_rows)
+
     # Initialize QRMumps
-    qrm_init()
+    qrm_init(1,1)
 
     # Initialize data structures
     spmat = qrm_spmat_init(Ablock)
     spfct = qrm_spfct_init(spmat)
 
     # # Specify that we want the Q-less QR factorization
-    # qrm_set(spfct, "qrm_keeph", 0)
+    qrm_set(spfct, "qrm_keeph", 0)
 
     # Perform symbolic analysis of Aᵀ and factorize Aᵀ = QR
     qrm_analyse!(spmat, spfct; transp='t')
     qrm_factorize!(spmat, spfct, transp='t')
 
+
+
     function proj(xstar)
         verbose && @info "mul!"
-        mul!(rhs, Ablock, xstar) # z_num_rows = A*xstar
+        iszero(xstar) ? fill!(rhs, zero(T)) : mul!(rhs, Ablock, xstar) # z_num_rows = A*xstar
         verbose && @info "axpy!"
         !iszero(bblock) && axpy!(-one(T), bblock, rhs) # z_num_rows = A*xstar - b
-        verbose && @info "QR"
-        qrm_solve!(spfct, rhs, z_num_cols, transp='t')
-        # qrm_solve!(spfct, z_num_cols, z_num_rows, transp='n')
-        # mul!(z_num_cols, Ablock', z_num_rows)
-        return (xstar - qrm_apply(spfct, z_num_cols))
+        verbose && @info "QRMumps"
+        # qrm_min_norm!(spmat, rhs, cache_num_cols; transp='n')
+        qrm_solve!(spfct, rhs, cache_num_cols; transp='t')
+        qrm_solve!(spfct, cache_num_cols, cache_num_rows, transp='n')
+        mul!(cache_num_cols, Ablock', cache_num_rows)
+        return (xstar - cache_num_cols)
     end
     return proj
 end
@@ -520,7 +525,7 @@ projection_block_QRMumps(A::AbstractMatrix, b::AbstractVector, num_blocks::Int) 
 using Krylov
 using LinearOperators
 function proj_factory_Krylov(Ablock::AbstractMatrix,
-                       bblock::AbstractVector)
+                       bblock::AbstractVector; verbose = false)
     # Sparse Projection proj_factory_Krylov
     issparse(Ablock) || error("Matrix A must be sparse")
     T = eltype(Ablock)
@@ -529,45 +534,84 @@ function proj_factory_Krylov(Ablock::AbstractMatrix,
     rhs = similar(bblock)
    
    
-   function projA(xstar)
-        @info "mul!"
+   function proj(xstar)
+        verbose &&  @info "mul!"
         mul!(rhs, opA, xstar) # rhs = A*xstar
-        @info "axpy!"
-        !iszero(b) && axpy!(-one(T), bblock, rhs) # rhs = A*xstar - b
-        @info "cgne!"
-        cgne!(cgne_solver, opA, rhs, rtol=1e-10) # cgne_solver.x = Aᵀ(AAᵀ)⁻¹(A*xstar - b)
-        return (xstar - cgne_solver.x)
-    end
-    return projA
-end
-
-
-
-
-
-function proj_factory_QR(Ablock::AbstractMatrix,
-    bblock::AbstractVector;
-    verbose::Bool=false)
-    # Sparse Projection using QRMumps
-    # A^T(AA^T)^{-1} = QR^{-T}
-    T = eltype(Ablock)
-    rhs = similar(bblock)
-    if issparse(Ablock) 
-        SF = qr(Ablock)
-    else
-        SF = qr(Ablock, ColumnNorm())
-    end
-
-    function proj(xstar)
-        verbose && @info "mul!"
-        mul!(rhs, Ablock, xstar) # z_num_rows = A*xstar
         verbose && @info "axpy!"
-        !iszero(bblock) && axpy!(-one(T), bblock, rhs) # z_num_rows = A*xstar - b
-        verbose && @info "QR"
-        return (xstar - (SF\rhs))
+        !iszero(bblock) && axpy!(-one(T), bblock, rhs) # rhs = A*xstar - b
+        verbose && @info "cgne!"
+        cgne!(cgne_solver, opA, rhs, rtol = T.(1e-12)) # cgne_solver.x = Aᵀ(AAᵀ)⁻¹(A*xstar - b)
+        return (xstar - cgne_solver.x)
     end
     return proj
 end
+
+projection_block_Krylov(A::AbstractMatrix, b::AbstractVector, num_blocks::Int) = form_Affine_blocks(A, b, num_blocks, proj_factory_Krylov)
+
+
+## Using QR factorization
+
+function proj_factory_QR(A::AbstractMatrix{T},
+    b::AbstractVector{T},
+    SF;
+    verbose::Bool=false) where T
+    # A^T(AA^T)^{-1} = QR^{-T}
+    num_rows, num_cols = size(A)
+    rhs = similar(b)
+    cache_num_cols = similar(b,num_cols)
+    cache_num_rows = similar(b,num_rows)
+
+    function proj(xstar) 
+        verbose && @info "mul!"
+        iszero(xstar) ? fill!(rhs, zero(T)) : mul!(rhs, A, xstar) # z_num_rows = A*xstar
+        verbose && @info "axpy!"
+        !iszero(b) && axpy!(-one(T), b, rhs) # z_num_rows = A*xstar - b
+        verbose && @info "QR"
+        _compute_ldivSF!(SF, rhs, cache_num_cols, cache_num_rows)
+        return xstar - cache_num_cols
+    end
+    return proj
+end
+
+
+function _compute_ldivSF!(SF::QRPivoted, rhs, cache_num_cols, cache_num_rows)
+    @views rhspivoted = rhs[SF.p]
+    ldiv!(cache_num_rows, LowerTriangular(SF.R'), rhspivoted)
+    mul!(cache_num_cols, SF.Q, cache_num_rows)
+    return nothing
+end
+
+proj_factory_QR(Ablock::AbstractMatrix, bblock::AbstractVector; kwargs...) = proj_factory_QR(Ablock, bblock, qr(transpose(Ablock), ColumnNorm()); kwargs...)
+
+
+
+
+
+using CUDA 
+
+
+
+function _compute_ldivSF!(SF::Union{QR,LinearAlgebra.QRCompactWY}, rhs, cache_num_cols, cache_num_rows)
+    ldiv!(cache_num_rows, LowerTriangular(SF.R'), rhs)
+    mul!(cache_num_cols, SF.Q, cache_num_rows)
+    return nothing
+end
+
+
+proj_factory_QR(Ablock::CuMatrix, bblock::CuVector; kwargs...) = proj_factory_QR(Ablock, bblock, qr(transpose(Ablock)); kwargs...)
+
+using SparseArrays
+
+
+function _compute_ldivSF!(SF::QR, rhs, cache_num_cols, cache_num_rows)
+    ldiv!(cache_num_rows, LowerTriangular(SF.R'), rhs)
+    mul!(cache_num_cols, SF.Q, cache_num_rows)
+    return nothing
+end
+
+
+projection_block_QR(A::SparseMatrixCSC, b::AbstractVector, num_blocks::Int) = form_Affine_blocks(A, b, num_blocks, proj_factory_QR)
+
 
 """
     projection_block_QR(A, b, num_blocks)
