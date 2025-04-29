@@ -378,7 +378,8 @@ function Tolerance(x::AbstractVector, xold::AbstractVector, xsol::AbstractVector
     if isempty(xsol)
         return norm(x - xold, norm_p)
     else
-        return norm(x - xsol, norm_p)
+        xsol_norm = norm(xsol, norm_p)
+        return norm(x - xsol, norm_p) / xsol_norm
     end
 end
 
