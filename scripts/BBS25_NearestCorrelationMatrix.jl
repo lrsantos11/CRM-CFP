@@ -109,6 +109,7 @@ function bestcirc_CRM2(X₀,
         X̂ₖ = CRMiteration(Xₖ, ProjS_Xₖ, ReflectU)
         ProjS_X̂ₖ = ProjS(X̂ₖ)
         X̂ₖ_ProjS_X̂ₖ = X̂ₖ - ProjS_X̂ₖ
+        norm(X̂ₖ_ProjS_X̂ₖ) ≈ 0.0 && break
         X̂ₖ_ProjS_X̂ₖ /= norm(X̂ₖ_ProjS_X̂ₖ)
         IndHₖ = IndHalfspace(X̂ₖ_ProjS_X̂ₖ, dot(X̂ₖ_ProjS_X̂ₖ, ProjS_X̂ₖ))
         # Note that  Xₖ is the Projection of X̂₀ onto  Wₖ ∩ U
