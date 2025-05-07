@@ -53,12 +53,12 @@ using ThreadsX
 
 function paralellCRMiteration!(xPCRM::Vector,
                         Projections)
-    # Xaffine = [xPCRM]
-    # for proj in Projections
-        # push!(Xaffine, 2 * proj(xPCRM) - xPCRM)
-    # end
-    Xaffine = ThreadsX.map((proj) -> 2 * proj(xPCRM) - xPCRM, Projections)
-    push!(Xaffine, xPCRM)
+    Xaffine = [xPCRM]
+    for proj in Projections
+        push!(Xaffine, 2 * proj(xPCRM) - xPCRM)
+    end
+    # Xaffine = ThreadsX.map((proj) -> 2 * proj(xPCRM) - xPCRM, Projections)
+    # push!(Xaffine, xPCRM)
     return find_circumcenter!(xPCRM, Xaffine)
 end
 

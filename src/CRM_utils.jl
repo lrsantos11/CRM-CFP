@@ -43,9 +43,11 @@ function find_circumcenter!(CC, X)
     T = eltype(CC)
     lengthX = length(X)
     if lengthX == 1
-        return X[1]
+        copyto!(CC, X[1])
+        return CC
     elseif lengthX == 2
-        return 0.5 * (X[1] + X[2])
+        copyto!(CC, 0.5 * (X[1] + X[2]))
+        return CC
     end
     V = []
     b = T[]
@@ -67,12 +69,15 @@ function find_circumcenter!(CC, X)
             G[icol, irow] = G[irow, icol]
         end
     end
-    if isposdef(G)
+    y = similar(X[1])
+    try
         L = cholesky(G)
         y = L \ b
-    else
-        @warn "Circumcenter matrix is not positive definite. Circumcenter is not unique"
-        y = G \ b
+    catch e
+        # @warn "Circumcenter matrix is not positive definite. Returning DR"
+        y = pinv(G) * b
+        # copyto!(CC , 0.5* (X[1] + X[end]))
+        # return CC
     end
     copyto!(CC, X[1])
     for ind in 1:dimG
@@ -421,7 +426,7 @@ end
 """
 function form_Affine_blocks(A, b, num_blocks, FuncProj)
     Recipient = []
-    block_size = div(size(A, 1), num_blocks)
+    block_size = cld(size(A, 1), num_blocks)
     for i = 1:num_blocks-1
         Ablock = A[(i-1)*block_size+1:i*block_size, :]
         bblock = b[(i-1)*block_size+1:i*block_size]
@@ -515,7 +520,7 @@ end
 
 
 """
-    projection_block_QR(A, b, num_blocks)
+    projection_block_QRMumps(A, b, num_blocks)
 """
 
 projection_block_QRMumps(A::AbstractMatrix, b::AbstractVector, num_blocks::Int) =  form_Affine_blocks(A, b, num_blocks, proj_factory_QRMumps)
