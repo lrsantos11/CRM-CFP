@@ -30,43 +30,6 @@ end
 
 
 """
-    parallelCRMiteration(xCRM, IsometryA, IsometryB)
-
-Computes an iteration of the Cirumcentered-Reflection method
-"""
-
-function parallelCRMiteration!(xpCRM::Vector,
-    IsometryA::Function,
-    IsometryB::Function)
-    xpCRM_RA = IsometryA(xpCRM)
-    xpCRM_RB = IsometryB(xpCRM)
-    xpCRM = parallelCRMiteration!(xpCRM, xpCRM_RA, xpCRM_RB)
-    return xpCRM
-end
-
-
-"""
-    parallelCRMiteration(xCRM, ReflectA, ReflectB)
-
-Computes an iteration of the Cirumcentered-Reflection method
-"""
-
-function parallelCRMiteration!(xpCRM::Vector,
-    xpCRM_RA::Vector,
-    xpCRM_RB::Vector)
-    if xpCRM_RA ≈ xpCRM
-        xpCRM = FindCircumcentermSet([xpCRM, xpCRM_RB])
-    elseif xpCRM_RB ≈ xpCRM
-        xpCRM = FindCircumcentermSet([xpCRM, xpCRM_RA])
-    elseif xpCRM_RA ≈ xpCRM_RB
-        xpCRM = FindCircumcentermSet([xpCRM, xpCRM_RA])
-    else
-        xpCRM = FindCircumcentermSet([xpCRM, xpCRM_RA, xpCRM_RB])
-    end
-    return xpCRM
-end
-
-"""
     centralizedCRM(x₀, ProjectA, ProjectB)
 
 Centralized Cirumcentered-Reflection method
