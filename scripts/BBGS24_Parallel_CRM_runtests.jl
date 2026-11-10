@@ -1,3 +1,9 @@
+# NOTE: The standalone Julia package and updated reproducible benchmark suite for
+# "Parallelizing the Circumcentered-Reflection Method" (Barros, Behling, Guigues, and Santos,
+# arXiv:2505.17258) have moved to the dedicated repository:
+#   https://github.com/lrsantos11/ParallelCRM
+# Please use `scripts/run_experiments.jl` and `scripts/make_table1.jl` in that repository.
+
 using DrWatson
 @quickactivate "CRM-CFP"
 

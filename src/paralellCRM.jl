@@ -1,6 +1,9 @@
 """ 
     Parallel Circumcentered Reflections Method
-    
+
+    NOTE: For the standalone package and zero-allocation parallel implementation of P-CRM
+    used in Barros, Behling, Guigues, and Santos (arXiv:2505.17258), see:
+    https://github.com/lrsantos11/ParallelCRM
 """
 
 """

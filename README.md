@@ -10,6 +10,9 @@ CRM-CFP concerns numerical results presented in [[Behling2021]](#1), [[Arefidamg
 
 It is authored by [Luiz-Rafael Santos](https://lrsantos11.github.io) in co-authorship with Guilherme Araújo, Reza Arefidamghani, Roger Behling, Yunier Bello-Cruz and Alfredo N. Iusem.
 
+> **Note on Parallel CRM ([Barros, Behling, Guigues, and Santos, arXiv:2505.17258](https://arxiv.org/abs/2505.17258)):**  
+> The standalone Julia package, updated zero-allocation implementations (`CRM`, `pCRM`, and `F-SPM`), and reproducible benchmark suite for *"Parallelizing the Circumcentered-Reflection Method"* have moved to a dedicated repository: **[https://github.com/lrsantos11/ParallelCRM](https://github.com/lrsantos11/ParallelCRM)**.
+
 ## How to use CRM-CFP
 
 To (locally) reproduce this project, do the following:
